@@ -1,0 +1,9 @@
+INTERFACE I_Sensor
+
+PROPERTY Value : REAL
+
+    GET : REAL
+        
+    END_GET
+
+END_PROPERTY

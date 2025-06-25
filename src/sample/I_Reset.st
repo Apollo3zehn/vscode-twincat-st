@@ -1,0 +1,6 @@
+INTERFACE I_Counter
+
+    METHOD Reset : BOOL
+    END_METHOD
+
+END_INTERFACE

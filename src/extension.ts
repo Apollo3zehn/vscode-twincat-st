@@ -1,10 +1,13 @@
 import * as vscode from 'vscode';
-import { MyDocumentSymbolProvider } from './MyDocumentSymbolProvider.js';
+import { StDocumentSymbolProvider } from './StDocumentSymbolProvider.js';
+import { buildModel } from './model.js';
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
+
+    const model = await buildModel(context);
 
 	context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(
-        { language: "st", pattern: "**/*.st" }, new MyDocumentSymbolProvider()
+        { language: "st", pattern: "**/*.st" }, new StDocumentSymbolProvider(model)
     ));
 }
 

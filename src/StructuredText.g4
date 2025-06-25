@@ -3,15 +3,30 @@ grammar StructuredText;
 // Program organization units
 program         : PROGRAM ID implementsClause? extendsClause? varDeclSection* statementSection END_PROGRAM ;
 function        : FUNCTION ID ':' type implementsClause? extendsClause? varDeclSection* statementSection END_FUNCTION ;
-property        : PROPERTY ID implementsClause? extendsClause? varDeclSection* propertyBody END_PROPERTY ;
+functionBlock   : attribute? FUNCTION_BLOCK accessModifier? modifier* ID implementsClause? extendsClause? functionBlockMember* statementSection END_FUNCTION_BLOCK ;
+property        : attribute? PROPERTY accessModifier? modifier* ID ':' type varDeclSection* propertyBody END_PROPERTY ;
+method          : attribute? METHOD accessModifier? modifier* ID (':' type)? varDeclSection* statementSection END_METHOD ;
+interface       : attribute? INTERFACE accessModifier? modifier* ID (extendsClause)? interfaceMember* END_INTERFACE ;
+classDecl       : attribute? CLASS accessModifier? modifier* ID (extendsClause)? (implementsClause)? classMember* END_CLASS ;
+structDecl      : STRUCT ID varDeclSection* END_STRUCT ;
+enumDecl        : ENUM ID enumMemberList END_ENUM ;
+namespaceDecl   : NAMESPACE ID namespaceMember* END_NAMESPACE ;
+typeDefDecl     : TYPEDEF ID '=' type ';' ;
 
-implementsClause: IMPLEMENTS ID (',' ID)* ;
-extendsClause   : EXTENDS ID ;
+// Implements and extends clauses
+implementsClause : IMPLEMENTS ID (',' ID)* ;
+extendsClause    : EXTENDS ID ;
+
+// Members
+functionBlockMember : varDeclSection | method | property ;
+interfaceMember     : method | property | varDeclSection ;
+classMember         : varDeclSection | method | property ;
+namespaceMember     : program | functionBlock | function | classDecl | structDecl | enumDecl | interface ;
 
 // Variable declarations
 varDeclSection  : varSectionType varDecl+ END_VAR ;
-varSectionType  : VAR | VAR_INPUT | VAR_OUTPUT | VAR_IN_OUT | VAR_TEMP | VAR_EXTERNAL | VAR_GLOBAL ;
-varDecl         : ID ':' arraySpec? type ('=' exprOrArrayInit)? ';' ;
+varSectionType  : VAR | VAR_INPUT | VAR_OUTPUT | VAR_IN_OUT | VAR_TEMP | VAR_EXTERNAL | VAR_GLOBAL | VAR_INST ;
+varDecl         : attribute? accessModifier? modifier* ID ':' (REFERENCE_TO)? arraySpec? type (':=' exprOrArrayInit)? ';' ;
 arraySpec       : ARRAY '[' NUMBER '..' NUMBER ']' OF ;
 exprOrArrayInit : expr | arrayInit ;
 arrayInit       : '[' expr (',' expr)* ']' ;
@@ -19,7 +34,7 @@ arrayInit       : '[' expr (',' expr)* ']' ;
 // Types
 type
     : builtinType
-    | ID // Allow custom/user-defined types
+    | ID
     ;
 
 builtinType
@@ -46,7 +61,9 @@ statement       : assignment
 // Assignments and calls
 assignment      : ID (arrayIndex)? ':=' expr ';' ;
 arrayIndex      : '[' expr ']' ;
-callStatement   : ID '(' (expr (',' expr)*)? ')' ';' ;
+callStatement   : ID '(' argumentList? ')' (';' | ) ;
+argumentList    : argument (',' argument)* ;
+argument        : ID (':=' | '=>') expr | expr ;
 
 // Control flow
 ifStatement     : IF expr THEN statementSection (ELSIF expr THEN statementSection)* (ELSE statementSection)? END_IF ;
@@ -63,19 +80,20 @@ exitStatement   : EXIT ';' ;
 continueStatement : CONTINUE ';' ;
 
 // Expressions
-expr            : expr op=('*'|'/') expr
-                | expr op=('+'|'-') expr
-                | expr op=('='|'<'|'>'|'<='|'>='|'<>') expr
-                | expr op=('AND'|'OR'|'XOR') expr
-                | '(' expr ')'
-                | NUMBER
-                | BOOL
-                | STRING_LITERAL
-                | ID (arrayIndex)?
-                ;
+expr
+    : expr op=('*'|'/'|MOD) expr
+    | expr op=('+'|'-') expr
+    | expr op=('='|'<'|'>'|'<='|'>='|'<>') expr
+    | expr op=('AND'|'OR'|'XOR') expr
+    | '(' expr ')'
+    | NUMBER
+    | BOOL
+    | STRING_LITERAL
+    | ID (arrayIndex)?
+    ;
 
 // Top-level entry point (optional, for clarity)
-compilationUnit : (program | functionBlock | function | property)* ;
+compilationUnit : (program | functionBlock | function | interface | classDecl | structDecl | enumDecl | namespaceDecl | typeDefDecl)* ;
 
 // Keywords
 PROGRAM             : 'PROGRAM' ;
@@ -99,6 +117,7 @@ VAR_IN_OUT          : 'VAR_IN_OUT' ;
 VAR_TEMP            : 'VAR_TEMP' ;
 VAR_EXTERNAL        : 'VAR_EXTERNAL' ;
 VAR_GLOBAL          : 'VAR_GLOBAL' ;
+VAR_INST            : 'VAR_INST' ;
 END_VAR             : 'END_VAR' ;
 IF                  : 'IF' ;
 THEN                : 'THEN' ;
@@ -127,6 +146,30 @@ OR                  : 'OR' ;
 XOR                 : 'XOR' ;
 METHOD              : 'METHOD' ;
 END_METHOD          : 'END_METHOD' ;
+INTERFACE           : 'INTERFACE' ;
+END_INTERFACE       : 'END_INTERFACE' ;
+CLASS               : 'CLASS' ;
+END_CLASS           : 'END_CLASS' ;
+STRUCT              : 'STRUCT' ;
+END_STRUCT          : 'END_STRUCT' ;
+ENUM                : 'ENUM' ;
+END_ENUM            : 'END_ENUM' ;
+NAMESPACE           : 'NAMESPACE' ;
+END_NAMESPACE       : 'END_NAMESPACE' ;
+TYPEDEF             : 'TYPEDEF' ;
+ABSTRACT            : 'ABSTRACT' ;
+FINAL               : 'FINAL' ;
+SEALED              : 'SEALED' ;
+OVERRIDE            : 'OVERRIDE' ;
+STATIC              : 'STATIC' ;
+CONSTANT            : 'CONSTANT' ;
+READONLY            : 'READONLY' ;
+PUBLIC              : 'PUBLIC' ;
+PRIVATE             : 'PRIVATE' ;
+PROTECTED           : 'PROTECTED' ;
+INTERNAL            : 'INTERNAL' ;
+REFERENCE_TO        : 'REFERENCE TO' ;
+MOD                 : 'MOD' ;
 
 // Literals and identifiers
 BOOL                : 'TRUE' | 'FALSE' ;
@@ -138,24 +181,19 @@ STRING_LITERAL      : '"' (~["\r\n])* '"' ;
 WS                  : [ \t\r\n]+ -> skip ;
 COMMENT             : '//' ~[\r\n]* -> skip ;
 
+// Property body
 propertyBody    : (getter | setter | getter setter | setter getter) ;
 getter          : GET statementSection END_GET ;
 setter          : SET statementSection END_SET ;
 
-functionBlock
-    : FUNCTION_BLOCK ID implementsClause? extendsClause?
-      functionBlockMember+
-      statementSection
-      END_FUNCTION_BLOCK
-    ;
-    
-functionBlockMember
-    : varDeclSection
-    | method
-    | property
-    ;
+// Attribute support (optional, simple)
+attribute           : '{' ID (attributeArgList)? '}' ;
+attributeArgList    : '(' attributeArg (',' attributeArg)* ')' ;
+attributeArg        : ID | NUMBER | STRING_LITERAL ;
 
-// Example method rule (simplified, adjust as needed)
-method
-    : METHOD ID (':' type)? varDeclSection* statementSection END_METHOD
-    ;
+// Access modifiers and modifiers
+accessModifier  : PUBLIC | PRIVATE | PROTECTED | INTERNAL ;
+modifier        : ABSTRACT | FINAL | SEALED | OVERRIDE | STATIC | CONSTANT | READONLY ;
+
+// Enum member list
+enumMemberList  : ID (',' ID)*  ;

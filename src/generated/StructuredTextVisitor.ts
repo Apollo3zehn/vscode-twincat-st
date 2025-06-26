@@ -14,6 +14,7 @@ import { StructDeclContext } from "./StructuredTextParser.js";
 import { EnumDeclContext } from "./StructuredTextParser.js";
 import { NamespaceDeclContext } from "./StructuredTextParser.js";
 import { TypeDefDeclContext } from "./StructuredTextParser.js";
+import { VarGlobalSectionContext } from "./StructuredTextParser.js";
 import { ImplementsClauseContext } from "./StructuredTextParser.js";
 import { ExtendsClauseContext } from "./StructuredTextParser.js";
 import { MemberContext } from "./StructuredTextParser.js";
@@ -130,6 +131,12 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      * @return the visitor result
      */
     visitTypeDefDecl?: (ctx: TypeDefDeclContext) => Result;
+    /**
+     * Visit a parse tree produced by `StructuredTextParser.varGlobalSection`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitVarGlobalSection?: (ctx: VarGlobalSectionContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.implementsClause`.
      * @param ctx the parse tree

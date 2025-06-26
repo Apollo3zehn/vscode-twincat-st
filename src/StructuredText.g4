@@ -1,35 +1,46 @@
 grammar StructuredText;
 
+// =======================
 // Program organization units
-program         : PROGRAM ID implementsClause? extendsClause? varDeclSection* statementSection END_PROGRAM ;
-function        : FUNCTION ID ':' type implementsClause? extendsClause? varDeclSection* statementSection END_FUNCTION ;
-functionBlock   : attribute? FUNCTION_BLOCK accessModifier? modifier* ID implementsClause? extendsClause? member* statementSection END_FUNCTION_BLOCK ;
-property        : attribute? PROPERTY accessModifier? modifier* ID ':' type varDeclSection* propertyBody END_PROPERTY ;
-method          : attribute? METHOD accessModifier? modifier* ID (':' type)? varDeclSection* statementSection END_METHOD ;
-interface       : attribute? INTERFACE accessModifier? modifier* ID (extendsClause)? member* END_INTERFACE ;
-classDecl       : attribute? CLASS accessModifier? modifier* ID (extendsClause)? (implementsClause)? member* END_CLASS ;
-structDecl      : STRUCT ID varDeclSection* END_STRUCT ;
-enumDecl        : ENUM ID enumMemberList END_ENUM ;
-namespaceDecl   : NAMESPACE ID namespaceMember* END_NAMESPACE ;
-typeDefDecl     : TYPEDEF ID '=' type ';' ;
+// =======================
+program             : PROGRAM ID implementsClause? extendsClause? varDeclSection* statementSection END_PROGRAM ;
+function            : attribute? FUNCTION ID ':' type implementsClause? extendsClause? varDeclSection* statementSection END_FUNCTION ;
+functionBlock       : attribute? FUNCTION_BLOCK accessModifier? modifier* ID implementsClause? extendsClause? member* statementSection END_FUNCTION_BLOCK ;
+property            : attribute? PROPERTY accessModifier? modifier* ID ':' type varDeclSection* propertyBody END_PROPERTY ;
+method              : attribute? METHOD accessModifier? modifier* ID (':' type)? varDeclSection* statementSection END_METHOD ;
+interface           : attribute? INTERFACE accessModifier? modifier* ID (extendsClause)? member* END_INTERFACE ;
+classDecl           : attribute? CLASS accessModifier? modifier* ID (extendsClause)? (implementsClause)? member* END_CLASS ;
+structDecl          : attribute? STRUCT ID varDeclSection* END_STRUCT ;
+enumDecl            : attribute? ENUM ID enumMemberList END_ENUM ;
+namespaceDecl       : attribute? NAMESPACE ID namespaceMember* END_NAMESPACE ;
+typeDefDecl         : attribute? TYPEDEF ID '=' type ';' ;
+varGlobalSection    : attribute? VAR_GLOBAL modifier* varDecl+ END_VAR ;
 
+// =======================
 // Implements and extends clauses
-implementsClause : IMPLEMENTS ID (',' ID)* ;
-extendsClause    : EXTENDS ID ;
+// =======================
+implementsClause    : IMPLEMENTS ID (',' ID)* ;
+extendsClause       : EXTENDS ID ;
 
+// =======================
 // Members
+// =======================
 member              : method | property | varDeclSection ;
 namespaceMember     : program | functionBlock | function | classDecl | structDecl | enumDecl | interface ;
 
+// =======================
 // Variable declarations
-varDeclSection  : varSectionType varDecl+ END_VAR ;
-varSectionType  : VAR | VAR_INPUT | VAR_OUTPUT | VAR_IN_OUT | VAR_TEMP | VAR_EXTERNAL | VAR_GLOBAL | VAR_INST ;
-varDecl         : attribute? accessModifier? modifier* ID ':' (REFERENCE_TO)? arraySpec? type (':=' exprOrArrayInit)? ';' ;
-arraySpec       : ARRAY '[' NUMBER '..' NUMBER ']' OF ;
-exprOrArrayInit : expr | arrayInit ;
-arrayInit       : '[' expr (',' expr)* ']' ;
+// =======================
+varDeclSection      : varSectionType modifier* varDecl+ END_VAR ;
+varSectionType      : VAR | VAR_INPUT | VAR_OUTPUT | VAR_IN_OUT | VAR_TEMP | VAR_EXTERNAL | VAR_INST ;
+varDecl             : attribute? accessModifier? modifier* ID ':' (REFERENCE_TO)? arraySpec? type (':=' exprOrArrayInit)? ';' ;
+arraySpec           : ARRAY '[' NUMBER '..' NUMBER ']' OF ;
+exprOrArrayInit     : expr | arrayInit ;
+arrayInit           : '[' expr (',' expr)* ']' ;
 
+// =======================
 // Types
+// =======================
 type
     : builtinType
     | ID
@@ -41,43 +52,53 @@ builtinType
     | 'TIME' | 'DATE' | 'TIME_OF_DAY' | 'DATE_AND_TIME'
     ;
 
+// =======================
 // Statements
-statementSection: statement* ;
-statement       : assignment
-                | ifStatement
-                | caseStatement
-                | whileStatement
-                | repeatStatement
-                | forStatement
-                | callStatement
-                | returnStatement
-                | exitStatement
-                | continueStatement
-                | ';'
-                ;
+// =======================
+statementSection    : statement* ;
+statement           : assignment
+                    | ifStatement
+                    | caseStatement
+                    | whileStatement
+                    | repeatStatement
+                    | forStatement
+                    | callStatement
+                    | returnStatement
+                    | exitStatement
+                    | continueStatement
+                    | ';'
+                    ;
 
+// =======================
 // Assignments and calls
-assignment      : ID (arrayIndex)? ':=' expr ';' ;
-arrayIndex      : '[' expr ']' ;
-callStatement   : ID '(' argumentList? ')' (';' | ) ;
-argumentList    : argument (',' argument)* ;
-argument        : ID (':=' | '=>') expr | expr ;
+// =======================
+assignment          : ID (arrayIndex)? ':=' expr ';' ;
+arrayIndex          : '[' expr ']' ;
+callStatement       : ID '(' argumentList? ')' (';' | ) ;
+argumentList        : argument (',' argument)* ;
+argument            : ID (':=' | '=>') expr | expr ;
 
+// =======================
 // Control flow
-ifStatement     : IF expr THEN statementSection (ELSIF expr THEN statementSection)* (ELSE statementSection)? END_IF ;
-caseStatement   : CASE expr OF caseElement+ (ELSE statementSection)? END_CASE ;
-caseElement     : (caseValue (',' caseValue)*) ':' statementSection ;
-caseValue       : NUMBER | BOOL | STRING_LITERAL | ID ;
-whileStatement  : WHILE expr DO statementSection END_WHILE ;
-repeatStatement : REPEAT statementSection UNTIL expr END_REPEAT ;
-forStatement    : FOR ID ':=' expr TO expr (BY expr)? DO statementSection END_FOR ;
+// =======================
+ifStatement         : IF expr THEN statementSection (ELSIF expr THEN statementSection)* (ELSE statementSection)? END_IF ;
+caseStatement       : CASE expr OF caseElement+ (ELSE statementSection)? END_CASE ;
+caseElement         : (caseValue (',' caseValue)*) ':' statementSection ;
+caseValue           : NUMBER | BOOL | STRING_LITERAL | ID ;
+whileStatement      : WHILE expr DO statementSection END_WHILE ;
+repeatStatement     : REPEAT statementSection UNTIL expr END_REPEAT ;
+forStatement        : FOR ID ':=' expr TO expr (BY expr)? DO statementSection END_FOR ;
 
+// =======================
 // Return, exit, continue
-returnStatement : RETURN ';' ;
-exitStatement   : EXIT ';' ;
-continueStatement : CONTINUE ';' ;
+// =======================
+returnStatement     : RETURN ';' ;
+exitStatement       : EXIT ';' ;
+continueStatement   : CONTINUE ';' ;
 
+// =======================
 // Expressions
+// =======================
 expr
     : expr op=('*'|'/'|MOD) expr
     | expr op=('+'|'-') expr
@@ -90,10 +111,26 @@ expr
     | ID (arrayIndex)?
     ;
 
-// Top-level entry point (optional, for clarity)
-compilationUnit : (program | functionBlock | function | interface | classDecl | structDecl | enumDecl | namespaceDecl | typeDefDecl)* ;
+// =======================
+// Top-level entry point
+// =======================
+compilationUnit
+    : (program
+    | functionBlock
+    | function
+    | interface
+    | classDecl
+    | structDecl
+    | enumDecl
+    | namespaceDecl
+    | typeDefDecl
+    | varGlobalSection
+    )*
+    ;
 
+// =======================
 // Keywords
+// =======================
 PROGRAM             : 'PROGRAM' ;
 END_PROGRAM         : 'END_PROGRAM' ;
 FUNCTION_BLOCK      : 'FUNCTION_BLOCK' ;
@@ -169,29 +206,41 @@ INTERNAL            : 'INTERNAL' ;
 REFERENCE_TO        : 'REFERENCE TO' ;
 MOD                 : 'MOD' ;
 
+// =======================
 // Literals and identifiers
+// =======================
 BOOL                : 'TRUE' | 'FALSE' ;
 ID                  : [a-zA-Z_][a-zA-Z0-9_]* ;
 NUMBER              : [0-9]+ ('.' [0-9]+)? ;
 STRING_LITERAL      : '"' (~["\r\n])* '"' ;
 
+// =======================
 // Whitespace and comments
+// =======================
 WS                  : [ \t\r\n]+ -> skip ;
 COMMENT             : '//' ~[\r\n]* -> skip ;
 
+// =======================
 // Property body
-propertyBody    : (getter | setter | getter setter | setter getter) ;
-getter          : GET statementSection END_GET ;
-setter          : SET statementSection END_SET ;
+// =======================
+propertyBody        : (getter | setter | getter setter | setter getter) ;
+getter              : GET statementSection END_GET ;
+setter              : SET statementSection END_SET ;
 
-// Attribute support (optional, simple)
+// =======================
+// Attribute support
+// =======================
 attribute           : '{' ID (attributeArgList)? '}' ;
 attributeArgList    : '(' attributeArg (',' attributeArg)* ')' ;
 attributeArg        : ID | NUMBER | STRING_LITERAL ;
 
+// =======================
 // Access modifiers and modifiers
-accessModifier  : PUBLIC | PRIVATE | PROTECTED | INTERNAL ;
-modifier        : ABSTRACT | FINAL | SEALED | OVERRIDE | STATIC | CONSTANT | READONLY ;
+// =======================
+accessModifier      : PUBLIC | PRIVATE | PROTECTED | INTERNAL ;
+modifier            : ABSTRACT | FINAL | SEALED | OVERRIDE | STATIC | CONSTANT | READONLY ;
 
+// =======================
 // Enum member list
-enumMemberList  : ID (',' ID)*  ;
+// =======================
+enumMemberList      : ID (',' ID)* ;

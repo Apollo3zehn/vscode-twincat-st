@@ -172,7 +172,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
             this.getOrCreateVariableUsage(ctx, idToken);
     }
 
-    private getOrCreateVarDeclSection(ctx: ParserRuleContext, nameToken: Token): StSymbol | undefined {
+    private getOrCreateVarDeclSection(ctx: ParserRuleContext, nameToken: Token): StSymbol {
 
         return this.getOrCreate(
             ctx,
@@ -242,10 +242,13 @@ export class StVisitor extends StructuredTextVisitor<void> {
                         );
                     
                     case VarGlobalSectionContext:
-                        return this.getOrCreateVarDeclSection(
+
+                        const symbol = this.getOrCreateVarDeclSection(
                             parentCtx,
                             (parentCtx as VarGlobalSectionContext).VAR_GLOBAL().symbol
                         );
+
+                        this._sourceFile.varGlobalSectionMap.set(parentCtx, symbol);
                    
                     default:
                         return undefined;

@@ -11,7 +11,8 @@ export class SourceFile {
     constructor(
         public readonly uri: Uri,
         public readonly uriAsString: string,
-        public readonly symbolMap: Map<ParserRuleContext, StSymbol>) {
+        public readonly symbolMap: Map<ParserRuleContext, StSymbol>,
+        public readonly varGlobalSectionMap: Map<ParserRuleContext, StSymbol>) {
         //
     }
 }

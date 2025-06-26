@@ -8,5 +8,6 @@ PROGRAM MAIN
     END_VAR
 
     _counter(enable := _enable, count := _count, success => _success);
+    _counter.Reset();
 
 END_PROGRAM

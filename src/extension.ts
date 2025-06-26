@@ -3,6 +3,7 @@ import { documentSelector } from './core.js';
 import { StDefinitionProvider } from './features/StDefinitionProvider.js';
 import { ExtensionContext, languages } from 'vscode';
 import { ModelBuilder } from './model/ModelBuilder.js';
+import { StReferencesCodeLensProvider } from './features/StReferencesCodeLensProvider.js';
 
 export async function activate(context: ExtensionContext) {
 
@@ -15,6 +16,10 @@ export async function activate(context: ExtensionContext) {
 
     context.subscriptions.push(languages.registerDocumentSymbolProvider(
         documentSelector, new StDocumentSymbolProvider(model)
+    ));
+
+    context.subscriptions.push(languages.registerCodeLensProvider(
+        documentSelector, new StReferencesCodeLensProvider(model)
     ));
 
 	// context.subscriptions.push(vscode.languages.registerFoldingRangeProvider(

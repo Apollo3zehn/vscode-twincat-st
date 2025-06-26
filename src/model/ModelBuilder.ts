@@ -96,6 +96,7 @@ export class ModelBuilder {
             sourceFile = new SourceFile(
                 fileUri,
                 fileUriAsString,
+                new Map<ParserRuleContext, StSymbol>(),
                 new Map<ParserRuleContext, StSymbol>()
             );
             
@@ -122,6 +123,65 @@ export class ModelBuilder {
             symbol.id,
             sourceFile
         );
+
+        // Try to find the variable declaration in global variable blocks
+        if (!symbol.declaringSymbol) {
+
+            for (const sourceFile of this._model.values()) {
+                
+                for (const varGlobalSection of sourceFile.varGlobalSectionMap.values()) {
+                    
+                    if (!varGlobalSection.children)
+                        continue;
+                    
+                    for (const varDeclSymbol of varGlobalSection.children) {
+                        
+                        if (varDeclSymbol.name === symbol.name) {
+                            symbol.declaringSymbol = varDeclSymbol;
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private findVariableDeclaringSymbolInParent(
+        ctx: ParserRuleContext,
+        symbol: StSymbol,
+        id: Token,
+        sourceFile: SourceFile
+    ): StSymbol | undefined {
+        
+        const parent = this.getVariablesDeclaringParent(ctx, sourceFile);
+
+        if (!parent || !parent.children)
+            return undefined;
+
+        const name = id.text;
+
+        // Shortcut for properties
+        if (parent.kind === StSymbolKind.Property && parent.name === name)
+            return parent;
+
+        // Search for variable declaration in this level
+        for (const child of parent.children) {
+
+            if (child.kind === StSymbolKind.VariableDeclarationSection && child.children) {
+                
+                for (const varDecl of child.children) {
+                    if (
+                        varDecl.kind === StSymbolKind.VariableDeclaration &&
+                        varDecl.name === name
+                    ) {
+                        return varDecl;
+                    }
+                }
+            }
+        }
+
+        // Try next level up (parent of parent)
+        return this.findVariableDeclaringSymbolInParent(parent.context, symbol, id, sourceFile);
     }
 
     private getVariablesDeclaringParent(
@@ -147,44 +207,6 @@ export class ModelBuilder {
         }
 
         return undefined;
-    }
-
-    private findVariableDeclaringSymbolInParent(
-        ctx: ParserRuleContext,
-        symbol: StSymbol,
-        id: Token,
-        sourceFile: SourceFile
-    ): StSymbol | undefined {
-        
-        const parent = this.getVariablesDeclaringParent(ctx, sourceFile);
-
-        if (!parent || !parent.children)
-            return undefined;
-
-        const name = id.text;
-
-        // Short cut for properties
-        if (parent.kind === StSymbolKind.Property && parent.name === name)
-            return parent;
-
-        // Search for variable declaration in this level
-        for (const child of parent.children) {
-
-            if (child.kind === StSymbolKind.VariableDeclarationSection && child.children) {
-                
-                for (const varDecl of child.children) {
-                    if (
-                        varDecl.kind === StSymbolKind.VariableDeclaration &&
-                        varDecl.name === name
-                    ) {
-                        return varDecl;
-                    }
-                }
-            }
-        }
-
-        // Try next level up (parent of parent)
-        return this.findVariableDeclaringSymbolInParent(parent.context, symbol, id, sourceFile);
     }
 
     //#endregion
@@ -220,6 +242,34 @@ export class ModelBuilder {
         }
     }
 
+    private findMethodOrFunctionDeclaringSymbolInParent(
+        ctx: ParserRuleContext,
+        symbol: StSymbol,
+        id: Token,
+        sourceFile: SourceFile
+    ): StSymbol | undefined {
+            
+        const parent = this.getMethodOrFunctionDeclaringParent(ctx, sourceFile);
+
+        if (!parent || !parent.children)
+            return undefined;
+
+        const name = id.text;
+
+        // Shortcut for functions
+        if (parent.kind === StSymbolKind.Function && parent.name === name)
+            return parent;
+
+        // Search for method declaration in this level
+        for (const child of parent.children) {
+            if (child.kind === StSymbolKind.Method && child.name === name)
+                return child;
+        }
+
+        // Try next level up (parent of parent)
+        return this.findMethodOrFunctionDeclaringSymbolInParent(ctx, symbol, id, sourceFile);
+    }
+
     private getMethodOrFunctionDeclaringParent(
         ctx: ParserRuleContext,
         sourceFile: SourceFile
@@ -240,34 +290,6 @@ export class ModelBuilder {
         }
 
         return undefined;
-    }
-
-    private findMethodOrFunctionDeclaringSymbolInParent(
-        ctx: ParserRuleContext,
-        symbol: StSymbol,
-        id: Token,
-        sourceFile: SourceFile
-    ): StSymbol | undefined {
-            
-        const parent = this.getMethodOrFunctionDeclaringParent(ctx, sourceFile);
-
-        if (!parent || !parent.children)
-            return undefined;
-
-        const name = id.text;
-
-        // Short cut for functions
-        if (parent.kind === StSymbolKind.Function && parent.name === name)
-            return parent;
-
-        // Search for method declaration in this level
-        for (const child of parent.children) {
-            if (child.kind === StSymbolKind.Method && child.name === name)
-                return child;
-        }
-
-        // Try next level up (parent of parent)
-        return this.findMethodOrFunctionDeclaringSymbolInParent(ctx, symbol, id, sourceFile);
     }
 
     //#endregion

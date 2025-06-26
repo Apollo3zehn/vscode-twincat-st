@@ -1,23 +1,32 @@
 import { ParserRuleContext } from "antlr4ng";
-import { Uri, window } from "vscode";
+import { Range, Uri, window } from "vscode";
 
 export const logger = window.createOutputChannel('TwinCAT Structured Text');
+
+export const documentSelector = [
+    { language: "st", pattern: "**/*.st" }
+];
 
 export class SourceFile {
     constructor(
         public readonly uri: Uri,
         public readonly uriAsString: string,
-        public readonly symbols: Map<ParserRuleContext, StSymbol>) {
+        public readonly symbolMap: Map<ParserRuleContext, StSymbol>) {
         //
     }
 }
 
 export class StSymbol {
+
     constructor(
+        public readonly documentUri: Uri,
         public readonly name: string | undefined,
-        public readonly type: StSymbolKind,
+        public readonly kind: StSymbolKind,
         public readonly context: ParserRuleContext,
         public readonly parent: StSymbol | undefined,
+        public readonly range: Range,
+        public readonly selectionRange: Range | undefined,
+        public readonly declaringSymbol: StSymbol | undefined,
         public children: StSymbol[] | undefined) {
         //
     }
@@ -31,5 +40,8 @@ export enum StSymbolKind {
     Function,
     Method,
     Property,
-    FunctionBlock
+    FunctionBlock,
+    Interface,
+    VariableUsage,
+    MethodOrFunctionCall
 }

@@ -1,14 +1,24 @@
-import * as vscode from 'vscode';
-import { StDocumentSymbolProvider } from './StDocumentSymbolProvider.js';
+import { StDocumentSymbolProvider } from './features/StDocumentSymbolProvider.js';
 import { buildModel } from './model.js';
+import { documentSelector } from './core.js';
+import { StDefinitionProvider } from './features/StDefinitionProvider.js';
+import { ExtensionContext, languages } from 'vscode';
 
-export async function activate(context: vscode.ExtensionContext) {
+export async function activate(context: ExtensionContext) {
 
     const model = await buildModel(context);
 
-	context.subscriptions.push(vscode.languages.registerDocumentSymbolProvider(
-        { language: "st", pattern: "**/*.st" }, new StDocumentSymbolProvider(model)
+    context.subscriptions.push(languages.registerDefinitionProvider(
+        documentSelector, new StDefinitionProvider(model)
     ));
+
+    context.subscriptions.push(languages.registerDocumentSymbolProvider(
+        documentSelector, new StDocumentSymbolProvider(model)
+    ));
+
+	// context.subscriptions.push(vscode.languages.registerFoldingRangeProvider(
+    //     documentSelector, new StFoldingRangeProvider(model)
+    // ));
 }
 
 export function deactivate() {}

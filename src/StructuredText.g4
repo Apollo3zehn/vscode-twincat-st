@@ -3,11 +3,11 @@ grammar StructuredText;
 // Program organization units
 program         : PROGRAM ID implementsClause? extendsClause? varDeclSection* statementSection END_PROGRAM ;
 function        : FUNCTION ID ':' type implementsClause? extendsClause? varDeclSection* statementSection END_FUNCTION ;
-functionBlock   : attribute? FUNCTION_BLOCK accessModifier? modifier* ID implementsClause? extendsClause? functionBlockMember* statementSection END_FUNCTION_BLOCK ;
+functionBlock   : attribute? FUNCTION_BLOCK accessModifier? modifier* ID implementsClause? extendsClause? member* statementSection END_FUNCTION_BLOCK ;
 property        : attribute? PROPERTY accessModifier? modifier* ID ':' type varDeclSection* propertyBody END_PROPERTY ;
 method          : attribute? METHOD accessModifier? modifier* ID (':' type)? varDeclSection* statementSection END_METHOD ;
-interface       : attribute? INTERFACE accessModifier? modifier* ID (extendsClause)? interfaceMember* END_INTERFACE ;
-classDecl       : attribute? CLASS accessModifier? modifier* ID (extendsClause)? (implementsClause)? classMember* END_CLASS ;
+interface       : attribute? INTERFACE accessModifier? modifier* ID (extendsClause)? member* END_INTERFACE ;
+classDecl       : attribute? CLASS accessModifier? modifier* ID (extendsClause)? (implementsClause)? member* END_CLASS ;
 structDecl      : STRUCT ID varDeclSection* END_STRUCT ;
 enumDecl        : ENUM ID enumMemberList END_ENUM ;
 namespaceDecl   : NAMESPACE ID namespaceMember* END_NAMESPACE ;
@@ -18,9 +18,7 @@ implementsClause : IMPLEMENTS ID (',' ID)* ;
 extendsClause    : EXTENDS ID ;
 
 // Members
-functionBlockMember : varDeclSection | method | property ;
-interfaceMember     : method | property | varDeclSection ;
-classMember         : varDeclSection | method | property ;
+member              : method | property | varDeclSection ;
 namespaceMember     : program | functionBlock | function | classDecl | structDecl | enumDecl | interface ;
 
 // Variable declarations

@@ -28,6 +28,13 @@
             ".st"
         ]
       }
+    ],
+    "grammars": [
+      {
+        "language": "st",
+        "scopeName": "source.st",
+        "path": "./grammars/st.tmLanguage.json"
+      }
     ]
   },
   "scripts": {

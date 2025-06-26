@@ -16,9 +16,7 @@ import { NamespaceDeclContext } from "./StructuredTextParser.js";
 import { TypeDefDeclContext } from "./StructuredTextParser.js";
 import { ImplementsClauseContext } from "./StructuredTextParser.js";
 import { ExtendsClauseContext } from "./StructuredTextParser.js";
-import { FunctionBlockMemberContext } from "./StructuredTextParser.js";
-import { InterfaceMemberContext } from "./StructuredTextParser.js";
-import { ClassMemberContext } from "./StructuredTextParser.js";
+import { MemberContext } from "./StructuredTextParser.js";
 import { NamespaceMemberContext } from "./StructuredTextParser.js";
 import { VarDeclSectionContext } from "./StructuredTextParser.js";
 import { VarSectionTypeContext } from "./StructuredTextParser.js";
@@ -145,23 +143,11 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      */
     visitExtendsClause?: (ctx: ExtendsClauseContext) => Result;
     /**
-     * Visit a parse tree produced by `StructuredTextParser.functionBlockMember`.
+     * Visit a parse tree produced by `StructuredTextParser.member`.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    visitFunctionBlockMember?: (ctx: FunctionBlockMemberContext) => Result;
-    /**
-     * Visit a parse tree produced by `StructuredTextParser.interfaceMember`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitInterfaceMember?: (ctx: InterfaceMemberContext) => Result;
-    /**
-     * Visit a parse tree produced by `StructuredTextParser.classMember`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitClassMember?: (ctx: ClassMemberContext) => Result;
+    visitMember?: (ctx: MemberContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.namespaceMember`.
      * @param ctx the parse tree

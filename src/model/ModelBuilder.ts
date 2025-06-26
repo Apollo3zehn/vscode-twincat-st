@@ -116,15 +116,12 @@ export class ModelBuilder {
         if (!symbol.id)
             return;
 
-        const parent = this.getVariablesDeclaringParent(ctx, sourceFile);
-
-        if (parent) {
-            symbol.declaringSymbol = this.findVariableDeclaringSymbolInParent(
-                parent,
-                symbol.id,
-                sourceFile
-            );
-        }
+        symbol.declaringSymbol = this.findVariableDeclaringSymbolInParent(
+            ctx,
+            symbol,
+            symbol.id,
+            sourceFile
+        );
     }
 
     private getVariablesDeclaringParent(
@@ -153,12 +150,15 @@ export class ModelBuilder {
     }
 
     private findVariableDeclaringSymbolInParent(
-        parent: StSymbol,
+        ctx: ParserRuleContext,
+        symbol: StSymbol,
         id: Token,
         sourceFile: SourceFile
     ): StSymbol | undefined {
-            
-        if (!parent.children)
+        
+        const parent = this.getVariablesDeclaringParent(ctx, sourceFile);
+
+        if (!parent || !parent.children)
             return undefined;
 
         const name = id.text;
@@ -184,13 +184,7 @@ export class ModelBuilder {
         }
 
         // Try next level up (parent of parent)
-        const grandParent = this.getVariablesDeclaringParent(parent.context, sourceFile);
-
-        if (grandParent)
-            return this.findVariableDeclaringSymbolInParent(grandParent, id, sourceFile);
-
-        // Not found: could be a global variable (not supported yet)
-        return undefined;
+        return this.findVariableDeclaringSymbolInParent(parent.context, symbol, id, sourceFile);
     }
 
     //#endregion
@@ -207,28 +201,22 @@ export class ModelBuilder {
             return;
 
         // Either this call is a for a normal method or function ...
-        const parent1 = this.getMethodOrFunctionDeclaringParent(ctx, sourceFile);
-
-        if (parent1) {
-            symbol.declaringSymbol = this.findMethodOrFunctionDeclaringSymbolInParent(
-                parent1,
-                symbol.id,
-                sourceFile
-            );
-        }
+        symbol.declaringSymbol = this.findMethodOrFunctionDeclaringSymbolInParent(
+            ctx,
+            symbol,
+            symbol.id,
+            sourceFile
+        );
 
         // ... or it is a function block variable that is being called
         if (!symbol.declaringSymbol) {
 
-            const parent2 = this.getVariablesDeclaringParent(ctx, sourceFile);
-
-            if (parent2) {
-                symbol.declaringSymbol = this.findVariableDeclaringSymbolInParent(
-                    parent2,
-                    symbol.id,
-                    sourceFile
-                );
-            }
+            symbol.declaringSymbol = this.findVariableDeclaringSymbolInParent(
+                ctx,
+                symbol,
+                symbol.id,
+                sourceFile
+            );
         }
     }
 
@@ -255,12 +243,15 @@ export class ModelBuilder {
     }
 
     private findMethodOrFunctionDeclaringSymbolInParent(
-        parent: StSymbol,
+        ctx: ParserRuleContext,
+        symbol: StSymbol,
         id: Token,
         sourceFile: SourceFile
     ): StSymbol | undefined {
             
-        if (!parent.children)
+        const parent = this.getMethodOrFunctionDeclaringParent(ctx, sourceFile);
+
+        if (!parent || !parent.children)
             return undefined;
 
         const name = id.text;
@@ -276,13 +267,7 @@ export class ModelBuilder {
         }
 
         // Try next level up (parent of parent)
-        const grandParent = this.getMethodOrFunctionDeclaringParent(parent.context, sourceFile);
-
-        if (grandParent)
-            return this.findMethodOrFunctionDeclaringSymbolInParent(grandParent, id, sourceFile);
-
-        // Not found: could be a global variable (not supported yet)
-        return undefined;
+        return this.findMethodOrFunctionDeclaringSymbolInParent(ctx, symbol, id, sourceFile);
     }
 
     //#endregion

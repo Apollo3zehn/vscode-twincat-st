@@ -107,6 +107,7 @@ expr
     | '(' expr ')'
     | NUMBER
     | BOOL
+    | TIME_LITERAL
     | STRING_LITERAL
     | ID (arrayIndex)?
     ;
@@ -212,6 +213,13 @@ MOD                 : 'MOD' ;
 BOOL                : 'TRUE' | 'FALSE' ;
 ID                  : [a-zA-Z_][a-zA-Z0-9_]* ;
 NUMBER              : [0-9]+ ('.' [0-9]+)? ;
+
+// Time literal support (e.g., T#10S, T#2.5MS, etc.)
+TIME_LITERAL        : 'T#' [0-9]+ ('.' [0-9]+)? ( 'MS' | 'S' | 'M' | 'H' | 'D' ) ;
+
+// =======================
+// String literal support
+// =======================
 STRING_LITERAL      : '"' (~["\r\n])* '"' ;
 
 // =======================

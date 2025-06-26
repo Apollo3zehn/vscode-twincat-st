@@ -1,7 +1,7 @@
 import { ParserRuleContext, Token } from "antlr4ng";
 import { Range, Uri } from "vscode";
 import { SourceFile, StSymbol, StSymbolKind } from "../core.js";
-import { AssignmentContext, CallStatementContext, ExprContext, FunctionBlockContext, FunctionContext, InterfaceContext, MemberContext, MethodContext, ProgramContext, PropertyContext, VarDeclContext, VarDeclSectionContext } from "../generated/StructuredTextParser.js";
+import { ArgumentContext, AssignmentContext, CallStatementContext, ExprContext, FunctionBlockContext, FunctionContext, InterfaceContext, MemberContext, MethodContext, ProgramContext, PropertyContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 
 export class StVisitor extends StructuredTextVisitor<void> {
@@ -52,7 +52,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
     };
 
     public override visitVarDeclSection = (ctx: VarDeclSectionContext): void => {
-        this.getOrCreateVarDeclSection(ctx)
+        this.getOrCreateVarDeclSection(ctx, (ctx as VarDeclSectionContext).varSectionType().start!)
         this.visitChildren(ctx);
     };
 
@@ -77,8 +77,15 @@ export class StVisitor extends StructuredTextVisitor<void> {
     };
 
     public override visitCallStatement? = (ctx: CallStatementContext): void => {
+
         const token = ctx.ID().symbol;
+
         this.getOrCreateMethodOrFunctionCall(ctx, token);
+        this.visitChildren(ctx);
+    }
+
+    public override visitArgument? = (ctx: ArgumentContext): void => {
+        this.getOrCreateArgument(ctx);
     }
 
     //#endregion
@@ -157,13 +164,19 @@ export class StVisitor extends StructuredTextVisitor<void> {
         );
     }
 
-    private getOrCreateVarDeclSection(ctx: VarDeclSectionContext): StSymbol | undefined {
+    private getOrCreateArgument(ctx: ArgumentContext) {
+        const expressionId = ctx.expr().ID();
+        const idToken = expressionId?.symbol;
 
-        const typeStartToken = ctx.varSectionType().start!;
+        if (idToken)
+            this.getOrCreateVariableUsage(ctx, idToken);
+    }
+
+    private getOrCreateVarDeclSection(ctx: ParserRuleContext, nameToken: Token): StSymbol | undefined {
 
         return this.getOrCreate(
             ctx,
-            typeStartToken,
+            nameToken,
             StSymbolKind.VariableDeclarationSection,
             () => {
 
@@ -216,7 +229,29 @@ export class StVisitor extends StructuredTextVisitor<void> {
             ctx,
             idToken,
             StSymbolKind.VariableDeclaration,
-            () => this.getOrCreateVarDeclSection(ctx.parent as VarDeclSectionContext)
+            () => {
+
+                const parentCtx = ctx.parent!;
+
+                switch (parentCtx.constructor) {
+
+                    case VarDeclSectionContext:
+                        return this.getOrCreateVarDeclSection(
+                            parentCtx,
+                            (parentCtx as VarDeclSectionContext).varSectionType().start!
+                        );
+                    
+                    case VarGlobalSectionContext:
+                        return this.getOrCreateVarDeclSection(
+                            parentCtx,
+                            (parentCtx as VarGlobalSectionContext).VAR_GLOBAL().symbol
+                        );
+                   
+                    default:
+                        return undefined;
+                    
+                }
+            }
         );
     }
     
@@ -230,7 +265,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
             ctx,
             idToken,
             StSymbolKind.MethodOrFunctionCall,
-            () => this.getOrCreateImplementationContainer(ctx)
+            () => this.getOrCreateNearestParent(ctx)
         );
     }
 
@@ -240,11 +275,11 @@ export class StVisitor extends StructuredTextVisitor<void> {
             ctx,
             idToken,
             StSymbolKind.VariableUsage,
-            () => this.getOrCreateImplementationContainer(ctx)
+            () => this.getOrCreateNearestParent(ctx)
         );
     }
 
-    private getOrCreateImplementationContainer(ctx: ParserRuleContext): StSymbol | undefined {
+    private getOrCreateNearestParent(ctx: ParserRuleContext): StSymbol | undefined {
 
         let current = ctx.parent ?? undefined;
 
@@ -255,7 +290,9 @@ export class StVisitor extends StructuredTextVisitor<void> {
                 current instanceof FunctionBlockContext ||
                 current instanceof FunctionContext ||
                 current instanceof MethodContext ||
-                current instanceof PropertyContext
+                current instanceof PropertyContext ||
+                current instanceof ArgumentContext ||
+                current instanceof CallStatementContext
             ) {
                 switch (current.constructor) {
 
@@ -273,6 +310,11 @@ export class StVisitor extends StructuredTextVisitor<void> {
                    
                     case PropertyContext:
                         return this.getOrCreateProperty(current as PropertyContext);
+                    
+                    case CallStatementContext:
+                        return this.getOrCreateMethodOrFunctionCall(
+                            current,
+                            (current as CallStatementContext).ID().symbol);
                         
                     default:
                         return undefined;

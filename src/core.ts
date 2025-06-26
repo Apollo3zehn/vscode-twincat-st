@@ -1,4 +1,4 @@
-import { ParserRuleContext } from "antlr4ng";
+import { ParserRuleContext, Token } from "antlr4ng";
 import { Range, Uri, window } from "vscode";
 
 export const logger = window.createOutputChannel('TwinCAT Structured Text');
@@ -20,13 +20,14 @@ export class StSymbol {
 
     constructor(
         public readonly documentUri: Uri,
+        public readonly id: Token | undefined,
         public readonly name: string | undefined,
         public readonly kind: StSymbolKind,
         public readonly context: ParserRuleContext,
         public readonly parent: StSymbol | undefined,
         public readonly range: Range,
         public readonly selectionRange: Range | undefined,
-        public readonly declaringSymbol: StSymbol | undefined,
+        public declaringSymbol: StSymbol | undefined,
         public children: StSymbol[] | undefined) {
         //
     }

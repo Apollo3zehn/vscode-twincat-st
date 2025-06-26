@@ -1,0 +1,289 @@
+import { CharStream, CommonTokenStream, ParserRuleContext, Token } from "antlr4ng";
+import { TextDocument, Uri, workspace } from "vscode";
+import { logger, SourceFile, StSymbol, StSymbolKind } from "../core.js";
+import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
+import { FunctionBlockContext, FunctionContext, MethodContext, ProgramContext, PropertyContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
+import { StVisitor } from "./StVisitor.js";
+
+export class ModelBuilder {
+
+    private _model = new Map<string, SourceFile>();
+
+    public async build(): Promise<Map<string, SourceFile>> {
+    
+        logger.appendLine(`Build model`);
+
+        // Build model
+        const fileUris = await workspace.findFiles(
+            "**/*.st"
+        );
+
+        const tasks: Promise<void>[] = [];
+
+        for (const fileUri of fileUris) {
+
+            logger.appendLine(`Processing ${fileUri.toString()}`);
+
+            const task = async () => {
+                const document = await workspace.openTextDocument(fileUri);
+                this.analyzeStFile(document);
+            };
+            
+            tasks.push(task());
+        }
+
+        await Promise.all(tasks);
+
+        // Find declaring symbols
+        for (const sourceFile of this._model.values()) {
+            
+            for (const [ctx, symbol] of sourceFile.symbolMap) {
+                
+                if (symbol.declaringSymbol)
+                    continue;
+
+                switch (symbol.kind) {
+
+                    case StSymbolKind.VariableUsage:
+                        this.findVariableDeclaringSymbol(ctx, symbol, sourceFile);
+                        break;
+                    
+                    case StSymbolKind.MethodOrFunctionCall:
+                        this.findMethodOrFunctionDeclaringSymbol(ctx, symbol, sourceFile);
+                        break;
+                }
+            }
+        }
+
+        return this._model;
+    }
+
+    private analyzeStFile(document: TextDocument) {
+    
+        const uri = document.uri;
+
+        if (uri.scheme !== "file")
+            return;
+
+        const sourceFile = this.getOrCreateSourceFile(uri);
+
+        if (document.lineCount === 0)
+            return;
+
+        // Build model
+        const inputStream = CharStream.fromString(document.getText());
+        const lexer = new StructuredTextLexer(inputStream);
+        const tokenStream = new CommonTokenStream(lexer);
+        const parser = new StructuredTextParser(tokenStream);
+        const tree = parser.compilationUnit();
+        const visitor = new StVisitor(sourceFile, uri);
+
+        tree.accept(visitor);
+    }
+
+    private getOrCreateSourceFile(fileUri: Uri): SourceFile {
+        
+        let sourceFile: SourceFile;
+        let fileUriAsString = fileUri.toString();
+
+        if (this._model.has(fileUriAsString)) {
+            sourceFile = this._model.get(fileUriAsString)!;
+        }
+
+        else {
+            logger.appendLine(`Create source file ${fileUri}`);
+
+            sourceFile = new SourceFile(
+                fileUri,
+                fileUriAsString,
+                new Map<ParserRuleContext, StSymbol>()
+            );
+            
+            this._model.set(fileUriAsString, sourceFile);
+        }
+
+        return sourceFile;
+    }
+
+    //#region Variables
+
+    private findVariableDeclaringSymbol(
+        ctx: ParserRuleContext,
+        symbol: StSymbol,
+        sourceFile: SourceFile
+    ) {
+
+        if (!symbol.id)
+            return;
+
+        const parent = this.getVariablesDeclaringParent(ctx, sourceFile);
+
+        if (parent) {
+            symbol.declaringSymbol = this.findVariableDeclaringSymbolInParent(
+                parent,
+                symbol.id,
+                sourceFile
+            );
+        }
+    }
+
+    private getVariablesDeclaringParent(
+        ctx: ParserRuleContext,
+        sourceFile: SourceFile
+    ): StSymbol | undefined {
+
+        let current = ctx.parent ?? undefined;
+
+        while (current) {
+
+            if (
+                current instanceof ProgramContext ||
+                current instanceof FunctionBlockContext ||
+                current instanceof FunctionContext ||
+                current instanceof PropertyContext ||
+                current instanceof MethodContext
+            ) {
+                return sourceFile.symbolMap.get(current);
+            }
+
+            current = current.parent ?? undefined;
+        }
+
+        return undefined;
+    }
+
+    private findVariableDeclaringSymbolInParent(
+        parent: StSymbol,
+        id: Token,
+        sourceFile: SourceFile
+    ): StSymbol | undefined {
+            
+        if (!parent.children)
+            return undefined;
+
+        const name = id.text;
+
+        // Short cut for properties
+        if (parent.kind === StSymbolKind.Property && parent.name === name)
+            return parent;
+
+        // Search for variable declaration in this level
+        for (const child of parent.children) {
+
+            if (child.kind === StSymbolKind.VariableDeclarationSection && child.children) {
+                
+                for (const varDecl of child.children) {
+                    if (
+                        varDecl.kind === StSymbolKind.VariableDeclaration &&
+                        varDecl.name === name
+                    ) {
+                        return varDecl;
+                    }
+                }
+            }
+        }
+
+        // Try next level up (parent of parent)
+        const grandParent = this.getVariablesDeclaringParent(parent.context, sourceFile);
+
+        if (grandParent)
+            return this.findVariableDeclaringSymbolInParent(grandParent, id, sourceFile);
+
+        // Not found: could be a global variable (not supported yet)
+        return undefined;
+    }
+
+    //#endregion
+
+    //#region Method or function calls
+
+    private findMethodOrFunctionDeclaringSymbol(
+        ctx: ParserRuleContext,
+        symbol: StSymbol,
+        sourceFile: SourceFile
+    ) {
+
+        if (!symbol.id)
+            return;
+
+        // Either this call is a for a normal method or function ...
+        const parent1 = this.getMethodOrFunctionDeclaringParent(ctx, sourceFile);
+
+        if (parent1) {
+            symbol.declaringSymbol = this.findMethodOrFunctionDeclaringSymbolInParent(
+                parent1,
+                symbol.id,
+                sourceFile
+            );
+        }
+
+        // ... or it is a function block variable that is being called
+        if (!symbol.declaringSymbol) {
+
+            const parent2 = this.getVariablesDeclaringParent(ctx, sourceFile);
+
+            if (parent2) {
+                symbol.declaringSymbol = this.findVariableDeclaringSymbolInParent(
+                    parent2,
+                    symbol.id,
+                    sourceFile
+                );
+            }
+        }
+    }
+
+    private getMethodOrFunctionDeclaringParent(
+        ctx: ParserRuleContext,
+        sourceFile: SourceFile
+    ): StSymbol | undefined {
+
+        let current = ctx.parent ?? undefined;
+
+        while (current) {
+
+            if (
+                current instanceof FunctionBlockContext ||
+                current instanceof FunctionContext
+            ) {
+                return sourceFile.symbolMap.get(current);
+            }
+
+            current = current.parent ?? undefined;
+        }
+
+        return undefined;
+    }
+
+    private findMethodOrFunctionDeclaringSymbolInParent(
+        parent: StSymbol,
+        id: Token,
+        sourceFile: SourceFile
+    ): StSymbol | undefined {
+            
+        if (!parent.children)
+            return undefined;
+
+        const name = id.text;
+
+        // Short cut for functions
+        if (parent.kind === StSymbolKind.Function && parent.name === name)
+            return parent;
+
+        // Search for method declaration in this level
+        for (const child of parent.children) {
+            if (child.kind === StSymbolKind.Method && child.name === name)
+                return child;
+        }
+
+        // Try next level up (parent of parent)
+        const grandParent = this.getMethodOrFunctionDeclaringParent(parent.context, sourceFile);
+
+        if (grandParent)
+            return this.findMethodOrFunctionDeclaringSymbolInParent(grandParent, id, sourceFile);
+
+        // Not found: could be a global variable (not supported yet)
+        return undefined;
+    }
+
+    //#endregion
+}

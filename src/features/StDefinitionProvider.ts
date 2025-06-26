@@ -9,7 +9,7 @@ export class StDefinitionProvider implements DefinitionProvider {
         this._model = model;
     }
 
-    provideDefinition(
+    public provideDefinition(
         document: TextDocument,
         position: Position,
         token: CancellationToken
@@ -47,7 +47,7 @@ export class StDefinitionProvider implements DefinitionProvider {
         return;
     }
 
-    findChildOrSelf(symbol: StSymbol, position: Position): StSymbol | undefined {
+    private findChildOrSelf(symbol: StSymbol, position: Position): StSymbol | undefined {
 
         const start = symbol.range.start;
         const end = symbol.range.end;

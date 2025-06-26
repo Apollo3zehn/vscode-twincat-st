@@ -1,12 +1,13 @@
 import { StDocumentSymbolProvider } from './features/StDocumentSymbolProvider.js';
-import { buildModel } from './model.js';
 import { documentSelector } from './core.js';
 import { StDefinitionProvider } from './features/StDefinitionProvider.js';
 import { ExtensionContext, languages } from 'vscode';
+import { ModelBuilder } from './model/ModelBuilder.js';
 
 export async function activate(context: ExtensionContext) {
 
-    const model = await buildModel(context);
+    const modelBuilder = new ModelBuilder();
+    const model = await modelBuilder.build();
 
     context.subscriptions.push(languages.registerDefinitionProvider(
         documentSelector, new StDefinitionProvider(model)

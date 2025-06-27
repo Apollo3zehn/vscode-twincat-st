@@ -32,6 +32,9 @@ export class StSymbol {
         //
     }
 
+    public typeSymbol: StSymbol | undefined;
+    public baseTypeSymbol: StSymbol | undefined;
+    public interfaceSymbols: StSymbol[] | undefined;
     public declaringSymbol: StSymbol | undefined;
     public referencingSymbols: StSymbol[] | undefined;
     public variableKind: VariableKind | undefined;
@@ -40,8 +43,8 @@ export class StSymbol {
 
 export enum StSymbolKind {
     Unknown,
-    VariableDeclaration,
-    VariableDeclarationSection,
+    Variable,
+    VariableSection,
     Program,
     Function,
     Method,
@@ -49,7 +52,8 @@ export enum StSymbolKind {
     FunctionBlock,
     Interface,
     VariableUsage,
-    MethodOrFunctionCall
+    MethodOrFunctionCall,
+    TypeUsage
 }
 
 export enum VariableKind {

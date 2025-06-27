@@ -23,22 +23,16 @@ export class StTypeDefinitionProvider implements TypeDefinitionProvider {
             return;
 
         // Find the symbol
-        let foundSymbol: StSymbol | undefined;
-
-        for (const symbol of sourceFile.symbolMap.values()) {
-
-            foundSymbol = findSymbolAtPosition(symbol, position);
-
-            if (foundSymbol)
-                break;
-        }
+        const foundSymbol = Array.from(sourceFile.symbolMap.values())
+            .map(symbol => findSymbolAtPosition(symbol, position))
+            .find(s => s !== undefined);
 
         if (!foundSymbol)
             return;
 
         let typeDeclaringSymbol: StSymbol | undefined;
 
-        if (foundSymbol.kind === StSymbolKind.VariableDeclaration) {
+        if (foundSymbol.kind === StSymbolKind.Variable) {
             typeDeclaringSymbol = foundSymbol.declaringSymbol;
         }
 

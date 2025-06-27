@@ -1,9 +1,7 @@
 import { Position } from "vscode";
 import { StSymbol } from "./core.js";
+import { ParserRuleContext } from "antlr4ng";
 
-/**
- * Recursively finds the most specific StSymbol at the given position.
- */
 export function findSymbolAtPosition(symbol: StSymbol, position: Position): StSymbol | undefined {
 
     const start = symbol.range.start;
@@ -28,6 +26,29 @@ export function findSymbolAtPosition(symbol: StSymbol, position: Position): StSy
 
         return symbol;
     }
+
+    return undefined;
+}
+
+export function findContextAtPosition(ctx: ParserRuleContext, position: Position): ParserRuleContext | undefined {
+
+    const start = ctx.start;
+    const stop = ctx.stop ?? ctx.start;
+
+    if (!start || !stop) {
+        return undefined;
+    }
+
+    const startsBefore =
+        start.line - 1 < position.line ||
+        (start.line - 1 === position.line && start.column <= position.character);
+
+    const endsAfter =
+        stop.line - 1 > position.line ||
+        (stop.line - 1 === position.line && (stop.column + (stop.text?.length ?? 1)) >= position.character);
+
+    if (startsBefore && endsAfter)
+        return ctx;
 
     return undefined;
 }

@@ -1,5 +1,5 @@
 import { CancellationToken, Definition, DefinitionProvider, Location, Position, ProviderResult, TextDocument } from "vscode";
-import { SourceFile, StSymbol, StSymbolKind } from "../core.js";
+import { SourceFile, StSymbolKind } from "../core.js";
 import { findSymbolAtPosition } from "../utils.js";
 
 export class StDefinitionProvider implements DefinitionProvider {
@@ -23,20 +23,15 @@ export class StDefinitionProvider implements DefinitionProvider {
             return;
 
         // Find the symbol
-        let foundSymbol: StSymbol | undefined;
-
-        for (const symbol of sourceFile.symbolMap.values()) {
-
-            foundSymbol = findSymbolAtPosition(symbol, position);
-
-            if (foundSymbol)
-                break;
-        }
+        const foundSymbol = Array.from(sourceFile.symbolMap.values())
+            .map(symbol => findSymbolAtPosition(symbol, position))
+            .find(x => x !== undefined);
 
         if (foundSymbol?.declaringSymbol) {
     
             switch (foundSymbol.kind) {
-                case StSymbolKind.VariableDeclaration:
+                case StSymbolKind.TypeUsage:
+                case StSymbolKind.Variable:
                 case StSymbolKind.VariableUsage:
                 case StSymbolKind.MethodOrFunctionCall:
 

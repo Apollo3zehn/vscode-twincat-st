@@ -23,7 +23,7 @@ export class StDiagnosticsProvider {
         for (const symbol of sourceFile.symbolMap.values()) {
 
             if (
-                symbol.kind === StSymbolKind.VariableDeclaration &&
+                symbol.kind === StSymbolKind.Variable &&
                 (
                     symbol.name!.toLowerCase() === "bInitRetains" ||
                     symbol.name!.toLowerCase() === "bInCopyCode"
@@ -34,7 +34,7 @@ export class StDiagnosticsProvider {
 
             if (
                 (
-                    symbol.kind === StSymbolKind.VariableDeclaration ||
+                    symbol.kind === StSymbolKind.Variable ||
                     symbol.kind === StSymbolKind.Method ||
                     symbol.kind === StSymbolKind.Function
                 ) &&
@@ -44,7 +44,7 @@ export class StDiagnosticsProvider {
                 )
             ) {
                 const diagnostic = new Diagnostic(
-                    symbol.range,
+                    symbol.selectionRange ?? symbol.range,
                     `Variable '${symbol.name!}' is never used.`,
                     DiagnosticSeverity.Hint
                 );

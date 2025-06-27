@@ -60,10 +60,10 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
             case StSymbolKind.Property:
                 symbolKind = SymbolKind.Property; break;
             
-            case StSymbolKind.VariableDeclaration:
+            case StSymbolKind.Variable:
                 symbolKind = SymbolKind.Variable; break;
             
-            case StSymbolKind.VariableDeclarationSection:
+            case StSymbolKind.VariableSection:
                 symbolKind = SymbolKind.Variable; break;
             
             default:

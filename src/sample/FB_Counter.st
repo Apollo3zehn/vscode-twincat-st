@@ -42,7 +42,7 @@ FUNCTION_BLOCK FB_Counter IMPLEMENTS I_Counter, I_Reset EXTENDS FB_CounterBase
         _value := _value + 1;
     END_METHOD
 
-    IF enable THEN
+    IF enable OR FALSE THEN
         IncreaseByOne();
         count := count + 1;
     END_IF;

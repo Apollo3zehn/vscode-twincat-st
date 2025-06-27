@@ -2,7 +2,7 @@ import { CharStream, CommonTokenStream, ParserRuleContext, Token } from "antlr4n
 import { TextDocument, Uri, workspace } from "vscode";
 import { logger, SourceFile, StSymbol, StSymbolKind } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
-import { FunctionBlockContext, FunctionContext, MethodContext, ProgramContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
+import { ExtendsClauseContext, FunctionBlockContext, FunctionContext, MethodContext, ProgramContext, PropertyContext, StructuredTextParser, TypeContext, VarDeclContext } from "../generated/StructuredTextParser.js";
 import { StVisitor } from "./StVisitor.js";
 
 export class ModelBuilder {
@@ -34,7 +34,7 @@ export class ModelBuilder {
 
         await Promise.all(tasks);
 
-        // Find declaring symbols
+        // Find interconnections
         for (const sourceFile of this._model.values()) {
             
             for (const [ctx, symbol] of sourceFile.symbolMap) {
@@ -44,8 +44,19 @@ export class ModelBuilder {
 
                 switch (symbol.kind) {
 
-                    case StSymbolKind.VariableDeclaration:
-                        this.findVariableTypeDeclaringSymbol(ctx as VarDeclContext, symbol);
+                    case StSymbolKind.TypeUsage:
+                        
+                        if ((ctx as TypeContext).builtinType())
+                            continue;
+                        
+                        this.findTypeDeclaringSymbol(symbol);
+
+                        break;
+                    
+                    case StSymbolKind.Function:
+                    case StSymbolKind.Method:
+                    case StSymbolKind.Variable:
+                        this.findTypeUsageSymbol(symbol);
                         break;
 
                     case StSymbolKind.VariableUsage:
@@ -111,43 +122,45 @@ export class ModelBuilder {
         return sourceFile;
     }
 
-    //#region Variable types
+    //#region Type
 
-    private findVariableTypeDeclaringSymbol(
-        ctx: VarDeclContext,
-        symbol: StSymbol
-    ) {
-        const typeCtx = ctx.type();
-
-        if (typeCtx.builtinType())
-            return;
-
-        const idToken = typeCtx.ID()?.symbol;
-
-        if (!idToken)
-            return;
-
-        const typeName = idToken.text!;
+    private findTypeDeclaringSymbol(symbol: StSymbol) {
 
         for (const sourceFile of this._model.values()) {
 
             for (const typeDeclaration of sourceFile.typeDeclarationsMap.values()) {
-                if ((
+
+                if (
+                    (
                         typeDeclaration.kind === StSymbolKind.FunctionBlock ||
-                        typeDeclaration.kind === StSymbolKind.Function ||
-                        typeDeclaration.kind === StSymbolKind.Interface ||
-                        typeDeclaration.kind === StSymbolKind.Program
+                        typeDeclaration.kind === StSymbolKind.Interface
                     ) &&
-                    typeDeclaration.name === typeName
+                    typeDeclaration.name === symbol.name
                 ) {
                     symbol.declaringSymbol = typeDeclaration;
+
+                    if (!typeDeclaration.referencingSymbols)
+                        typeDeclaration.referencingSymbols = [];
+
+                    typeDeclaration.referencingSymbols.push(symbol);
+
                     return;
                 }
             }
         }
     }
+    
+    private findTypeUsageSymbol(symbol: StSymbol) {
+        
+        if (!symbol.children)
+            return;
 
-    //#endregion
+        const typeSymbol = symbol.children
+            .find(child => child.kind === StSymbolKind.TypeUsage);
+
+        if (typeSymbol)
+            symbol.typeSymbol = typeSymbol;
+    }
 
     //#region Variable usages
 
@@ -168,7 +181,7 @@ export class ModelBuilder {
         );
 
         if (declaringSymbol)
-            this.ConnectSymbols(symbol, declaringSymbol);
+            this.ConnectDeclaringSymbols(symbol, declaringSymbol);
 
         // Try to find the variable declaration in global variable blocks
         if (!declaringSymbol) {
@@ -183,7 +196,7 @@ export class ModelBuilder {
                     for (const varDeclSymbol of varGlobalSection.children) {
                         
                         if (varDeclSymbol.name === symbol.name) {
-                            this.ConnectSymbols(symbol, varDeclSymbol);
+                            this.ConnectDeclaringSymbols(symbol, varDeclSymbol);
                             return;
                         }
                     }
@@ -213,11 +226,11 @@ export class ModelBuilder {
         // Search for variable declaration in this level
         for (const child of parent.children) {
 
-            if (child.kind === StSymbolKind.VariableDeclarationSection && child.children) {
+            if (child.kind === StSymbolKind.VariableSection && child.children) {
                 
                 for (const varDecl of child.children) {
                     if (
-                        varDecl.kind === StSymbolKind.VariableDeclaration &&
+                        varDecl.kind === StSymbolKind.Variable &&
                         varDecl.name === name
                     ) {
                         return varDecl;
@@ -291,7 +304,7 @@ export class ModelBuilder {
 
         //
         if (declaringSymbol)
-            this.ConnectSymbols(symbol, declaringSymbol);
+            this.ConnectDeclaringSymbols(symbol, declaringSymbol);
     }
 
     private findMethodOrFunctionDeclaringSymbolInParent(
@@ -348,7 +361,7 @@ export class ModelBuilder {
 
     //#region Utils
 
-    private ConnectSymbols(symbol: StSymbol, declaringSymbol: StSymbol) {
+    private ConnectDeclaringSymbols(symbol: StSymbol, declaringSymbol: StSymbol) {
 
         symbol.declaringSymbol = declaringSymbol;
 

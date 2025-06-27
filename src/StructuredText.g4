@@ -3,13 +3,12 @@ grammar StructuredText;
 // =======================
 // Program organization units
 // =======================
-program             : PROGRAM ID implementsClause? extendsClause? varDeclSection* statementSection END_PROGRAM ;
+program             : PROGRAM ID varDeclSection* statementSection END_PROGRAM ;
 function            : attribute? FUNCTION ID ':' type implementsClause? extendsClause? varDeclSection* statementSection END_FUNCTION ;
-functionBlock       : attribute? FUNCTION_BLOCK accessModifier? modifier* ID implementsClause? extendsClause? member* statementSection END_FUNCTION_BLOCK ;
+functionBlock       : attribute? FUNCTION_BLOCK modifier* ID implementsClause? extendsClause? member* statementSection END_FUNCTION_BLOCK ;
 property            : attribute? PROPERTY accessModifier? modifier* ID ':' type varDeclSection* propertyBody END_PROPERTY ;
 method              : attribute? METHOD accessModifier? modifier* ID (':' type)? varDeclSection* statementSection END_METHOD ;
-interface           : attribute? INTERFACE accessModifier? modifier* ID (extendsClause)? member* END_INTERFACE ;
-classDecl           : attribute? CLASS accessModifier? modifier* ID (extendsClause)? (implementsClause)? member* END_CLASS ;
+interface           : attribute? INTERFACE ID extendsClause? member* END_INTERFACE ;
 structDecl          : attribute? STRUCT ID varDeclSection* END_STRUCT ;
 enumDecl            : attribute? ENUM ID enumMemberList END_ENUM ;
 namespaceDecl       : attribute? NAMESPACE ID namespaceMember* END_NAMESPACE ;
@@ -19,21 +18,21 @@ varGlobalSection    : attribute? VAR_GLOBAL modifier* varDecl+ END_VAR ;
 // =======================
 // Implements and extends clauses
 // =======================
-implementsClause    : IMPLEMENTS ID (',' ID)* ;
-extendsClause       : EXTENDS ID ;
+implementsClause    : IMPLEMENTS type (',' type)* ;
+extendsClause       : EXTENDS type (',' type)* ;
 
 // =======================
 // Members
 // =======================
 member              : method | property | varDeclSection ;
-namespaceMember     : program | functionBlock | function | classDecl | structDecl | enumDecl | interface ;
+namespaceMember     : program | functionBlock | function | structDecl | enumDecl | interface ;
 
 // =======================
 // Variable declarations
 // =======================
 varDeclSection      : varSectionType modifier* varDecl+ END_VAR ;
-varSectionType      : VAR | VAR_INPUT | VAR_OUTPUT | VAR_IN_OUT | VAR_TEMP | VAR_EXTERNAL | VAR_INST ;
-varDecl             : attribute? accessModifier? modifier* ID ':' (REFERENCE_TO)? arraySpec? type (':=' exprOrArrayInit)? ';' ;
+varSectionType      : VAR | VAR_INPUT | VAR_OUTPUT | VAR_IN_OUT | VAR_TEMP | VAR_EXTERNAL | VAR_INST | VAR_STAT ;
+varDecl             : attribute? ID ':' (REFERENCE_TO)? arraySpec? type (':=' exprOrArrayInit)? ';' ;
 arraySpec           : ARRAY '[' NUMBER '..' NUMBER ']' OF ;
 exprOrArrayInit     : expr | arrayInit ;
 arrayInit           : '[' expr (',' expr)* ']' ;
@@ -136,7 +135,6 @@ compilationUnit
     | functionBlock
     | function
     | interface
-    | classDecl
     | structDecl
     | enumDecl
     | namespaceDecl
@@ -170,6 +168,7 @@ VAR_TEMP            : 'VAR_TEMP' ;
 VAR_EXTERNAL        : 'VAR_EXTERNAL' ;
 VAR_GLOBAL          : 'VAR_GLOBAL' ;
 VAR_INST            : 'VAR_INST' ;
+VAR_STAT            : 'VAR_STAT' ;
 END_VAR             : 'END_VAR' ;
 IF                  : 'IF' ;
 THEN                : 'THEN' ;
@@ -211,9 +210,6 @@ END_NAMESPACE       : 'END_NAMESPACE' ;
 TYPEDEF             : 'TYPEDEF' ;
 ABSTRACT            : 'ABSTRACT' ;
 FINAL               : 'FINAL' ;
-SEALED              : 'SEALED' ;
-OVERRIDE            : 'OVERRIDE' ;
-STATIC              : 'STATIC' ;
 CONSTANT            : 'CONSTANT' ;
 READONLY            : 'READONLY' ;
 PUBLIC              : 'PUBLIC' ;
@@ -248,8 +244,8 @@ COMMENT             : '//' ~[\r\n]* -> skip ;
 // Property body
 // =======================
 propertyBody        : (getter | setter | getter setter | setter getter) ;
-getter              : GET statementSection END_GET ;
-setter              : SET statementSection END_SET ;
+getter              : GET accessModifier? statementSection END_GET ;
+setter              : SET accessModifier? statementSection END_SET ;
 
 // =======================
 // Attribute support
@@ -262,7 +258,7 @@ attributeArg        : ID | NUMBER | STRING_LITERAL ;
 // Access modifiers and modifiers
 // =======================
 accessModifier      : PUBLIC | PRIVATE | PROTECTED | INTERNAL ;
-modifier            : ABSTRACT | FINAL | SEALED | OVERRIDE | STATIC | CONSTANT | READONLY ;
+modifier            : ABSTRACT | FINAL | CONSTANT ;
 
 // =======================
 // Enum member list

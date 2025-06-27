@@ -1,7 +1,7 @@
 import { ParserRuleContext, Token } from "antlr4ng";
 import { Range, Uri } from "vscode";
 import { SourceFile, StSymbol, StSymbolKind, VariableKind } from "../core.js";
-import { ArgumentContext, AssignmentContext, CallStatementContext, ExprContext, FunctionBlockContext, FunctionContext, InterfaceContext, MemberContext, MethodContext, ProgramContext, PropertyContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { ArgumentContext, AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, InterfaceContext, MemberContext, MethodContext, ProgramContext, PropertyContext, TypeContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 
 export class StVisitor extends StructuredTextVisitor<void> {
@@ -57,11 +57,12 @@ export class StVisitor extends StructuredTextVisitor<void> {
     };
 
     public override visitVarDecl = (ctx: VarDeclContext): void => {
-        this.getOrCreateVarDecl(ctx)
+        this.getOrCreateVarDecl(ctx);
+        this.visitChildren(ctx);
     };
 
     public override visitAssignment = (ctx: AssignmentContext): void => {
-        this.processAssignment(ctx)
+        this.processAssignment(ctx);
     };
 
     public override visitExpr = (ctx: ExprContext): void => {
@@ -95,6 +96,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
     public override visitArgument? = (ctx: ArgumentContext): void => {
         this.getOrCreateArgument(ctx);
+    }
+
+    public override visitType? = (ctx: TypeContext): void | undefined => {
+        this.getOrCreateType(ctx)
     }
 
     //#endregion
@@ -202,7 +207,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         return this.getOrCreate(
             ctx,
             nameToken,
-            StSymbolKind.VariableDeclarationSection,
+            StSymbolKind.VariableSection,
             () => {
 
                 const parentCtx = ctx.parent!;
@@ -253,7 +258,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const symbol = this.getOrCreate(
             ctx,
             idToken,
-            StSymbolKind.VariableDeclaration,
+            StSymbolKind.Variable,
             () => {
 
                 const parentCtx = ctx.parent!;
@@ -409,6 +414,67 @@ export class StVisitor extends StructuredTextVisitor<void> {
         }
 
         return undefined;
+    }
+
+    private getOrCreateType(ctx: TypeContext): StSymbol {
+
+        const builtinTypeNode = ctx.builtinType();
+        let idToken: Token | undefined;
+
+        if (builtinTypeNode) {
+            const text = builtinTypeNode.getText();
+            const startToken = builtinTypeNode.start;
+
+            idToken = {
+                ...startToken,
+                text,
+            } as Token;
+        }
+        
+        else if (ctx.ID()) {
+            idToken = ctx.ID()!.symbol;
+        }
+
+        return this.getOrCreate(
+            ctx,
+            idToken,
+            StSymbolKind.TypeUsage,
+            () => {
+
+                let parentCtx = ctx.parent!;
+
+                switch (parentCtx.constructor) {
+                    case ImplementsClauseContext:
+                    case ExtendsClauseContext:
+                        parentCtx = parentCtx.parent!;
+                }
+
+                switch (parentCtx.constructor) {
+
+                    case InterfaceContext:
+                        return this.getOrCreateInterface(parentCtx as InterfaceContext);
+
+                    case FunctionBlockContext:
+                        return this.getOrCreateFunctionBlock(parentCtx as FunctionBlockContext);
+                                       
+                    case Function:
+                        return this.getOrCreateFunction(parentCtx as FunctionContext);
+                                        
+                    case MethodContext:
+                        return this.getOrCreateMethod(parentCtx as MethodContext);
+                   
+                    case PropertyContext:
+                        return this.getOrCreateProperty(parentCtx as PropertyContext);
+                    
+                    case VarDeclContext:
+                        return this.getOrCreateVarDecl(parentCtx as VarDeclContext);                      
+                        
+                    default:
+                        return undefined;
+                   
+                }
+            }
+        );
     }
 
     private getOrCreate(

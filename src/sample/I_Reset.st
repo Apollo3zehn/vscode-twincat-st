@@ -1,4 +1,4 @@
-INTERFACE I_Counter
+INTERFACE I_Reset
 
     METHOD Reset : BOOL
     END_METHOD

@@ -21,9 +21,11 @@ export class StReferencesCodeLensProvider implements CodeLensProvider {
         for (const symbol of sourceFile.symbolMap.values()) {
 
             if (
-                symbol.kind === StSymbolKind.VariableDeclaration ||
-                symbol.kind === StSymbolKind.Method ||
-                symbol.kind === StSymbolKind.Function
+                symbol.kind === StSymbolKind.FunctionBlock ||
+                symbol.kind === StSymbolKind.Interface ||
+                symbol.kind === StSymbolKind.Function ||
+                symbol.kind === StSymbolKind.Variable ||
+                symbol.kind === StSymbolKind.Method
             ) {
                 if (symbol.variableKind == VariableKind.Local)
                     continue;

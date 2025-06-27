@@ -1,10 +1,3 @@
-INTERFACE I_Counter
-
-    PROPERTY Value : INT
-        GET
-        END_GET
-        SET
-        END_SET
-    END_PROPERTY
+INTERFACE I_Counter EXTENDS I_CounterBase1, I_CounterBase2
 
 END_INTERFACE

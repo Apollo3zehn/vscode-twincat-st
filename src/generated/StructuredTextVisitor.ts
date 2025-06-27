@@ -9,7 +9,6 @@ import { FunctionBlockContext } from "./StructuredTextParser.js";
 import { PropertyContext } from "./StructuredTextParser.js";
 import { MethodContext } from "./StructuredTextParser.js";
 import { InterfaceContext } from "./StructuredTextParser.js";
-import { ClassDeclContext } from "./StructuredTextParser.js";
 import { StructDeclContext } from "./StructuredTextParser.js";
 import { EnumDeclContext } from "./StructuredTextParser.js";
 import { NamespaceDeclContext } from "./StructuredTextParser.js";
@@ -103,12 +102,6 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      * @return the visitor result
      */
     visitInterface?: (ctx: InterfaceContext) => Result;
-    /**
-     * Visit a parse tree produced by `StructuredTextParser.classDecl`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitClassDecl?: (ctx: ClassDeclContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.structDecl`.
      * @param ctx the parse tree

@@ -1,0 +1,13 @@
+{
+  "iconDefinitions": {
+    "st-file": {
+      "iconPath": "st.svg"
+    }
+  },
+  "fileExtensions": {
+    "st": "st-file"
+  },
+  "languageIds": {
+    "st": "st-file"
+  }
+}

@@ -1,5 +1,6 @@
 import { CancellationToken, Definition, DefinitionProvider, Location, Position, ProviderResult, TextDocument } from "vscode";
 import { SourceFile, StSymbol, StSymbolKind } from "../core.js";
+import { findSymbolAtPosition } from "../utils.js";
 
 export class StDefinitionProvider implements DefinitionProvider {
 
@@ -26,7 +27,7 @@ export class StDefinitionProvider implements DefinitionProvider {
 
         for (const symbol of sourceFile.symbolMap.values()) {
 
-            foundSymbol = this.findChildOrSelf(symbol, position);
+            foundSymbol = findSymbolAtPosition(symbol, position);
 
             if (foundSymbol)
                 break;
@@ -45,37 +46,5 @@ export class StDefinitionProvider implements DefinitionProvider {
         }
 
         return;
-    }
-
-    private findChildOrSelf(symbol: StSymbol, position: Position): StSymbol | undefined {
-
-        const start = symbol.range.start;
-        const end = symbol.range.end;
-
-        const startsBefore =
-            start.line < position.line ||
-            (start.line === position.line && start.character <= position.character);
-
-        const endsAfter =
-            end.line > position.line ||
-            (end.line === position.line && end.character >= position.character);
-
-        if (startsBefore && endsAfter) {
-
-            if (symbol.children) {
-
-                for (const child of symbol.children) {
-
-                    const found = this.findChildOrSelf(child, position);
-
-                    if (found)
-                        return found;
-                }
-            }
-
-            return symbol;
-        }
-
-        return undefined;
     }
 }

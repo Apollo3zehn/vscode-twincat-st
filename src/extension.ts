@@ -1,10 +1,11 @@
 import { StDocumentSymbolProvider } from './features/StDocumentSymbolProvider.js';
 import { documentSelector } from './core.js';
 import { StDefinitionProvider } from './features/StDefinitionProvider.js';
-import { ExtensionContext, languages, workspace } from 'vscode';
+import { commands, ExtensionContext, languages, workspace } from 'vscode';
 import { ModelBuilder } from './model/ModelBuilder.js';
-import { StReferencesCodeLensProvider } from './features/StReferencesCodeLensProvider.js';
+import { StReferencesCodeLensProvider as StReferenceCodeLensProvider } from './features/StReferenceCodeLensProvider.js';
 import { StDiagnosticsProvider } from './features/StDiagnosticsProvider.js';
+import { StReferenceProvider } from './features/StReferenceProvider.js';
 
 export async function activate(context: ExtensionContext) {
 
@@ -20,8 +21,23 @@ export async function activate(context: ExtensionContext) {
     ));
 
     context.subscriptions.push(languages.registerCodeLensProvider(
-        documentSelector, new StReferencesCodeLensProvider(model)
+        documentSelector, new StReferenceCodeLensProvider(model)
     ));
+
+    context.subscriptions.push(languages.registerReferenceProvider(
+        documentSelector, new StReferenceProvider(model))
+    );
+
+    context.subscriptions.push(
+        commands.registerCommand('twincat-st.showReferences', (uri, position, locations) => {
+            commands.executeCommand(
+                'editor.action.showReferences',
+                uri,
+                position,
+                locations
+            );
+        })
+    );
 
     const diagnosticsProvider = new StDiagnosticsProvider(model);
     workspace.onDidOpenTextDocument(doc => diagnosticsProvider.updateDiagnostics(doc));

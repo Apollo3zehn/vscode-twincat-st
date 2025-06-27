@@ -35,14 +35,7 @@ FUNCTION_BLOCK FB_Counter IMPLEMENTS I_Counter, I_Reset EXTENDS FB_CounterBase
     END_METHOD
 
     METHOD UnusedMethod : BOOL
-
-        VAR_INST
-            _resetCount : INT;
-        END_VAR
-
-        _value      := DEFAULT_INT;
-        _resetCount := _resetCount MOD 5 + 1;
-
+        _value := DEFAULT_INT;
     END_METHOD
 
     METHOD PRIVATE IncreaseByOne : BOOL

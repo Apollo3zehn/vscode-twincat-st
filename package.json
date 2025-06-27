@@ -35,6 +35,13 @@
         "scopeName": "source.st",
         "path": "./grammars/st.tmLanguage.json"
       }
+    ],
+    "iconThemes": [
+      {
+        "id": "twincat-st-icons",
+        "label": "TwinCAT Structured Text Icons",
+        "path": "./fileicons/st_icon_theme.json"
+      }
     ]
   },
   "scripts": {

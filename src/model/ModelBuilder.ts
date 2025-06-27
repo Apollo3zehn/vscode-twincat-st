@@ -236,7 +236,7 @@ export class ModelBuilder {
         );
 
         // ... or it is a function block variable that is being called
-        if (!symbol.declaringSymbol) {
+        if (!declaringSymbol) {
 
             declaringSymbol = this.findVariableDeclaringSymbolInParent(
                 ctx,

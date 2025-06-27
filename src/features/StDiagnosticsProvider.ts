@@ -1,0 +1,51 @@
+import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, TextDocument } from "vscode";
+import { SourceFile, StSymbolKind } from "../core.js";
+
+export class StDiagnosticsProvider {
+    private _diagnosticCollection: DiagnosticCollection;
+
+    constructor(
+        private model: Map<string, SourceFile>
+    ) {
+        this._diagnosticCollection = languages.createDiagnosticCollection("twincat-st");
+    }
+
+    public updateDiagnostics(document: TextDocument): void {
+
+        const diagnostics: Diagnostic[] = [];
+        const sourceFile = this.model.get(document.uri.toString());
+        
+        if (!sourceFile) {
+            this._diagnosticCollection.set(document.uri, []);
+            return;
+        }
+
+        for (const symbol of sourceFile.symbolMap.values()) {
+
+            // Report unused variable declarations
+            if (
+                (
+                    symbol.kind === StSymbolKind.VariableDeclaration ||
+                    symbol.kind === StSymbolKind.Method ||
+                    symbol.kind === StSymbolKind.Function
+                ) &&
+                (!symbol.referencingSymbols || symbol.referencingSymbols.length === 0)
+            ) {
+                const diagnostic = new Diagnostic(
+                    symbol.range,
+                    `Variable '${symbol.name!}' is never used.`,
+                    DiagnosticSeverity.Hint // Use Hint so it can be faded by editor.unnecessaryCode
+                );
+
+                diagnostic.tags = [DiagnosticTag.Unnecessary];
+                diagnostics.push(diagnostic);
+            }
+        }
+
+        this._diagnosticCollection.set(document.uri, diagnostics);
+    }
+
+    public dispose() {
+        this._diagnosticCollection.dispose();
+    }
+}

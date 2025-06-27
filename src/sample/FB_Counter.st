@@ -3,6 +3,7 @@ FUNCTION_BLOCK FB_Counter IMPLEMENTS I_Counter, I_Reset EXTENDS FB_CounterBase
     VAR_INPUT
         enable: BOOL;
         count:  REFERENCE TO BOOL;
+        unused: INT;
     END_VAR
 
     VAR_OUTPUT
@@ -23,6 +24,17 @@ FUNCTION_BLOCK FB_Counter IMPLEMENTS I_Counter, I_Reset EXTENDS FB_CounterBase
     END_PROPERTY
 
     METHOD Reset : BOOL
+
+        VAR_INST
+            _resetCount : INT;
+        END_VAR
+
+        _value      := DEFAULT_INT;
+        _resetCount := _resetCount MOD 5 + 1;
+
+    END_METHOD
+
+    METHOD UnusedMethod : BOOL
 
         VAR_INST
             _resetCount : INT;

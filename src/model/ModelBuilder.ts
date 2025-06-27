@@ -117,15 +117,18 @@ export class ModelBuilder {
         if (!symbol.id)
             return;
 
-        symbol.declaringSymbol = this.findVariableDeclaringSymbolInParent(
+        let declaringSymbol = this.findVariableDeclaringSymbolInParent(
             ctx,
             symbol,
             symbol.id,
             sourceFile
         );
 
+        if (declaringSymbol)
+            this.ConnectSymbols(symbol, declaringSymbol);
+
         // Try to find the variable declaration in global variable blocks
-        if (!symbol.declaringSymbol) {
+        if (!declaringSymbol) {
 
             for (const sourceFile of this._model.values()) {
                 
@@ -137,7 +140,7 @@ export class ModelBuilder {
                     for (const varDeclSymbol of varGlobalSection.children) {
                         
                         if (varDeclSymbol.name === symbol.name) {
-                            symbol.declaringSymbol = varDeclSymbol;
+                            this.ConnectSymbols(symbol, varDeclSymbol);
                             return;
                         }
                     }
@@ -222,8 +225,10 @@ export class ModelBuilder {
         if (!symbol.id)
             return;
 
+        let declaringSymbol: StSymbol | undefined;
+
         // Either this call is a for a normal method or function ...
-        symbol.declaringSymbol = this.findMethodOrFunctionDeclaringSymbolInParent(
+        declaringSymbol = this.findMethodOrFunctionDeclaringSymbolInParent(
             ctx,
             symbol,
             symbol.id,
@@ -233,13 +238,17 @@ export class ModelBuilder {
         // ... or it is a function block variable that is being called
         if (!symbol.declaringSymbol) {
 
-            symbol.declaringSymbol = this.findVariableDeclaringSymbolInParent(
+            declaringSymbol = this.findVariableDeclaringSymbolInParent(
                 ctx,
                 symbol,
                 symbol.id,
                 sourceFile
             );
         }
+
+        //
+        if (declaringSymbol)
+            this.ConnectSymbols(symbol, declaringSymbol);
     }
 
     private findMethodOrFunctionDeclaringSymbolInParent(
@@ -290,6 +299,20 @@ export class ModelBuilder {
         }
 
         return undefined;
+    }
+
+    //#endregion
+
+    //#region Utils
+
+    private ConnectSymbols(symbol: StSymbol, declaringSymbol: StSymbol) {
+
+        symbol.declaringSymbol = declaringSymbol;
+
+        if (!declaringSymbol.referencingSymbols)
+            declaringSymbol.referencingSymbols = [];
+
+        declaringSymbol.referencingSymbols.push(symbol);
     }
 
     //#endregion

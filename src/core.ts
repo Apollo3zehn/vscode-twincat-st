@@ -27,11 +27,14 @@ export class StSymbol {
         public readonly context: ParserRuleContext,
         public readonly parent: StSymbol | undefined,
         public readonly range: Range,
-        public readonly selectionRange: Range | undefined,
-        public declaringSymbol: StSymbol | undefined,
-        public children: StSymbol[] | undefined) {
+        public readonly selectionRange: Range | undefined) {
         //
     }
+
+    public declaringSymbol: StSymbol | undefined;
+    public referencingSymbols: StSymbol[] | undefined;
+    public variableKind: VariableKind | undefined;
+    public children: StSymbol[] | undefined
 }
 
 export enum StSymbolKind {
@@ -46,4 +49,12 @@ export enum StSymbolKind {
     Interface,
     VariableUsage,
     MethodOrFunctionCall
+}
+
+export enum VariableKind {
+    Local,
+    Global,
+    Input,
+    Output,
+    InOut
 }

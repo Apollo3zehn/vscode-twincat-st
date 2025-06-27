@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { SourceFile, StSymbolKind } from '../core.js';
+import { SourceFile, StSymbolKind, VariableKind } from '../core.js';
 
 export class StReferencesCodeLensProvider implements vscode.CodeLensProvider {
     private _model: Map<string, SourceFile>;
@@ -9,12 +9,14 @@ export class StReferencesCodeLensProvider implements vscode.CodeLensProvider {
     }
 
     provideCodeLenses(document: vscode.TextDocument): vscode.CodeLens[] {
+
         const sourceFile = this._model.get(document.uri.toString());
-        if (!sourceFile) return [];
+
+        if (!sourceFile)
+            return [];
 
         const lenses: vscode.CodeLens[] = [];
 
-        // Dummy implementation! More effient one is need by simply creating back references in declaring symbols
         for (const symbol of sourceFile.symbolMap.values()) {
 
             if (
@@ -22,18 +24,12 @@ export class StReferencesCodeLensProvider implements vscode.CodeLensProvider {
                 symbol.kind === StSymbolKind.Method ||
                 symbol.kind === StSymbolKind.Function
             ) {
-                let refCount = 0;
+                if (symbol.variableKind == VariableKind.Local)
+                    continue;
 
-                for (const sf of this._model.values()) {
-                    for (const usage of sf.symbolMap.values()) {
-                        if (
-                            (usage.kind === StSymbolKind.VariableUsage || usage.kind === StSymbolKind.MethodOrFunctionCall) &&
-                            usage.declaringSymbol === symbol
-                        ) {
-                            refCount++;
-                        }
-                    }
-                }
+                const refCount = symbol.referencingSymbols
+                    ? symbol.referencingSymbols.length
+                    : 0;
 
                 lenses.push(
                     new vscode.CodeLens(symbol.range, {

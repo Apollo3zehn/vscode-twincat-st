@@ -72,9 +72,18 @@ statement           : assignment
 // =======================
 // Assignments and calls
 // =======================
-assignment          : ID (arrayIndex)? ':=' expr ';' ;
+assignment
+    : assignTarget ':=' expr ';'
+    | assignTarget '=' expr ';'
+    ;
+
+assignTarget
+    : ID (arrayIndex)?
+    | memberQualifier '.' ID (arrayIndex)?
+    ;
+
 arrayIndex          : '[' expr ']' ;
-callStatement       : ID '(' argumentList? ')' (';' | ) ;
+callStatement       : (ID | memberQualifier '.' ID) '(' argumentList? ')' ';' ;
 argumentList        : argument (',' argument)* ;
 argument            : ID (':=' | '=>') expr | expr ;
 
@@ -99,19 +108,26 @@ continueStatement   : CONTINUE ';' ;
 // =======================
 // Expressions
 // =======================
+memberQualifier
+    : ID (arrayIndex)?
+    ;
+
 expr
     : expr op=('*'|'/'|MOD) expr
     | expr op=('+'|'-') expr
     | expr op=('='|'<'|'>'|'<='|'>='|'<>') expr
     | expr op=('AND'|'OR'|'XOR') expr
-    | '(' expr ')'
+    | ID '(' argumentList? ')'                      // unqualified member call
+    | ID (arrayIndex)?                              // unqualified member access or array access
+    | memberQualifier '.' ID '(' argumentList? ')'  // qualified member call
+    | memberQualifier '.' ID (arrayIndex)?          // qualified member access or array access
+    | '(' expr ')'                                  // parenthesized expression
     | NUMBER
     | BOOL
     | TIME_LITERAL
     | STRING_LITERAL
-    | ID (arrayIndex)?
     ;
-
+    
 // =======================
 // Top-level entry point
 // =======================

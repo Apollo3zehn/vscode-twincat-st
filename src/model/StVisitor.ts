@@ -1,6 +1,6 @@
 import { ParserRuleContext, Token } from "antlr4ng";
 import { Range, Uri } from "vscode";
-import { SourceFile, StSymbol, StSymbolKind } from "../core.js";
+import { SourceFile, StSymbol, StSymbolKind, VariableKind } from "../core.js";
 import { ArgumentContext, AssignmentContext, CallStatementContext, ExprContext, FunctionBlockContext, FunctionContext, InterfaceContext, MemberContext, MethodContext, ProgramContext, PropertyContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 
@@ -78,9 +78,18 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
     public override visitCallStatement? = (ctx: CallStatementContext): void => {
 
-        const token = ctx.ID().symbol;
+        /* Qualified member assignment is not yet supported */
+        if (ctx.memberQualifier())
+            return;
 
-        this.getOrCreateMethodOrFunctionCall(ctx, token);
+        const idNode = ctx.ID();
+
+        if (!idNode)
+            return;
+
+        const idToken = idNode.symbol;
+
+        this.getOrCreateMethodOrFunctionCall(ctx, idToken);
         this.visitChildren(ctx);
     }
 
@@ -225,7 +234,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         const idToken = ctx.ID().symbol;
 
-        return this.getOrCreate(
+        const symbol = this.getOrCreate(
             ctx,
             idToken,
             StSymbolKind.VariableDeclaration,
@@ -256,10 +265,56 @@ export class StVisitor extends StructuredTextVisitor<void> {
                 }
             }
         );
+
+        let variableKind: VariableKind | undefined = undefined;
+        
+        const parentCtx = ctx.parent!;
+
+        if (parentCtx instanceof VarDeclSectionContext) {
+
+            const sectionTypeCtx = (parentCtx as VarDeclSectionContext).varSectionType();
+            
+            if (sectionTypeCtx.VAR_INPUT())
+                variableKind = VariableKind.Input;
+                
+            else if (sectionTypeCtx.VAR_OUTPUT())
+                variableKind = VariableKind.Output;
+                
+            else if (sectionTypeCtx.VAR_IN_OUT())
+                variableKind = VariableKind.InOut;
+                
+            else if (sectionTypeCtx.VAR_TEMP())
+                variableKind = VariableKind.Local;
+                
+            else if (sectionTypeCtx.VAR_EXTERNAL())
+                variableKind = VariableKind.Global;
+                
+            else if (sectionTypeCtx.VAR_INST())
+                variableKind = VariableKind.Local;
+                
+            else if (sectionTypeCtx.VAR())
+                variableKind = VariableKind.Local;
+            
+        } else if (parentCtx instanceof VarGlobalSectionContext) {
+            variableKind = VariableKind.Global;
+        }
+        
+        symbol.variableKind = variableKind;
+
+        return symbol;
     }
     
     private processAssignment(ctx: AssignmentContext) {
-        this.getOrCreateVariableUsage(ctx, ctx.ID().symbol);
+
+        const assignTargetContext = ctx.assignTarget();
+
+        /* Qualified member assignment is not yet supported */
+        if (assignTargetContext.memberQualifier())
+            return;
+
+        const idToken = assignTargetContext.ID().symbol;
+
+        this.getOrCreateVariableUsage(ctx, idToken);
         this.visitExpr(ctx.expr());
     }
 
@@ -315,9 +370,18 @@ export class StVisitor extends StructuredTextVisitor<void> {
                         return this.getOrCreateProperty(current as PropertyContext);
                     
                     case CallStatementContext:
-                        return this.getOrCreateMethodOrFunctionCall(
-                            current,
-                            (current as CallStatementContext).ID().symbol);
+
+                        const idNode = (current as CallStatementContext).ID();
+                        
+                        if (idNode) {
+                            return this.getOrCreateMethodOrFunctionCall(
+                                current,
+                                idNode.symbol);
+                        }
+
+                        else {
+                            return undefined;
+                        }
                         
                     default:
                         return undefined;
@@ -373,9 +437,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
             ctx,
             parent,
             range,
-            selectionRange,
-            undefined,
-            []
+            selectionRange
         );
 
         // Add symbol to parent

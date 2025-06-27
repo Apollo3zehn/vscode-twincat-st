@@ -103,22 +103,38 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
     private getOrCreateProgram(ctx: ProgramContext): StSymbol {
         const idToken = ctx.ID().symbol;
-        return this.getOrCreate(ctx, idToken, StSymbolKind.Program);
+        const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.Program);
+
+        this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
+
+        return symbol;
     }
 
     private getOrCreateInterface(ctx: InterfaceContext): StSymbol {
         const idToken = ctx.ID().symbol;
-        return this.getOrCreate(ctx, idToken, StSymbolKind.Interface);
+        const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.Interface);
+
+        this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
+
+        return symbol;
     }
 
     private getOrCreateFunctionBlock(ctx: FunctionBlockContext): StSymbol {
         const idToken = ctx.ID().symbol;
-        return this.getOrCreate(ctx, idToken, StSymbolKind.FunctionBlock);
+        const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.FunctionBlock);
+
+        this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
+
+        return symbol;
     }
 
     private getOrCreateFunction(ctx: FunctionContext): StSymbol {
         const idToken = ctx.ID().symbol;
-        return this.getOrCreate(ctx, idToken, StSymbolKind.Function);
+        const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.Function);
+
+        this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
+
+        return symbol;
     }
 
     private getOrCreateMethod(ctx: MethodContext): StSymbol {

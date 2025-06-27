@@ -34,7 +34,7 @@ FUNCTION_BLOCK FB_Counter IMPLEMENTS I_Counter, I_Reset EXTENDS FB_CounterBase
 
     END_METHOD
 
-    METHOD UnusedMethod : BOOL
+    METHOD PRIVATE UnusedMethod : BOOL
         _value := DEFAULT_INT;
     END_METHOD
 

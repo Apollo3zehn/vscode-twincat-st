@@ -22,19 +22,31 @@ export class StDiagnosticsProvider {
 
         for (const symbol of sourceFile.symbolMap.values()) {
 
-            // Report unused variable declarations
+            if (
+                symbol.kind === StSymbolKind.VariableDeclaration &&
+                (
+                    symbol.name!.toLowerCase() === "bInitRetains" ||
+                    symbol.name!.toLowerCase() === "bInCopyCode"
+                )
+            ) {
+                continue;
+            }
+
             if (
                 (
                     symbol.kind === StSymbolKind.VariableDeclaration ||
                     symbol.kind === StSymbolKind.Method ||
                     symbol.kind === StSymbolKind.Function
                 ) &&
-                (!symbol.referencingSymbols || symbol.referencingSymbols.length === 0)
+                (
+                    !symbol.referencingSymbols ||
+                    symbol.referencingSymbols.length === 0
+                )
             ) {
                 const diagnostic = new Diagnostic(
                     symbol.range,
                     `Variable '${symbol.name!}' is never used.`,
-                    DiagnosticSeverity.Hint // Use Hint so it can be faded by editor.unnecessaryCode
+                    DiagnosticSeverity.Hint
                 );
 
                 diagnostic.tags = [DiagnosticTag.Unnecessary];

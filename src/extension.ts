@@ -6,6 +6,7 @@ import { ModelBuilder } from './model/ModelBuilder.js';
 import { StReferencesCodeLensProvider as StReferenceCodeLensProvider } from './features/StReferenceCodeLensProvider.js';
 import { StDiagnosticsProvider } from './features/StDiagnosticsProvider.js';
 import { StReferenceProvider } from './features/StReferenceProvider.js';
+import { StTypeDefinitionProvider } from './features/StTypeDefinitionProvider.js';
 
 export async function activate(context: ExtensionContext) {
 
@@ -15,6 +16,10 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(languages.registerDefinitionProvider(
         documentSelector, new StDefinitionProvider(model)
     ));
+
+    context.subscriptions.push(languages.registerTypeDefinitionProvider(
+        documentSelector, new StTypeDefinitionProvider(model))
+    );
 
     context.subscriptions.push(languages.registerDocumentSymbolProvider(
         documentSelector, new StDocumentSymbolProvider(model)

@@ -33,18 +33,20 @@ export class StDefinitionProvider implements DefinitionProvider {
                 break;
         }
 
-        if (
-            (foundSymbol?.kind == StSymbolKind.VariableUsage || foundSymbol?.kind == StSymbolKind.MethodOrFunctionCall) &&
-            foundSymbol.declaringSymbol
-        ) {
-            const declaringSymbol = foundSymbol.declaringSymbol;
+        if (foundSymbol?.declaringSymbol) {
+    
+            switch (foundSymbol.kind) {
+                case StSymbolKind.VariableDeclaration:
+                case StSymbolKind.VariableUsage:
+                case StSymbolKind.MethodOrFunctionCall:
 
-            return new Location(
-                declaringSymbol.documentUri,
-                declaringSymbol.selectionRange ?? declaringSymbol.range
-            );
+                    const declaringSymbol = foundSymbol.declaringSymbol;
+
+                    return new Location(
+                        declaringSymbol.documentUri,
+                        declaringSymbol.selectionRange ?? declaringSymbol.range
+                    );
+            }
         }
-
-        return;
     }
 }

@@ -2,7 +2,7 @@ import { CharStream, CommonTokenStream, ParserRuleContext, Token } from "antlr4n
 import { TextDocument, Uri, workspace } from "vscode";
 import { logger, SourceFile, StSymbol, StSymbolKind } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
-import { FunctionBlockContext, FunctionContext, MethodContext, ProgramContext, PropertyContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
+import { FunctionBlockContext, FunctionContext, MethodContext, ProgramContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
 import { StVisitor } from "./StVisitor.js";
 
 export class ModelBuilder {
@@ -43,6 +43,10 @@ export class ModelBuilder {
                     continue;
 
                 switch (symbol.kind) {
+
+                    case StSymbolKind.VariableDeclaration:
+                        this.findVariableTypeDeclaringSymbol(ctx as VarDeclContext, symbol);
+                        break;
 
                     case StSymbolKind.VariableUsage:
                         this.findVariableDeclaringSymbol(ctx, symbol, sourceFile);
@@ -97,6 +101,7 @@ export class ModelBuilder {
                 fileUri,
                 fileUriAsString,
                 new Map<ParserRuleContext, StSymbol>(),
+                new Map<ParserRuleContext, StSymbol>(),
                 new Map<ParserRuleContext, StSymbol>()
             );
             
@@ -106,7 +111,45 @@ export class ModelBuilder {
         return sourceFile;
     }
 
-    //#region Variables
+    //#region Variable types
+
+    private findVariableTypeDeclaringSymbol(
+        ctx: VarDeclContext,
+        symbol: StSymbol
+    ) {
+        const typeCtx = ctx.type();
+
+        if (typeCtx.builtinType())
+            return;
+
+        const idToken = typeCtx.ID()?.symbol;
+
+        if (!idToken)
+            return;
+
+        const typeName = idToken.text!;
+
+        for (const sourceFile of this._model.values()) {
+
+            for (const typeDeclaration of sourceFile.typeDeclarationsMap.values()) {
+                if ((
+                        typeDeclaration.kind === StSymbolKind.FunctionBlock ||
+                        typeDeclaration.kind === StSymbolKind.Function ||
+                        typeDeclaration.kind === StSymbolKind.Interface ||
+                        typeDeclaration.kind === StSymbolKind.Program
+                    ) &&
+                    typeDeclaration.name === typeName
+                ) {
+                    symbol.declaringSymbol = typeDeclaration;
+                    return;
+                }
+            }
+        }
+    }
+
+    //#endregion
+
+    //#region Variable usages
 
     private findVariableDeclaringSymbol(
         ctx: ParserRuleContext,

@@ -12,6 +12,7 @@ export class SourceFile {
         public readonly uri: Uri,
         public readonly uriAsString: string,
         public readonly symbolMap: Map<ParserRuleContext, StSymbol>,
+        public readonly typeDeclarationsMap: Map<ParserRuleContext, StSymbol>,
         public readonly varGlobalSectionMap: Map<ParserRuleContext, StSymbol>) {
         //
     }

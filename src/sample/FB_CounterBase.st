@@ -24,7 +24,5 @@ FUNCTION_BLOCK ABSTRACT FB_CounterBase
         END_VAR
 
         _baseInternal := 0;
-
     END_METHOD
-
 END_FUNCTION_BLOCK

@@ -1,7 +1,7 @@
 import { StDocumentSymbolProvider } from './features/StDocumentSymbolProvider.js';
 import { documentSelector } from './core.js';
 import { StDefinitionProvider } from './features/StDefinitionProvider.js';
-import { commands, ExtensionContext, languages, SemanticTokensLegend, workspace } from 'vscode';
+import { commands, ExtensionContext, languages, SemanticTokensLegend, window, workspace } from 'vscode';
 import { ModelBuilder } from './model/ModelBuilder.js';
 import { StReferencesCodeLensProvider as StReferenceCodeLensProvider } from './features/StReferenceCodeLensProvider.js';
 import { StDiagnosticsProvider } from './features/StDiagnosticsProvider.js';
@@ -10,11 +10,33 @@ import { StTypeDefinitionProvider } from './features/StTypeDefinitionProvider.js
 import { StTypeHierarchyProvider } from './features/StTypeHierarchyProvider.js';
 import { StHoverProvider } from './features/StHoverProvider.js';
 import { STSemanticTokenProvider } from './features/StSemanticTokenProvider.js';
+import { StCStyleDecorationProvider } from './features/StCStyleDecorationProvider.js';
 
 export async function activate(context: ExtensionContext) {
 
     const modelBuilder = new ModelBuilder();
     const model = await modelBuilder.build();
+
+     // TODO: move this into the StEndBlockDecorationProvider.ts file
+    const decorationProvider = new StCStyleDecorationProvider();
+    
+    window.onDidChangeActiveTextEditor(editor => {
+        if (editor && editor.document.languageId === 'st') {
+            decorationProvider.provideDecorations(editor.document, editor);
+        }
+    });
+
+    workspace.onDidChangeTextDocument(event => {
+
+        const editor = window.activeTextEditor;
+
+        if (editor && event.document === editor.document && editor.document.languageId === 'st') {
+            decorationProvider.provideDecorations(editor.document, editor);
+        }
+    });
+
+    if (window.activeTextEditor)
+        decorationProvider.provideDecorations(window.activeTextEditor.document, window.activeTextEditor)
 
     // TODO: move this into the StSemanticTokensProvider.ts file
     const tokenTypes = ['function'];

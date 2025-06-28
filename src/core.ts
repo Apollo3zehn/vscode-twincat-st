@@ -32,13 +32,25 @@ export class StSymbol {
         //
     }
 
-    public typeSymbol: StSymbol | undefined;
-    public baseTypeSymbol: StSymbol | undefined;
-    public interfaceSymbols: StSymbol[] | undefined;
-    public declaringSymbol: StSymbol | undefined;
-    public referencingSymbols: StSymbol[] | undefined;
+    public type: StSymbol | undefined;
+    public typeInfo: StTypeInfo | undefined;
+    public declaration: StSymbol | undefined;
+    public references: StSymbol[] | undefined;
     public variableKind: VariableKind | undefined;
     public children: StSymbol[] | undefined
+}
+
+export class StTypeInfo {
+
+    constructor(init?: Partial<StTypeInfo>) {
+        Object.assign(this, init);
+    }
+
+    public baseTypes: StSymbol[] | undefined;
+    public interfaces: StSymbol[] | undefined;
+    public subTypes: StSymbol[] | undefined;
+    public isInterface: boolean = false;
+    public isFunctionBlock: boolean = false;
 }
 
 export enum StSymbolKind {

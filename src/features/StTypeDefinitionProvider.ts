@@ -33,14 +33,14 @@ export class StTypeDefinitionProvider implements TypeDefinitionProvider {
         let typeDeclaringSymbol: StSymbol | undefined;
 
         if (foundSymbol.kind === StSymbolKind.Variable) {
-            typeDeclaringSymbol = foundSymbol.declaringSymbol;
+            typeDeclaringSymbol = foundSymbol.declaration;
         }
 
         else if (
             foundSymbol.kind === StSymbolKind.VariableUsage ||
             foundSymbol.kind === StSymbolKind.MethodOrFunctionCall
         ) {
-            typeDeclaringSymbol = foundSymbol.declaringSymbol?.declaringSymbol;
+            typeDeclaringSymbol = foundSymbol.declaration?.declaration;
         }
 
         if (typeDeclaringSymbol) {

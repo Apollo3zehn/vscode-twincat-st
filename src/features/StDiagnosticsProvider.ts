@@ -39,8 +39,8 @@ export class StDiagnosticsProvider {
                     symbol.kind === StSymbolKind.Function
                 ) &&
                 (
-                    !symbol.referencingSymbols ||
-                    symbol.referencingSymbols.length === 0
+                    !symbol.references ||
+                    symbol.references.length === 0
                 )
             ) {
                 const diagnostic = new Diagnostic(

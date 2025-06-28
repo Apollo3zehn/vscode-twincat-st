@@ -29,12 +29,12 @@ export class StReferenceProvider implements ReferenceProvider {
 
         if (foundSymbol) {
             
-            const declaringSymbol = foundSymbol.declaringSymbol ?? foundSymbol;
+            const declaringSymbol = foundSymbol.declaration ?? foundSymbol;
             const locations: Location[] = [];
 
-            if (declaringSymbol.referencingSymbols) {
+            if (declaringSymbol.references) {
 
-                for (const referencingSymbol of declaringSymbol.referencingSymbols) {
+                for (const referencingSymbol of declaringSymbol.references) {
 
                     locations.push(
                         new Location(

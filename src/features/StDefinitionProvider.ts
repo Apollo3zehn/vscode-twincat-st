@@ -27,7 +27,7 @@ export class StDefinitionProvider implements DefinitionProvider {
             .map(symbol => findSymbolAtPosition(symbol, position))
             .find(x => x !== undefined);
 
-        if (foundSymbol?.declaringSymbol) {
+        if (foundSymbol?.declaration) {
     
             switch (foundSymbol.kind) {
                 case StSymbolKind.TypeUsage:
@@ -35,7 +35,7 @@ export class StDefinitionProvider implements DefinitionProvider {
                 case StSymbolKind.VariableUsage:
                 case StSymbolKind.MethodOrFunctionCall:
 
-                    const declaringSymbol = foundSymbol.declaringSymbol;
+                    const declaringSymbol = foundSymbol.declaration;
 
                     return new Location(
                         declaringSymbol.documentUri,

@@ -31,8 +31,8 @@ export class StReferencesCodeLensProvider implements CodeLensProvider {
                     continue;
 
                 // Reference count
-                const referenceCount = symbol.referencingSymbols
-                    ? symbol.referencingSymbols.length
+                const referenceCount = symbol.references
+                    ? symbol.references.length
                     : 0;
 
                 // Reference locations (include declaration itself)
@@ -47,9 +47,9 @@ export class StReferencesCodeLensProvider implements CodeLensProvider {
                 );
 
                 // Add all referencing symbols
-                if (symbol.referencingSymbols) {
+                if (symbol.references) {
 
-                    for (const referencingSymbols of symbol.referencingSymbols) {
+                    for (const referencingSymbols of symbol.references) {
                         locations.push(
                             new Location(
                                 referencingSymbols.documentUri,

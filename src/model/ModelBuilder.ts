@@ -2,7 +2,7 @@ import { CharStream, CommonTokenStream, ParserRuleContext, Token } from "antlr4n
 import { TextDocument, Uri, workspace } from "vscode";
 import { logger, SourceFile, StSymbol, StSymbolKind } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
-import { ExtendsClauseContext, FunctionBlockContext, FunctionContext, MethodContext, ProgramContext, PropertyContext, StructuredTextParser, TypeContext, VarDeclContext } from "../generated/StructuredTextParser.js";
+import { ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, MethodContext, ProgramContext, PropertyContext, StructuredTextParser, TypeContext, VarDeclContext } from "../generated/StructuredTextParser.js";
 import { StVisitor } from "./StVisitor.js";
 
 export class ModelBuilder {
@@ -39,8 +39,8 @@ export class ModelBuilder {
             
             for (const [ctx, symbol] of sourceFile.symbolMap) {
                 
-                if (symbol.declaringSymbol)
-                    continue;
+                // if (symbol.declaration)
+                //     continue;
 
                 switch (symbol.kind) {
 
@@ -50,6 +50,53 @@ export class ModelBuilder {
                             continue;
                         
                         this.findTypeDeclaringSymbol(symbol);
+
+                        if (symbol.declaration) {
+
+                            // Inheritance
+                            if (ctx.parent instanceof ExtendsClauseContext) {
+
+                                const parentTypeInfo = symbol.parent?.typeInfo;
+
+                                if (parentTypeInfo) {
+
+                                    if (!parentTypeInfo.baseTypes)
+                                        parentTypeInfo.baseTypes = []
+
+                                    parentTypeInfo.baseTypes.push(symbol.declaration);
+
+                                    // Add back reference
+                                    const declaringSymbolTypeInfo = symbol.declaration.typeInfo!;
+
+                                    if (!declaringSymbolTypeInfo.subTypes)
+                                        declaringSymbolTypeInfo.subTypes = []
+
+                                    declaringSymbolTypeInfo.subTypes.push(symbol.parent);
+                                }
+                            }
+
+                            // Interfaces
+                            if (ctx.parent instanceof ImplementsClauseContext) {
+
+                                const parentTypeInfo = symbol.parent?.typeInfo;
+
+                                if (parentTypeInfo) {
+
+                                    if (!parentTypeInfo.interfaces)
+                                        parentTypeInfo.interfaces = []
+
+                                    parentTypeInfo.interfaces.push(symbol.declaration);
+
+                                    // Add back reference
+                                    const declaringSymbolTypeInfo = symbol.declaration.typeInfo!;
+
+                                    if (!declaringSymbolTypeInfo.subTypes)
+                                        declaringSymbolTypeInfo.subTypes = []
+
+                                    declaringSymbolTypeInfo.subTypes.push(symbol.parent);
+                                }
+                            }
+                        }
 
                         break;
                     
@@ -137,12 +184,12 @@ export class ModelBuilder {
                     ) &&
                     typeDeclaration.name === symbol.name
                 ) {
-                    symbol.declaringSymbol = typeDeclaration;
+                    symbol.declaration = typeDeclaration;
 
-                    if (!typeDeclaration.referencingSymbols)
-                        typeDeclaration.referencingSymbols = [];
+                    if (!typeDeclaration.references)
+                        typeDeclaration.references = [];
 
-                    typeDeclaration.referencingSymbols.push(symbol);
+                    typeDeclaration.references.push(symbol);
 
                     return;
                 }
@@ -159,7 +206,7 @@ export class ModelBuilder {
             .find(child => child.kind === StSymbolKind.TypeUsage);
 
         if (typeSymbol)
-            symbol.typeSymbol = typeSymbol;
+            symbol.type = typeSymbol;
     }
 
     //#region Variable usages
@@ -363,12 +410,12 @@ export class ModelBuilder {
 
     private ConnectDeclaringSymbols(symbol: StSymbol, declaringSymbol: StSymbol) {
 
-        symbol.declaringSymbol = declaringSymbol;
+        symbol.declaration = declaringSymbol;
 
-        if (!declaringSymbol.referencingSymbols)
-            declaringSymbol.referencingSymbols = [];
+        if (!declaringSymbol.references)
+            declaringSymbol.references = [];
 
-        declaringSymbol.referencingSymbols.push(symbol);
+        declaringSymbol.references.push(symbol);
     }
 
     //#endregion

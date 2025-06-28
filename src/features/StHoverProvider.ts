@@ -41,19 +41,19 @@ export class StHoverProvider implements HoverProvider {
         switch (symbol.kind) {
 
             case StSymbolKind.Variable:
-                return `${symbol.name}: ${symbol.typeSymbol?.name ?? "?"}`;
+                return `${symbol.name}: ${symbol.type?.name ?? "?"}`;
             
             case StSymbolKind.VariableUsage:
-                return `${symbol.name}: ${symbol.declaringSymbol?.typeSymbol?.name ?? "?"}`;
+                return `${symbol.name}: ${symbol.declaration?.type?.name ?? "?"}`;
             
             case StSymbolKind.Method:
-                return `METHOD ${symbol.name} : ${symbol.typeSymbol?.name ?? "?"}`;
+                return `METHOD ${symbol.name} : ${symbol.type?.name ?? "?"}`;
             
             case StSymbolKind.Function:
-                return `FUNCTION ${symbol.name} : ${symbol.typeSymbol?.name ?? "?"}`;
+                return `FUNCTION ${symbol.name} : ${symbol.type?.name ?? "?"}`;
             
             case StSymbolKind.MethodOrFunctionCall:
-                return `${symbol.name} : ${symbol.declaringSymbol?.typeSymbol?.name ?? "?"}`;
+                return `${symbol.name} : ${symbol.declaration?.type?.name ?? "?"}`;
             
             case StSymbolKind.Property:
                 return `PROPERTY ${symbol.name}`;

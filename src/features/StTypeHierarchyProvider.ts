@@ -55,31 +55,48 @@ export class StTypeHierarchyProvider implements TypeHierarchyProvider {
         item: TypeHierarchyItem,
         token: CancellationToken
     ): ProviderResult<TypeHierarchyItem[]> {
+
         const symbol = this.findSymbolByItem(item);
 
         if (!symbol)
             return [];
 
-        const subtypes: TypeHierarchyItem[] = [];
+        const superTypes: TypeHierarchyItem[] = [];
         
-        if (symbol.baseTypeSymbol)
-            subtypes.push(this.toTypeHierarchyItem(symbol.baseTypeSymbol));
-
-        if (symbol.interfaceSymbols) {
-            for (const interfaceSymbol of symbol.interfaceSymbols) {
-                subtypes.push(this.toTypeHierarchyItem(interfaceSymbol));
+        if (symbol.typeInfo?.baseTypes) {
+            for (const baseTypeSymbol of symbol.typeInfo?.baseTypes) {
+                superTypes.push(this.toTypeHierarchyItem(baseTypeSymbol));
             }
         }
 
-        return subtypes;
+        if (symbol.typeInfo?.interfaces) {
+            for (const interfaceSymbol of symbol.typeInfo?.interfaces) {
+                superTypes.push(this.toTypeHierarchyItem(interfaceSymbol));
+            }
+        }
+
+        return superTypes;
     }
 
     provideTypeHierarchySubtypes(
         item: TypeHierarchyItem,
         token: CancellationToken
     ): ProviderResult<TypeHierarchyItem[]> {
-        // TBI
-        return [];
+        
+        const symbol = this.findSymbolByItem(item);
+
+        if (!symbol)
+            return [];
+
+        const subTypes: TypeHierarchyItem[] = [];
+        
+        if (symbol.typeInfo?.subTypes) {
+            for (const subTypeSymbol of symbol.typeInfo?.subTypes) {
+                subTypes.push(this.toTypeHierarchyItem(subTypeSymbol));
+            }
+        }
+
+        return subTypes;
     }
 
     private toTypeHierarchyItem(symbol: StSymbol): TypeHierarchyItem {

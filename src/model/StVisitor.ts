@@ -1,6 +1,6 @@
 import { ParserRuleContext, Token } from "antlr4ng";
 import { Range, Uri } from "vscode";
-import { SourceFile, StSymbol, StSymbolKind, VariableKind } from "../core.js";
+import { SourceFile, StSymbol, StSymbolKind, StTypeInfo as StTypeInfo, VariableKind } from "../core.js";
 import { ArgumentContext, AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, InterfaceContext, MemberContext, MethodContext, ProgramContext, PropertyContext, TypeContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 
@@ -116,8 +116,11 @@ export class StVisitor extends StructuredTextVisitor<void> {
     }
 
     private getOrCreateInterface(ctx: InterfaceContext): StSymbol {
+
         const idToken = ctx.ID().symbol;
         const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.Interface);
+
+        symbol.typeInfo = new StTypeInfo({ isInterface: true });
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
 
@@ -125,8 +128,11 @@ export class StVisitor extends StructuredTextVisitor<void> {
     }
 
     private getOrCreateFunctionBlock(ctx: FunctionBlockContext): StSymbol {
+
         const idToken = ctx.ID().symbol;
         const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.FunctionBlock);
+
+        symbol.typeInfo = new StTypeInfo({ isFunctionBlock: true });
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
 

@@ -14,6 +14,7 @@ FUNCTION_BLOCK ABSTRACT FB_CounterBase
     END_PROPERTY
 
     METHOD ABSTRACT DoSomething : BOOL
+        //
     END_METHOD
 
     METHOD FB_Init

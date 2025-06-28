@@ -54,7 +54,7 @@ export class StCStyleDecorationProvider {
         const endRegex = /\b(END_SET|END_GET|END_CASE|END_WHILE|END_REPEAT|END_FOR|END_IF|END_VAR|END_METHOD|END_PROPERTY|END_FUNCTION_BLOCK|END_FUNCTION|END_INTERFACE|END_PROGRAM);?/g;
         const thenRegex = /\bTHEN\b/g;
         const varRegex = /^\s*(VAR|VAR_INPUT|VAR_OUTPUT|VAR_IN_OUT|VAR_TEMP|VAR_GLOBAL|VAR_EXTERNAL|VAR_STAT|VAR_INST)\b.*$/;
-        const methodRegex = /^\s*(METHOD|FUNCTION_BLOCK|FUNCTION|INTERFACE|PROGRAM)\b.*$/;
+        const methodRegex = /^\s*(METHOD|FUNCTION_BLOCK|FUNCTION|INTERFACE|PROGRAM|GET|SET)\b.*$/;
 
         for (let line = 0; line < document.lineCount; line++) {
 

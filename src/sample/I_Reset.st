@@ -1,6 +1,6 @@
 INTERFACE I_Reset
 
     METHOD Reset : BOOL
+        //
     END_METHOD
-
 END_INTERFACE

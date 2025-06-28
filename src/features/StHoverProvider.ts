@@ -21,7 +21,7 @@ export class StHoverProvider implements HoverProvider {
         const foundSymbol = Array.from(sourceFile.symbolMap.values())
             .map(symbol => findSymbolAtPosition(symbol, position))
             .find(s => s !== undefined);
-
+    
         if (!foundSymbol)
             return;
 

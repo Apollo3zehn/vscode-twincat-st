@@ -20,15 +20,28 @@ export class StReferenceProvider implements ReferenceProvider {
         const sourceFile = this._model.get(document.uri.toString());
 
         if (!sourceFile)
-            return [];
+            return;
 
         // Find the symbol at the given position
         const foundSymbol = Array.from(sourceFile.symbolMap.values())
             .map(symbol => findSymbolAtPosition(symbol, position))
             .find(s => s !== undefined);
-
+       
         if (foundSymbol) {
-            
+
+            // Ensure we really hit the selection range
+            const range = foundSymbol.selectionRange;
+
+            if (
+                !range ||
+                position.line < range.start.line ||
+                position.line > range.end.line ||
+                (position.line === range.start.line && position.character < range.start.character) ||
+                (position.line === range.end.line && position.character > range.end.character)
+            ) {
+                return;
+            }
+
             const declaringSymbol = foundSymbol.declaration ?? foundSymbol;
             const locations: Location[] = [];
 
@@ -58,6 +71,6 @@ export class StReferenceProvider implements ReferenceProvider {
             return locations;
         }
 
-        return [];
+        return;
     }
 }

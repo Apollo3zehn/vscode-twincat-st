@@ -3,17 +3,16 @@ grammar StructuredText;
 // =======================
 // Program organization units
 // =======================
-program             : PROGRAM ID varDeclSection* statementSection END_PROGRAM ;
-function            : attribute? FUNCTION ID ':' type implementsClause? extendsClause? varDeclSection* statementSection END_FUNCTION ;
-functionBlock       : attribute? FUNCTION_BLOCK modifier* ID implementsClause? extendsClause? member* statementSection END_FUNCTION_BLOCK ;
-property            : attribute? PROPERTY accessModifier? modifier* ID ':' type varDeclSection* propertyBody END_PROPERTY ;
-method              : attribute? METHOD accessModifier? modifier* ID (':' type)? varDeclSection* statementSection END_METHOD ;
-interface           : attribute? INTERFACE ID extendsClause? member* END_INTERFACE ;
-structDecl          : attribute? STRUCT ID varDeclSection* END_STRUCT ;
-enumDecl            : attribute? ENUM ID enumMemberList END_ENUM ;
-namespaceDecl       : attribute? NAMESPACE ID namespaceMember* END_NAMESPACE ;
-typeDefDecl         : attribute? TYPEDEF ID '=' type ';' ;
-varGlobalSection    : attribute? VAR_GLOBAL modifier* varDecl+ END_VAR ;
+program             : attribute? PROGRAM        accessModifier?             ID varDeclSection* statementSection END_PROGRAM ;
+function            : attribute? FUNCTION       accessModifier?             ID ':' type implementsClause? extendsClause? varDeclSection* statementSection END_FUNCTION ;
+functionBlock       : attribute? FUNCTION_BLOCK accessModifier? modifier*   ID implementsClause? extendsClause? member* statementSection END_FUNCTION_BLOCK ;
+property            : attribute? PROPERTY       accessModifier? modifier*   ID ':' type varDeclSection* propertyBody END_PROPERTY ;
+method              : attribute? METHOD         accessModifier? modifier*   ID (':' type)? varDeclSection* statementSection END_METHOD ;
+interface           : attribute? INTERFACE      accessModifier?             ID extendsClause? member* END_INTERFACE ;
+structDecl          : attribute? STRUCT         accessModifier?             ID varDeclSection* END_STRUCT ;
+enumDecl            : attribute? ENUM           accessModifier?             ID enumMemberList END_ENUM ;
+namespaceDecl       : attribute? NAMESPACE                                  ID namespaceMember* END_NAMESPACE ;
+varGlobalSection    : attribute? VAR_GLOBAL                     modifier*      varDecl+ END_VAR ;
 
 // =======================
 // Implements and extends clauses
@@ -138,7 +137,6 @@ compilationUnit
     | structDecl
     | enumDecl
     | namespaceDecl
-    | typeDefDecl
     | varGlobalSection
     )*
     ;
@@ -199,19 +197,15 @@ METHOD              : 'METHOD' ;
 END_METHOD          : 'END_METHOD' ;
 INTERFACE           : 'INTERFACE' ;
 END_INTERFACE       : 'END_INTERFACE' ;
-CLASS               : 'CLASS' ;
-END_CLASS           : 'END_CLASS' ;
 STRUCT              : 'STRUCT' ;
 END_STRUCT          : 'END_STRUCT' ;
 ENUM                : 'ENUM' ;
 END_ENUM            : 'END_ENUM' ;
 NAMESPACE           : 'NAMESPACE' ;
 END_NAMESPACE       : 'END_NAMESPACE' ;
-TYPEDEF             : 'TYPEDEF' ;
 ABSTRACT            : 'ABSTRACT' ;
 FINAL               : 'FINAL' ;
 CONSTANT            : 'CONSTANT' ;
-READONLY            : 'READONLY' ;
 PUBLIC              : 'PUBLIC' ;
 PRIVATE             : 'PRIVATE' ;
 PROTECTED           : 'PROTECTED' ;

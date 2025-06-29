@@ -1,5 +1,5 @@
 import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, TextDocument } from "vscode";
-import { SourceFile, StSymbolKind } from "../core.js";
+import { SourceFile, StAccessModifier, StSymbolKind } from "../core.js";
 
 export class StDiagnosticsProvider {
     private _diagnosticCollection: DiagnosticCollection;
@@ -23,21 +23,12 @@ export class StDiagnosticsProvider {
         for (const symbol of sourceFile.symbolMap.values()) {
 
             if (
-                symbol.kind === StSymbolKind.Variable &&
-                (
-                    symbol.name!.toLowerCase() === "bInitRetains" ||
-                    symbol.name!.toLowerCase() === "bInCopyCode"
-                )
-            ) {
-                continue;
-            }
-
-            if (
                 (
                     symbol.kind === StSymbolKind.Variable ||
                     symbol.kind === StSymbolKind.Method ||
                     symbol.kind === StSymbolKind.Function
                 ) &&
+                symbol.accessModifier === StAccessModifier.Private &&
                 (
                     !symbol.references ||
                     symbol.references.length === 0

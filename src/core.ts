@@ -32,6 +32,7 @@ export class StSymbol {
         //
     }
 
+    public accessModifier: StAccessModifier | undefined;
     public type: StSymbol | undefined;
     public typeInfo: StTypeInfo | undefined;
     public declaration: StSymbol | undefined;
@@ -74,4 +75,11 @@ export enum VariableKind {
     Input,
     Output,
     InOut
+}
+
+export enum StAccessModifier {
+    Public,
+    Internal,
+    Protected,
+    Private
 }

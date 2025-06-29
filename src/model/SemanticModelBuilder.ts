@@ -5,7 +5,7 @@ import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
 import { ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, MethodContext, ProgramContext, PropertyContext, StructuredTextParser, TypeContext, VarDeclContext } from "../generated/StructuredTextParser.js";
 import { StVisitor } from "./StVisitor.js";
 
-export class ModelBuilder {
+export class SemanticModelBuilder {
 
     private _model = new Map<string, SourceFile>();
 
@@ -39,8 +39,8 @@ export class ModelBuilder {
             
             for (const [ctx, symbol] of sourceFile.symbolMap) {
                 
-                // if (symbol.declaration)
-                //     continue;
+                if (symbol.declaration)
+                    continue;
 
                 switch (symbol.kind) {
 
@@ -49,7 +49,7 @@ export class ModelBuilder {
                         if ((ctx as TypeContext).builtinType())
                             continue;
                         
-                        this.findTypeDeclaringSymbol(symbol);
+                        symbol.declaration = this.findTypeDeclaringSymbol(symbol);
 
                         if (symbol.declaration) {
 
@@ -103,11 +103,11 @@ export class ModelBuilder {
                     case StSymbolKind.Function:
                     case StSymbolKind.Method:
                     case StSymbolKind.Variable:
-                        this.findTypeUsageSymbol(symbol);
+                        this.findAndAssignTypeUsageSymbol(symbol);
                         break;
 
                     case StSymbolKind.VariableUsage:
-                        this.findVariableDeclaringSymbol(ctx, symbol, sourceFile);
+                        this.findAndAssignVariableDeclaringSymbol(ctx, symbol, sourceFile);
                         break;
                     
                     case StSymbolKind.MethodOrFunctionCall:
@@ -171,7 +171,7 @@ export class ModelBuilder {
 
     //#region Type
 
-    private findTypeDeclaringSymbol(symbol: StSymbol) {
+    private findTypeDeclaringSymbol(symbol: StSymbol): StSymbol | undefined {
 
         for (const sourceFile of this._model.values()) {
 
@@ -184,20 +184,18 @@ export class ModelBuilder {
                     ) &&
                     typeDeclaration.name === symbol.name
                 ) {
-                    symbol.declaration = typeDeclaration;
-
                     if (!typeDeclaration.references)
                         typeDeclaration.references = [];
 
                     typeDeclaration.references.push(symbol);
 
-                    return;
+                    return typeDeclaration;
                 }
             }
         }
     }
     
-    private findTypeUsageSymbol(symbol: StSymbol) {
+    private findAndAssignTypeUsageSymbol(symbol: StSymbol): StSymbol | undefined {
         
         if (!symbol.children)
             return;
@@ -211,7 +209,7 @@ export class ModelBuilder {
 
     //#region Variable usages
 
-    private findVariableDeclaringSymbol(
+    private findAndAssignVariableDeclaringSymbol(
         ctx: ParserRuleContext,
         symbol: StSymbol,
         sourceFile: SourceFile

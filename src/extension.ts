@@ -2,7 +2,7 @@ import { StDocumentSymbolProvider } from './features/StDocumentSymbolProvider.js
 import { documentSelector } from './core.js';
 import { StDefinitionProvider } from './features/StDefinitionProvider.js';
 import { commands, ExtensionContext, languages, SemanticTokensLegend, window, workspace } from 'vscode';
-import { ModelBuilder } from './model/ModelBuilder.js';
+import { SemanticModelBuilder } from './model/SemanticModelBuilder.js';
 import { StReferencesCodeLensProvider as StReferenceCodeLensProvider } from './features/StReferenceCodeLensProvider.js';
 import { StDiagnosticsProvider } from './features/StDiagnosticsProvider.js';
 import { StReferenceProvider } from './features/StReferenceProvider.js';
@@ -14,7 +14,7 @@ import { StCStyleDecorationProvider } from './features/StCStyleDecorationProvide
 
 export async function activate(context: ExtensionContext) {
 
-    const modelBuilder = new ModelBuilder();
+    const modelBuilder = new SemanticModelBuilder();
     const model = await modelBuilder.build();
 
      // TODO: move this into the StEndBlockDecorationProvider.ts file

@@ -11,7 +11,8 @@ FUNCTION_BLOCK FB_Counter IMPLEMENTS I_Counter, I_Reset EXTENDS FB_CounterBase
     END_VAR
     
     VAR
-        _value: INT;
+        _value:     INT;
+        _unused:    BOOL;
     END_VAR
 
     PROPERTY Value : INT

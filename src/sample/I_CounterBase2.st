@@ -1,3 +1,3 @@
-INTERFACE I_CounterBase2
+INTERFACE INTERNAL I_CounterBase2
     //
 END_INTERFACE

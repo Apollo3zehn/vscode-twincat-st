@@ -1,7 +1,7 @@
 import { ParserRuleContext, Token } from "antlr4ng";
-import { Range, Uri } from "vscode";
-import { SourceFile, StSymbol, StSymbolKind, StTypeInfo as StTypeInfo, VariableKind } from "../core.js";
-import { ArgumentContext, AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, InterfaceContext, MemberContext, MethodContext, ProgramContext, PropertyContext, TypeContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { Range, StatementCoverage, Uri } from "vscode";
+import { SourceFile, StAccessModifier, StSymbol, StSymbolKind, StTypeInfo as StTypeInfo, VariableKind } from "../core.js";
+import { AccessModifierContext, ArgumentContext, AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, InterfaceContext, MemberContext, MethodContext, ProgramContext, PropertyContext, TypeContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 
 export class StVisitor extends StructuredTextVisitor<void> {
@@ -111,6 +111,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.Program);
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
+        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         return symbol;
     }
@@ -121,6 +122,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.Interface);
 
         symbol.typeInfo = new StTypeInfo({ isInterface: true });
+        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
 
@@ -133,6 +135,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.FunctionBlock);
 
         symbol.typeInfo = new StTypeInfo({ isFunctionBlock: true });
+        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
 
@@ -140,8 +143,11 @@ export class StVisitor extends StructuredTextVisitor<void> {
     }
 
     private getOrCreateFunction(ctx: FunctionContext): StSymbol {
+
         const idToken = ctx.ID().symbol;
         const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.Function);
+
+        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
 
@@ -149,9 +155,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
     }
 
     private getOrCreateMethod(ctx: MethodContext): StSymbol {
+        
         const idToken = ctx.ID().symbol;
 
-        return this.getOrCreate(
+        const symbol = this.getOrCreate(
             ctx,
             idToken,
             StSymbolKind.Method,
@@ -172,6 +179,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
                 } 
             }
         );
+
+        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
+
+        return symbol;
     }
 
     private getOrCreateProperty(ctx: PropertyContext): StSymbol {
@@ -293,6 +304,8 @@ export class StVisitor extends StructuredTextVisitor<void> {
             }
         );
 
+        symbol.accessModifier = StAccessModifier.Public;
+
         let variableKind: VariableKind | undefined = undefined;
         
         const parentCtx = ctx.parent!;
@@ -321,6 +334,9 @@ export class StVisitor extends StructuredTextVisitor<void> {
                 
             else if (sectionTypeCtx.VAR())
                 variableKind = VariableKind.Local;
+
+            if (sectionTypeCtx.VAR())
+                symbol.accessModifier = StAccessModifier.Private;
             
         } else if (parentCtx instanceof VarGlobalSectionContext) {
             variableKind = VariableKind.Global;
@@ -570,6 +586,28 @@ export class StVisitor extends StructuredTextVisitor<void> {
             stop.line - 1,
             stop.column + stop.stop - stop.start + 1
         );
+    }
+
+    private GetAccessModifier(ctx: AccessModifierContext | undefined): StAccessModifier | undefined {
+
+        if (!ctx)
+            return;
+
+        let accessModifier: StAccessModifier | undefined = undefined;
+
+        if (ctx?.PUBLIC())
+            accessModifier = StAccessModifier.Public;
+
+        else if (ctx?.INTERNAL())
+            accessModifier = StAccessModifier.Internal;
+
+        else if (ctx?.PROTECTED())
+            accessModifier = StAccessModifier.Protected;
+
+        else if (ctx?.PRIVATE())
+            accessModifier = StAccessModifier.Private;
+
+        return accessModifier;
     }
 
     //#endregion

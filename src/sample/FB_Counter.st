@@ -38,12 +38,12 @@ FUNCTION_BLOCK FB_Counter IMPLEMENTS I_Counter, I_Reset EXTENDS FB_CounterBase
         _value := DEFAULT_INT;
     END_METHOD
 
-    METHOD PRIVATE IncreaseByOne : BOOL
+    METHOD PRIVATE IncreaseByTwo : BOOL
         _value := _value + 1;
     END_METHOD
 
     IF enable OR FALSE THEN
-        IncreaseByOne();
+        IncreaseByTwo();
         count := count + 1;
     END_IF;
 END_FUNCTION_BLOCK

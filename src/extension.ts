@@ -11,13 +11,14 @@ import { StTypeHierarchyProvider } from './features/StTypeHierarchyProvider.js';
 import { StHoverProvider } from './features/StHoverProvider.js';
 import { STSemanticTokenProvider } from './features/StSemanticTokenProvider.js';
 import { StCStyleDecorationProvider } from './features/StCStyleDecorationProvider.js';
+import { StRenameProvider } from './features/StRenameProvider.js';
 
 export async function activate(context: ExtensionContext) {
 
     const modelBuilder = new SemanticModelBuilder();
     const model = await modelBuilder.build();
 
-     // TODO: move this into the StEndBlockDecorationProvider.ts file
+    // TODO: move this into the StEndBlockDecorationProvider.ts file
     const decorationProvider = new StCStyleDecorationProvider();
     
     window.onDidChangeActiveTextEditor(editor => {
@@ -34,6 +35,15 @@ export async function activate(context: ExtensionContext) {
             decorationProvider.provideDecorations(editor.document, editor);
         }
     });
+
+    window.onDidChangeTextEditorSelection(event => {
+
+        const editor = event.textEditor;
+
+        if (editor && editor.document.languageId === 'st') {
+            decorationProvider.provideDecorations(editor.document, editor);
+        }
+    })
 
     if (window.activeTextEditor)
         decorationProvider.provideDecorations(window.activeTextEditor.document, window.activeTextEditor)
@@ -94,6 +104,13 @@ export async function activate(context: ExtensionContext) {
 	// context.subscriptions.push(vscode.languages.registerFoldingRangeProvider(
     //     documentSelector, new StFoldingRangeProvider(model)
     // ));
+
+    context.subscriptions.push(
+        languages.registerRenameProvider(
+            documentSelector,
+            new StRenameProvider(model)
+        )
+    );
 }
 
 export function deactivate() {}

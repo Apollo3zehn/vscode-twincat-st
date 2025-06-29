@@ -56,6 +56,15 @@ export class StCStyleDecorationProvider {
         const varRegex = /^\s*(VAR|VAR_INPUT|VAR_OUTPUT|VAR_IN_OUT|VAR_TEMP|VAR_GLOBAL|VAR_EXTERNAL|VAR_STAT|VAR_INST)\b.*$/;
         const methodRegex = /^\s*(METHOD|FUNCTION_BLOCK|FUNCTION|INTERFACE|PROGRAM|GET|SET)\b.*$/;
 
+        // Get all selected lines (as a Set for fast lookup)
+        const selectedLines = new Set<number>();
+
+        for (const selection of editor.selections) {
+            for (let i = selection.start.line; i <= selection.end.line; i++) {
+                selectedLines.add(i);
+            }
+        }
+
         for (let line = 0; line < document.lineCount; line++) {
 
             const text = document.lineAt(line).text;
@@ -63,26 +72,34 @@ export class StCStyleDecorationProvider {
 
             // END_... decorations
             while ((match = endRegex.exec(text))) {
-                const start = new Position(line, match.index);
-                const end = new Position(line, match.index + match[0].length);
-                endDecorations.push({ range: new Range(start, end) });
+
+                if (!selectedLines.has(line)) {
+                    const start = new Position(line, match.index);
+                    const end = new Position(line, match.index + match[0].length);
+
+                    endDecorations.push({ range: new Range(start, end) });
+                }
             }
 
             // THEN decorations
             while ((match = thenRegex.exec(text))) {
-                const start = new Position(line, match.index);
-                const end = new Position(line, match.index + match[0].length);
-                thenDecorations.push({ range: new Range(start, end) });
+
+                if (!selectedLines.has(line)) {
+                    const start = new Position(line, match.index);
+                    const end = new Position(line, match.index + match[0].length);
+                    
+                    thenDecorations.push({ range: new Range(start, end) });
+                }
             }
 
             // VAR... decorations
-            if (varRegex.test(text)) {
+            if (varRegex.test(text) && !selectedLines.has(line)) {
                 const endPos = new Position(line, text.length);
                 varDecorations.push({ range: new Range(endPos, endPos) });
             }
 
             // METHOD ... decorations (add " {" at end of METHOD line)
-            if (methodRegex.test(text)) {
+            if (methodRegex.test(text) && !selectedLines.has(line)) {
                 const endPos = new Position(line, text.length);
                 methodDecorations.push({ range: new Range(endPos, endPos) });
             }

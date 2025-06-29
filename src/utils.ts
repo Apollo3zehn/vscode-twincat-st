@@ -1,6 +1,19 @@
-import { Position } from "vscode";
+import { Position, Range } from "vscode";
 import { StSymbol } from "./core.js";
 import { ParserRuleContext } from "antlr4ng";
+
+export function isInRange(range: Range | undefined, position: Position): boolean {
+    
+    const isOutOfRange = (
+        !range ||
+        position.line < range.start.line ||
+        position.line > range.end.line ||
+        (position.line === range.start.line && position.character < range.start.character) ||
+        (position.line === range.end.line && position.character > range.end.character)
+    );
+
+    return !isOutOfRange;
+}
 
 export function findSymbolAtPosition(symbol: StSymbol, position: Position): StSymbol | undefined {
 
@@ -18,9 +31,12 @@ export function findSymbolAtPosition(symbol: StSymbol, position: Position): StSy
     if (startsBefore && endsAfter) {
         
         if (symbol.children) {
+            
             for (const child of symbol.children) {
                 const found = findSymbolAtPosition(child, position);
-                if (found) return found;
+
+                if (found)
+                    return found;
             }
         }
 

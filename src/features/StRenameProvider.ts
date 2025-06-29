@@ -1,6 +1,6 @@
 import { Position, ProviderResult, Range, RenameProvider, TextDocument, WorkspaceEdit } from "vscode";
 import { SourceFile } from "../core.js";
-import { findSymbolAtPosition } from "../utils.js";
+import { findSymbolAtPosition, isInRange } from "../utils.js";
 
 export class StRenameProvider implements RenameProvider {
 
@@ -29,6 +29,9 @@ export class StRenameProvider implements RenameProvider {
         if (!foundSymbol)
             return;
 
+        if (!isInRange(foundSymbol.selectionRange, position))
+            return;
+
         // Get all references (including declaration)
         const allRefs = (foundSymbol.declaration?.references ?? foundSymbol.references) ?? [];
         const allSymbols = [foundSymbol.declaration ?? foundSymbol, ...allRefs];
@@ -50,22 +53,26 @@ export class StRenameProvider implements RenameProvider {
         document: TextDocument,
         position: Position
     ): ProviderResult<Range | { range: Range; placeholder: string }> {
-
         const sourceFile = this._model.get(document.uri.toString());
 
         if (!sourceFile)
-            return;
+            return Promise.reject("The element can't be renamed");
 
         const foundSymbol = Array.from(sourceFile.symbolMap.values())
             .map(symbol => findSymbolAtPosition(symbol, position))
             .find(symbol => symbol !== undefined);
 
-        if (!foundSymbol || !foundSymbol.selectionRange)
-            return;
+        if (!foundSymbol)
+            return Promise.reject("The element can't be renamed");
+
+        if (!foundSymbol.selectionRange)
+            return Promise.reject("The element can't be renamed");
+
+        if (!isInRange(foundSymbol.selectionRange, position))
+            return Promise.reject("The element can't be renamed");
 
         return {
-            range: foundSymbol.selectionRange,
-            placeholder: foundSymbol.name ?? ""
+            range: foundSymbol.selectionRange
         };
     }
 }

@@ -1,6 +1,6 @@
 import { CancellationToken, Location, Position, ProviderResult, ReferenceContext, ReferenceProvider, TextDocument } from "vscode";
 import { SourceFile } from "../core.js";
-import { findSymbolAtPosition } from "../utils.js";
+import { findSymbolAtPosition, isInRange } from "../utils.js";
 
 export class StReferenceProvider implements ReferenceProvider {
 
@@ -27,50 +27,38 @@ export class StReferenceProvider implements ReferenceProvider {
             .map(symbol => findSymbolAtPosition(symbol, position))
             .find(s => s !== undefined);
        
-        if (foundSymbol) {
+        if (!foundSymbol)
+            return;
 
-            // Ensure we really hit the selection range
-            const range = foundSymbol.selectionRange;
+        if (!isInRange(foundSymbol.selectionRange, position))
+            return;
 
-            if (
-                !range ||
-                position.line < range.start.line ||
-                position.line > range.end.line ||
-                (position.line === range.start.line && position.character < range.start.character) ||
-                (position.line === range.end.line && position.character > range.end.character)
-            ) {
-                return;
-            }
+        const declaringSymbol = foundSymbol.declaration ?? foundSymbol;
+        const locations: Location[] = [];
 
-            const declaringSymbol = foundSymbol.declaration ?? foundSymbol;
-            const locations: Location[] = [];
+        if (declaringSymbol.references) {
 
-            if (declaringSymbol.references) {
+            for (const referencingSymbol of declaringSymbol.references) {
 
-                for (const referencingSymbol of declaringSymbol.references) {
-
-                    locations.push(
-                        new Location(
-                            referencingSymbol.documentUri,
-                            referencingSymbol.selectionRange ?? referencingSymbol.range
-                        )
-                    );
-                }
-            }
-
-            if (context.includeDeclaration) {
-
-                locations.unshift(
+                locations.push(
                     new Location(
-                        declaringSymbol.documentUri,
-                        declaringSymbol.selectionRange ?? declaringSymbol.range
+                        referencingSymbol.documentUri,
+                        referencingSymbol.selectionRange ?? referencingSymbol.range
                     )
                 );
             }
-
-            return locations;
         }
 
-        return;
+        if (context.includeDeclaration) {
+
+            locations.unshift(
+                new Location(
+                    declaringSymbol.documentUri,
+                    declaringSymbol.selectionRange ?? declaringSymbol.range
+                )
+            );
+        }
+
+        return locations;
     }
 }

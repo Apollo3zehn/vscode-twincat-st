@@ -1,6 +1,19 @@
 grammar StructuredText;
 
 // =======================
+// Top-level entry point
+// =======================
+compilationUnit
+    : (program
+    | functionBlock
+    | function
+    | interface
+    | varGlobalSection
+    | typeDecl
+    )*
+    ;
+
+// =======================
 // Program organization units
 // =======================
 program             : attribute? PROGRAM        accessModifier?             ID varDeclSection* statementSection END_PROGRAM ;
@@ -9,9 +22,27 @@ functionBlock       : attribute? FUNCTION_BLOCK accessModifier? modifier*   ID i
 property            : attribute? PROPERTY       accessModifier? modifier*   ID ':' type varDeclSection* propertyBody END_PROPERTY ;
 method              : attribute? METHOD         accessModifier? modifier*   ID (':' type)? varDeclSection* statementSection END_METHOD ;
 interface           : attribute? INTERFACE      accessModifier?             ID extendsClause? member* END_INTERFACE ;
-typeDecl            : attribute? TYPE           accessModifier?             ID ':' structDecl END_TYPE ;
-enumDecl            : attribute? ENUM           accessModifier?             ID enumMemberList END_ENUM ;
 varGlobalSection    : attribute? VAR_GLOBAL                     modifier*      varDecl+ END_VAR ;
+
+// =======================
+// Type declarations
+// =======================
+typeDecl
+    : attribute* TYPE accessModifier? ID ':' enumTypeDecl END_TYPE
+    | attribute* TYPE accessModifier? ID ':' structDecl END_TYPE
+    ;
+
+enumTypeDecl
+    : '(' enumMember (',' enumMember)* ')' (type)? (':=' ID)? ';'
+    ;
+
+enumMember
+    : ID (':=' expr)?
+    ;
+
+structDecl
+    : STRUCT varDecl* END_STRUCT
+    ;
 
 // =======================
 // Implements and extends clauses
@@ -104,9 +135,7 @@ continueStatement   : CONTINUE ';' ;
 // =======================
 // Expressions
 // =======================
-memberQualifier
-    : ID (arrayIndex)?
-    ;
+memberQualifier     : ID (arrayIndex)? ;
 
 expr
     : expr op=('*'|'/'|MOD) expr
@@ -119,28 +148,31 @@ expr
     | memberQualifier '.' ID (arrayIndex)?          // qualified member access or array access
     | '(' expr ')'                                  // parenthesized expression
     | NUMBER
+    | HEX_NUMBER
     | BOOL
     | TIME_LITERAL
     | STRING_LITERAL
     ;
-    
-// =======================
-// Type declarations
-// =======================
-structDecl  : STRUCT varDecl* END_STRUCT ;
 
 // =======================
-// Top-level entry point
+// Property body
 // =======================
-compilationUnit
-    : (program
-    | functionBlock
-    | function
-    | interface
-    | varGlobalSection
-    | typeDecl
-    )*
-    ;
+propertyBody        : (getter | setter | getter setter | setter getter) ;
+getter              : GET accessModifier? statementSection END_GET ;
+setter              : SET accessModifier? statementSection END_SET ;
+
+// =======================
+// Attribute support
+// =======================
+attribute           : '{' ID (attributeArgList)? '}' ;
+attributeArgList    : '(' attributeArg (',' attributeArg)* ')' ;
+attributeArg        : ID | NUMBER | STRING_LITERAL ;
+
+// =======================
+// Access modifiers and modifiers
+// =======================
+accessModifier      : PUBLIC | PRIVATE | PROTECTED | INTERNAL ;
+modifier            : ABSTRACT | FINAL | CONSTANT ;
 
 // =======================
 // Keywords
@@ -220,6 +252,7 @@ END_TYPE            : 'END_TYPE' ;
 BOOL                : 'TRUE' | 'FALSE' ;
 ID                  : [a-zA-Z_][a-zA-Z0-9_]* ;
 NUMBER              : [0-9]+ ('.' [0-9]+)? ;
+HEX_NUMBER          : '16#' [0-9A-Fa-f]+ ;
 
 // Time literal support (e.g., T#10S, T#2.5MS, etc.)
 TIME_LITERAL        : 'T#' [0-9]+ ('.' [0-9]+)? ( 'MS' | 'S' | 'M' | 'H' | 'D' ) ;
@@ -235,28 +268,3 @@ STRING_LITERAL      : '"' (~["\r\n])* '"' ;
 WS                  : [ \t\r\n]+ -> skip ;
 COMMENT             : '//' ~[\r\n]* -> channel(HIDDEN) ;
 COMMENT_BLOCK       : '(*' .*? '*)' -> channel(HIDDEN) ;
-
-// =======================
-// Property body
-// =======================
-propertyBody        : (getter | setter | getter setter | setter getter) ;
-getter              : GET accessModifier? statementSection END_GET ;
-setter              : SET accessModifier? statementSection END_SET ;
-
-// =======================
-// Attribute support
-// =======================
-attribute           : '{' ID (attributeArgList)? '}' ;
-attributeArgList    : '(' attributeArg (',' attributeArg)* ')' ;
-attributeArg        : ID | NUMBER | STRING_LITERAL ;
-
-// =======================
-// Access modifiers and modifiers
-// =======================
-accessModifier      : PUBLIC | PRIVATE | PROTECTED | INTERNAL ;
-modifier            : ABSTRACT | FINAL | CONSTANT ;
-
-// =======================
-// Enum member list
-// =======================
-enumMemberList      : ID (',' ID)* ;

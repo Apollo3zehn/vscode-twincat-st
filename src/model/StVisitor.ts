@@ -24,9 +24,11 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
     public override visitTypeDecl = (ctx: TypeDeclContext): void => {
 
-        if (ctx.structDecl()) {
+        const structDeclCtx = ctx.structDecl();
+
+        if (structDeclCtx) {
             this.getOrCreateStruct(ctx);
-            this.visitChildren(ctx.structDecl());
+            this.visitChildren(structDeclCtx);
         }
     };
 

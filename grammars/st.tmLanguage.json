@@ -2,11 +2,14 @@
   "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
   "name": "Structured Text",
   "scopeName": "source.st",
+  "fileTypes": ["st"],
+  "uuid": "b8e7c7a0-7c2b-4e6e-9b7e-structured-text-tmgrammar",
   "patterns": [
     { "include": "#comments" },
     { "include": "#strings" },
-    { "include": "#numbers" },
     { "include": "#keywords" },
+    { "include": "#numbers" },
+    { "include": "#typedefs" },
     { "include": "#types" },
     { "include": "#sections" },
     { "include": "#functions" },
@@ -56,14 +59,6 @@
         }
       ]
     },
-    "numbers": {
-      "patterns": [
-        { "name": "constant.numeric.float.st", "match": "\\b\\d+\\.\\d+([eE][\\-+]?\\d+)?\\b" },
-        { "name": "constant.numeric.integer.st", "match": "\\b\\d+\\b" },
-        { "name": "constant.numeric.integer.st", "match": "\\b(2|8|16)#[0-9A-Fa-f_]+\\b" },
-        { "name": "constant.numeric.integer.st", "match": "\\b(BYTE|D?WORD|L?WORD|U?(S|D|L)?INT)#(2|8|16)?#[0-9A-Fa-f_]+\\b" }
-      ]
-    },
     "keywords": {
       "patterns": [
         {
@@ -77,6 +72,52 @@
         {
           "name": "constant.language.boolean.st",
           "match": "\\b(TRUE|FALSE)\\b"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        { "name": "constant.numeric.hex.st", "match": "\\b16#[0-9A-Fa-f_]+\\b" },
+        { "name": "constant.numeric.float.st", "match": "\\b\\d+\\.\\d+([eE][\\-+]?\\d+)?\\b" },
+        { "name": "constant.numeric.integer.st", "match": "\\b\\d+\\b" },
+        { "name": "constant.numeric.integer.st", "match": "\\b(2|8|16)#[0-9A-Fa-f_]+\\b" },
+        { "name": "constant.numeric.integer.st", "match": "\\b(BYTE|D?WORD|L?WORD|U?(S|D|L)?INT)#(2|8|16)?#[0-9A-Fa-f_]+\\b" }
+      ]
+    },
+    "typedefs": {
+      "patterns": [
+        {
+          "begin": "(?<=\\bTYPE\\b\\s*)([A-Za-z_][A-Za-z0-9_]+)\\s*:",
+          "beginCaptures": {
+            "1": { "name": "support.type.st" }
+          },
+          "end": "(?=\\bEND_TYPE\\b)",
+          "patterns": [
+            { "include": "#enums" }
+          ]
+        }
+      ]
+    },
+    "enums": {
+      "patterns": [
+        {
+          "begin": "\\(",
+          "end": "\\)\\s*(?:(\\w+)\\s*)?(?:(:=)\\s*(\\w+))?;",
+          "endCaptures": {
+            "1": { "name": "support.type.st" },
+            "2": { "name": "keyword.operator" },
+            "3": { "name": "variable.other.enummember" }
+          },
+          "patterns": [
+            {
+              "name": "variable.other.enummember",
+              "match": "^\\s*\\b[A-Za-z_][A-Za-z0-9_]*\\b(?=\\s*(,|:=))"
+            },
+            { "include": "#operators" },
+            { "include": "#numbers" },
+            { "include": "#types" },
+            { "include": "#identifiers" }
+          ]
         }
       ]
     },
@@ -99,12 +140,12 @@
           "match": "(?<=\\bEXTENDS\\s+)([a-zA-Z_][a-zA-Z0-9_]*)"
         },
         {
-            "name": "storage.type.st",
-            "match": "\\b(INT|REAL|BOOL|STRING|DINT|BYTE|WORD|DWORD|SINT|USINT|UINT|UDINT|LINT|ULINT|LREAL|TIME|DATE|TIME_OF_DAY|DATE_AND_TIME)\\b"
+          "name": "storage.type.st",
+          "match": "\\b(INT|REAL|BOOL|STRING|DINT|BYTE|WORD|DWORD|SINT|USINT|UINT|UDINT|LINT|ULINT|LREAL|TIME|DATE|TIME_OF_DAY|DATE_AND_TIME)\\b"
         },
         {
-            "name": "support.type.st",
-            "match": "(?<=:\\s*)([a-zA-Z_][a-zA-Z0-9_]*)"
+          "name": "support.type.st",
+          "match": "(?<=:\\s*)([a-zA-Z_][a-zA-Z0-9_]*)"
         }
       ]
     },
@@ -176,7 +217,5 @@
         }
       ]
     }
-  },
-  "fileTypes": ["st"],
-  "uuid": "b8e7c7a0-7c2b-4e6e-9b7e-structured-text-tmgrammar"
+  }
 }

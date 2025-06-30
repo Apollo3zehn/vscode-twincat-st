@@ -9,9 +9,8 @@ functionBlock       : attribute? FUNCTION_BLOCK accessModifier? modifier*   ID i
 property            : attribute? PROPERTY       accessModifier? modifier*   ID ':' type varDeclSection* propertyBody END_PROPERTY ;
 method              : attribute? METHOD         accessModifier? modifier*   ID (':' type)? varDeclSection* statementSection END_METHOD ;
 interface           : attribute? INTERFACE      accessModifier?             ID extendsClause? member* END_INTERFACE ;
-structDecl          : attribute? STRUCT         accessModifier?             ID varDeclSection* END_STRUCT ;
+typeDecl            : attribute? TYPE           accessModifier?             ID ':' structDecl END_TYPE ;
 enumDecl            : attribute? ENUM           accessModifier?             ID enumMemberList END_ENUM ;
-namespaceDecl       : attribute? NAMESPACE                                  ID namespaceMember* END_NAMESPACE ;
 varGlobalSection    : attribute? VAR_GLOBAL                     modifier*      varDecl+ END_VAR ;
 
 // =======================
@@ -24,7 +23,6 @@ extendsClause       : EXTENDS type (',' type)* ;
 // Members
 // =======================
 member              : method | property | varDeclSection ;
-namespaceMember     : program | functionBlock | function | structDecl | enumDecl | interface ;
 
 // =======================
 // Variable declarations
@@ -127,6 +125,11 @@ expr
     ;
     
 // =======================
+// Type declarations
+// =======================
+structDecl  : STRUCT varDecl* END_STRUCT ;
+
+// =======================
 // Top-level entry point
 // =======================
 compilationUnit
@@ -134,10 +137,8 @@ compilationUnit
     | functionBlock
     | function
     | interface
-    | structDecl
-    | enumDecl
-    | namespaceDecl
     | varGlobalSection
+    | typeDecl
     )*
     ;
 
@@ -201,8 +202,6 @@ STRUCT              : 'STRUCT' ;
 END_STRUCT          : 'END_STRUCT' ;
 ENUM                : 'ENUM' ;
 END_ENUM            : 'END_ENUM' ;
-NAMESPACE           : 'NAMESPACE' ;
-END_NAMESPACE       : 'END_NAMESPACE' ;
 ABSTRACT            : 'ABSTRACT' ;
 FINAL               : 'FINAL' ;
 CONSTANT            : 'CONSTANT' ;
@@ -212,6 +211,8 @@ PROTECTED           : 'PROTECTED' ;
 INTERNAL            : 'INTERNAL' ;
 REFERENCE_TO        : 'REFERENCE TO' ;
 MOD                 : 'MOD' ;
+TYPE                : 'TYPE' ;
+END_TYPE            : 'END_TYPE' ;
 
 // =======================
 // Literals and identifiers
@@ -232,7 +233,8 @@ STRING_LITERAL      : '"' (~["\r\n])* '"' ;
 // Whitespace and comments
 // =======================
 WS                  : [ \t\r\n]+ -> skip ;
-COMMENT             : '//' ~[\r\n]* -> skip ;
+COMMENT             : '//' ~[\r\n]* -> channel(HIDDEN) ;
+COMMENT_BLOCK       : '(*' .*? '*)' -> channel(HIDDEN) ;
 
 // =======================
 // Property body

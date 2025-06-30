@@ -1,7 +1,7 @@
 import { ParserRuleContext, Token } from "antlr4ng";
-import { Range, StatementCoverage, Uri } from "vscode";
-import { SourceFile, StAccessModifier, StSymbol, StSymbolKind, StTypeInfo as StTypeInfo, VariableKind } from "../core.js";
-import { AccessModifierContext, ArgumentContext, AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, InterfaceContext, MemberContext, MethodContext, ProgramContext, PropertyContext, TypeContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { Range, Uri } from "vscode";
+import { SourceFile, StAccessModifier, StSymbol, StSymbolKind, StTypeInfo, VariableKind } from "../core.js";
+import { AccessModifierContext, ArgumentContext, AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, InterfaceContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StructDeclContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 
 export class StVisitor extends StructuredTextVisitor<void> {
@@ -20,6 +20,14 @@ export class StVisitor extends StructuredTextVisitor<void> {
     public override visitProgram = (ctx: ProgramContext): void => {
         this.getOrCreateProgram(ctx)
         this.visitChildren(ctx);
+    };
+
+    public override visitTypeDecl = (ctx: TypeDeclContext): void => {
+
+        if (ctx.structDecl()) {
+            this.getOrCreateStruct(ctx);
+            this.visitChildren(ctx.structDecl());
+        }
     };
 
     public override visitInterface = (ctx: InterfaceContext): void => {
@@ -142,6 +150,18 @@ export class StVisitor extends StructuredTextVisitor<void> {
         return symbol;
     }
 
+    private getOrCreateStruct(ctx: TypeDeclContext): StSymbol {
+
+        const idToken = ctx.ID().symbol;
+        const accessModifier = ctx.accessModifier() ?? undefined;
+        const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.Struct);
+        symbol.accessModifier = this.GetAccessModifier(accessModifier);
+
+        this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
+
+        return symbol;
+    }
+
     private getOrCreateFunction(ctx: FunctionContext): StSymbol {
 
         const idToken = ctx.ID().symbol;
@@ -188,7 +208,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
     private getOrCreateProperty(ctx: PropertyContext): StSymbol {
         const idToken = ctx.ID().symbol;
 
-        return this.getOrCreate(
+        const symbol = this.getOrCreate(
             ctx,
             idToken,
             StSymbolKind.Property,
@@ -209,6 +229,33 @@ export class StVisitor extends StructuredTextVisitor<void> {
                 } 
             }
         );
+
+        let variableKind: VariableKind | undefined;
+
+        const propertyBodyCtx = ctx.propertyBody();
+            
+        const getter = propertyBodyCtx.getter();
+        const setter = propertyBodyCtx.setter();
+
+        if (getter) {
+            if (setter)
+                variableKind = VariableKind.InOut
+
+            else
+                variableKind = VariableKind.Output
+        }
+
+        else {
+            if (setter)
+                variableKind = VariableKind.Input
+
+            else
+                variableKind = undefined
+        }
+
+        symbol.variableKind = variableKind;
+
+        return symbol;
     }
 
     private getOrCreateArgument(ctx: ArgumentContext) {
@@ -290,12 +337,17 @@ export class StVisitor extends StructuredTextVisitor<void> {
                     
                     case VarGlobalSectionContext:
 
-                        const symbol = this.getOrCreateVarDeclSection(
+                        const varDeclSectionSymbol = this.getOrCreateVarDeclSection(
                             parentCtx,
                             (parentCtx as VarGlobalSectionContext).VAR_GLOBAL().symbol
                         );
 
-                        this._sourceFile.varGlobalSectionMap.set(parentCtx, symbol);
+                        this._sourceFile.varGlobalSectionMap.set(parentCtx, varDeclSectionSymbol);
+
+                        return varDeclSectionSymbol;
+
+                    case StructDeclContext:
+                        return this.getOrCreateStruct(parentCtx.parent as TypeDeclContext);
                    
                     default:
                         return undefined;
@@ -314,8 +366,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
             const sectionTypeCtx = (parentCtx as VarDeclSectionContext).varSectionType();
             
-            if (sectionTypeCtx.VAR_INPUT())
+            if (sectionTypeCtx.VAR_INPUT()) {
                 variableKind = VariableKind.Input;
+                symbol.accessModifier = StAccessModifier.Private;
+            }
                 
             else if (sectionTypeCtx.VAR_OUTPUT())
                 variableKind = VariableKind.Output;
@@ -329,17 +383,22 @@ export class StVisitor extends StructuredTextVisitor<void> {
             else if (sectionTypeCtx.VAR_EXTERNAL())
                 variableKind = VariableKind.Global;
                 
-            else if (sectionTypeCtx.VAR_INST())
+            else if (sectionTypeCtx.VAR_INST()) {
                 variableKind = VariableKind.Local;
+                symbol.accessModifier = StAccessModifier.Private;
+            }
                 
             else if (sectionTypeCtx.VAR())
                 variableKind = VariableKind.Local;
-
-            if (sectionTypeCtx.VAR())
-                symbol.accessModifier = StAccessModifier.Private;
             
-        } else if (parentCtx instanceof VarGlobalSectionContext) {
+        }
+        
+        else if (parentCtx instanceof VarGlobalSectionContext) {
             variableKind = VariableKind.Global;
+        }
+        
+        else if (parentCtx instanceof StructDeclContext) {
+            variableKind = VariableKind.Input;
         }
         
         symbol.variableKind = variableKind;

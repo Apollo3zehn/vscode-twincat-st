@@ -1,7 +1,7 @@
 PROGRAM MAIN
 
     VAR
-        _counter:   FB_Counter;
+        _counter:   FB_Counter; // THe counter banm
         _enable:    BOOL := TRUE;
         _success:   BOOL;
         _count:     INT;

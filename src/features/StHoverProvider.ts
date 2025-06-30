@@ -1,6 +1,6 @@
 import { Hover, HoverProvider, MarkdownString, Position, ProviderResult, TextDocument } from "vscode";
-import { SourceFile, StSymbol, StSymbolKind } from "../core.js";
-import { findSymbolAtPosition } from "../utils.js";
+import { SourceFile, StSymbol, StSymbolKind, VariableKind } from "../core.js";
+import { findSymbolAtPosition, isInRange } from "../utils.js";
 
 export class StHoverProvider implements HoverProvider {
 
@@ -25,13 +25,53 @@ export class StHoverProvider implements HoverProvider {
         if (!foundSymbol)
             return;
 
+        if (!isInRange(foundSymbol.selectionRange, position))
+            return;
+
         // Build hover content
         const markdown = new MarkdownString();
         markdown.appendCodeblock(this.getSymbolSignature(foundSymbol), 'st');
 
-        // if (symbol.documentation) {
-        //     markdown.appendMarkdown('\n\n' + symbol.documentation);
-        // }
+        const tokenStream = sourceFile.tokenStream;
+        const declarationSymbol = foundSymbol.declaration ?? foundSymbol;
+
+        let comment: String | undefined;
+
+        if (declarationSymbol.context.start) {
+            
+            const startTokenIndex = declarationSymbol.context.start.tokenIndex;
+            const endTokenIndex = declarationSymbol.context.stop?.tokenIndex;
+
+            // Look for a comment that prefixes the current token
+            const previous = tokenStream.get(startTokenIndex - 1);
+
+            if (previous.channel === 1 && previous.text !== undefined)
+                comment = previous.text;
+
+            // Look for a comment that starts on the same line
+            if (endTokenIndex) {
+                const next = tokenStream.get(endTokenIndex + 1);
+
+                if (
+                    next.channel === 1 &&
+                    next.line - 1 === declarationSymbol.range.end.line &&
+                    next.text !== undefined
+                ) {
+                    comment = next.text;
+                }
+            }
+        }
+
+        if (comment) {
+
+            const sanitizedComment = comment
+                .replace("(*", "")
+                .replace("*)", "")
+                .replace(/^\/\//, "")
+                .trim();
+            
+            markdown.appendMarkdown('\n\n' + sanitizedComment);
+        }
 
         return new Hover(markdown, foundSymbol.selectionRange ?? foundSymbol.range);
     }
@@ -41,10 +81,24 @@ export class StHoverProvider implements HoverProvider {
         switch (symbol.kind) {
 
             case StSymbolKind.Variable:
-                return `${symbol.name}: ${symbol.type?.name ?? "?"}`;
+
+                const variableKind1 = symbol.variableKind;
+
+                const variableKindString1 = variableKind1 !== undefined
+                    ? ("VAR_" + VariableKind[variableKind1].toUpperCase()).replace("_LOCAL", "")
+                    : "?"
+                
+                return `${variableKindString1} ${symbol.name}: ${symbol.type?.name ?? "?"}`;
             
             case StSymbolKind.VariableUsage:
-                return `${symbol.name}: ${symbol.declaration?.type?.name ?? "?"}`;
+
+                const variableKind2 = symbol.declaration?.variableKind;
+
+                const variableKindString2 = variableKind2 !== undefined
+                    ? ("VAR_" + VariableKind[variableKind2].toUpperCase()).replace("_LOCAL", "")
+                    : "?"
+                
+                return `${variableKindString2} ${symbol.name}: ${symbol.declaration?.type?.name ?? "?"}`;
             
             case StSymbolKind.Method:
                 return `METHOD ${symbol.name} : ${symbol.type?.name ?? "?"}`;
@@ -60,6 +114,9 @@ export class StHoverProvider implements HoverProvider {
             
             case StSymbolKind.FunctionBlock:
                 return `FUNCTION_BLOCK ${symbol.name}`;
+            
+            case StSymbolKind.Struct:
+                return `STRUCT ${symbol.name}`;
             
             default:
                 return symbol.name ?? "";

@@ -1,4 +1,4 @@
-import { SourceFile, StSymbol, StSymbolKind } from '../core.js';
+import { SourceFile, StSymbol, StSymbolKind, VariableKind } from '../core.js';
 import { CancellationToken, DocumentSymbol, DocumentSymbolProvider, ProviderResult, SymbolInformation, SymbolKind, TextDocument } from 'vscode';
 
 export class StDocumentSymbolProvider implements DocumentSymbolProvider {
@@ -21,8 +21,10 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
         const topLevelUnit = [...sourceFile.symbolMap.values()].filter(x =>
             x.kind === StSymbolKind.Program ||
             x.kind === StSymbolKind.FunctionBlock ||
+            x.kind === StSymbolKind.Struct ||
             x.kind === StSymbolKind.Function ||
-            x.kind === StSymbolKind.Interface
+            x.kind === StSymbolKind.Interface ||
+            x.kind === StSymbolKind.VariableSection
         );
         
         for (const compilationUnit of topLevelUnit) {
@@ -47,6 +49,9 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
             
             case StSymbolKind.FunctionBlock:
                 symbolKind = SymbolKind.Class; break;
+            
+            case StSymbolKind.Struct:
+                symbolKind = SymbolKind.Struct; break;
             
             case StSymbolKind.Function:
                 symbolKind = SymbolKind.Function; break;

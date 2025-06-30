@@ -1,4 +1,4 @@
-import { ParserRuleContext, Token } from "antlr4ng";
+import { CommonTokenStream, ParserRuleContext, Token } from "antlr4ng";
 import { Range, Uri, window } from "vscode";
 
 export const logger = window.createOutputChannel('TwinCAT Structured Text');
@@ -11,6 +11,7 @@ export class SourceFile {
     constructor(
         public readonly uri: Uri,
         public readonly uriAsString: string,
+        public readonly tokenStream: CommonTokenStream,
         public readonly symbolMap: Map<ParserRuleContext, StSymbol>,
         public readonly typeDeclarationsMap: Map<ParserRuleContext, StSymbol>,
         public readonly varGlobalSectionMap: Map<ParserRuleContext, StSymbol>) {
@@ -66,7 +67,8 @@ export enum StSymbolKind {
     Interface,
     VariableUsage,
     MethodOrFunctionCall,
-    TypeUsage
+    TypeUsage,
+    Struct
 }
 
 export enum VariableKind {

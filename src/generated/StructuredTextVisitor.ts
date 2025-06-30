@@ -9,14 +9,12 @@ import { FunctionBlockContext } from "./StructuredTextParser.js";
 import { PropertyContext } from "./StructuredTextParser.js";
 import { MethodContext } from "./StructuredTextParser.js";
 import { InterfaceContext } from "./StructuredTextParser.js";
-import { StructDeclContext } from "./StructuredTextParser.js";
+import { TypeDeclContext } from "./StructuredTextParser.js";
 import { EnumDeclContext } from "./StructuredTextParser.js";
-import { NamespaceDeclContext } from "./StructuredTextParser.js";
 import { VarGlobalSectionContext } from "./StructuredTextParser.js";
 import { ImplementsClauseContext } from "./StructuredTextParser.js";
 import { ExtendsClauseContext } from "./StructuredTextParser.js";
 import { MemberContext } from "./StructuredTextParser.js";
-import { NamespaceMemberContext } from "./StructuredTextParser.js";
 import { VarDeclSectionContext } from "./StructuredTextParser.js";
 import { VarSectionTypeContext } from "./StructuredTextParser.js";
 import { VarDeclContext } from "./StructuredTextParser.js";
@@ -45,6 +43,7 @@ import { ExitStatementContext } from "./StructuredTextParser.js";
 import { ContinueStatementContext } from "./StructuredTextParser.js";
 import { MemberQualifierContext } from "./StructuredTextParser.js";
 import { ExprContext } from "./StructuredTextParser.js";
+import { StructDeclContext } from "./StructuredTextParser.js";
 import { CompilationUnitContext } from "./StructuredTextParser.js";
 import { PropertyBodyContext } from "./StructuredTextParser.js";
 import { GetterContext } from "./StructuredTextParser.js";
@@ -102,23 +101,17 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      */
     visitInterface?: (ctx: InterfaceContext) => Result;
     /**
-     * Visit a parse tree produced by `StructuredTextParser.structDecl`.
+     * Visit a parse tree produced by `StructuredTextParser.typeDecl`.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    visitStructDecl?: (ctx: StructDeclContext) => Result;
+    visitTypeDecl?: (ctx: TypeDeclContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.enumDecl`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitEnumDecl?: (ctx: EnumDeclContext) => Result;
-    /**
-     * Visit a parse tree produced by `StructuredTextParser.namespaceDecl`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitNamespaceDecl?: (ctx: NamespaceDeclContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.varGlobalSection`.
      * @param ctx the parse tree
@@ -143,12 +136,6 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      * @return the visitor result
      */
     visitMember?: (ctx: MemberContext) => Result;
-    /**
-     * Visit a parse tree produced by `StructuredTextParser.namespaceMember`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitNamespaceMember?: (ctx: NamespaceMemberContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.varDeclSection`.
      * @param ctx the parse tree
@@ -317,6 +304,12 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      * @return the visitor result
      */
     visitExpr?: (ctx: ExprContext) => Result;
+    /**
+     * Visit a parse tree produced by `StructuredTextParser.structDecl`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitStructDecl?: (ctx: StructDeclContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.compilationUnit`.
      * @param ctx the parse tree

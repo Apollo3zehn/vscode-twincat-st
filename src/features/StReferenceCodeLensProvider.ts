@@ -22,6 +22,7 @@ export class StReferencesCodeLensProvider implements CodeLensProvider {
 
             if (
                 symbol.kind === StSymbolKind.FunctionBlock ||
+                symbol.kind === StSymbolKind.Struct ||
                 symbol.kind === StSymbolKind.Interface ||
                 symbol.kind === StSymbolKind.Function ||
                 symbol.kind === StSymbolKind.Variable ||

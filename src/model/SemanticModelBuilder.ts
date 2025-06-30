@@ -102,6 +102,7 @@ export class SemanticModelBuilder {
                     
                     case StSymbolKind.Function:
                     case StSymbolKind.Method:
+                    case StSymbolKind.Property:
                     case StSymbolKind.Variable:
                         this.findAndAssignTypeUsageSymbol(symbol);
                         break;
@@ -127,8 +128,6 @@ export class SemanticModelBuilder {
         if (uri.scheme !== "file")
             return;
 
-        const sourceFile = this.getOrCreateSourceFile(uri);
-
         if (document.lineCount === 0)
             return;
 
@@ -138,12 +137,13 @@ export class SemanticModelBuilder {
         const tokenStream = new CommonTokenStream(lexer);
         const parser = new StructuredTextParser(tokenStream);
         const tree = parser.compilationUnit();
+        const sourceFile = this.getOrCreateSourceFile(uri, tokenStream);
         const visitor = new StVisitor(sourceFile, uri);
 
         tree.accept(visitor);
     }
 
-    private getOrCreateSourceFile(fileUri: Uri): SourceFile {
+    private getOrCreateSourceFile(fileUri: Uri, tokenStream: CommonTokenStream): SourceFile {
         
         let sourceFile: SourceFile;
         let fileUriAsString = fileUri.toString();
@@ -158,6 +158,7 @@ export class SemanticModelBuilder {
             sourceFile = new SourceFile(
                 fileUri,
                 fileUriAsString,
+                tokenStream,
                 new Map<ParserRuleContext, StSymbol>(),
                 new Map<ParserRuleContext, StSymbol>(),
                 new Map<ParserRuleContext, StSymbol>()
@@ -180,6 +181,7 @@ export class SemanticModelBuilder {
                 if (
                     (
                         typeDeclaration.kind === StSymbolKind.FunctionBlock ||
+                        typeDeclaration.kind === StSymbolKind.Struct ||
                         typeDeclaration.kind === StSymbolKind.Interface
                     ) &&
                     typeDeclaration.name === symbol.name

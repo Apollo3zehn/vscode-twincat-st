@@ -71,8 +71,6 @@ export class StRenameProvider implements RenameProvider {
         if (!isInRange(foundSymbol.selectionRange, position))
             return Promise.reject("The element can't be renamed");
 
-        return {
-            range: foundSymbol.selectionRange
-        };
+        return foundSymbol.selectionRange;
     }
 }

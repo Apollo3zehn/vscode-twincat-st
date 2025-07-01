@@ -93,7 +93,8 @@
           },
           "end": "(?=\\bEND_TYPE\\b)",
           "patterns": [
-            { "include": "#enums" }
+            { "include": "#enums" },
+            { "include": "#structs" }
           ]
         }
       ]
@@ -109,10 +110,36 @@
             "3": { "name": "variable.other.enummember" }
           },
           "patterns": [
+            { "include": "#comments" },
             {
               "name": "variable.other.enummember",
-              "match": "^\\s*\\b[A-Za-z_][A-Za-z0-9_]*\\b(?=\\s*(,|:=))"
+              "match": "^\\s*\\b[A-Za-z_][A-Za-z0-9_]*\\b"
             },
+            {
+              "name": "variable.other.enummember",
+              "match": "^\\s*\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+            },
+            { "include": "#operators" },
+            { "include": "#numbers" },
+            { "include": "#types" },
+            { "include": "#identifiers" }
+          ]
+        }
+      ]
+    },
+    "structs": {
+      "patterns": [
+        {
+          "begin": "STRUCT",
+          "beginCaptures": {
+            "0": { "name": "storage.type.class.st" }
+          },
+          "end": "END_STRUCT",
+          "endCaptures": {
+            "0": { "name": "storage.type.class.st" }
+          },
+          "patterns": [
+            { "include": "#comments" },
             { "include": "#operators" },
             { "include": "#numbers" },
             { "include": "#types" },

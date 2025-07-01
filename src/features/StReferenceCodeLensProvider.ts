@@ -26,7 +26,9 @@ export class StReferencesCodeLensProvider implements CodeLensProvider {
                 symbol.kind === StSymbolKind.Interface ||
                 symbol.kind === StSymbolKind.Function ||
                 symbol.kind === StSymbolKind.Variable ||
-                symbol.kind === StSymbolKind.Method
+                symbol.kind === StSymbolKind.Method ||
+                symbol.kind === StSymbolKind.Enum ||
+                symbol.kind === StSymbolKind.EnumMember
             ) {
                 if (symbol.variableKind == VariableKind.Local)
                     continue;

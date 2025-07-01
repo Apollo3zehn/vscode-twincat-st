@@ -4,13 +4,8 @@ STRUCT
     // a
     a: BOOL;
 
-    // unused
-
-    (* b
-    b *)
-    b: BOOL;
-
-	c: BOOL; (*c
-    c*)
+    b: INT; // b
+    
+	c: BOOL := 1; // c
 END_STRUCT
 END_TYPE

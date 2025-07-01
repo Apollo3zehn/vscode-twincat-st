@@ -1,21 +1,33 @@
 TYPE E_Color1 :
 (
-    White   := 16#FFFFFF,
-    Yellow  := 16#FFFF00,
-    Green   := 16#FF00FF,
-    Blue    := 16#0000FF,
-    Black   := 16#000000
-) DWORD := Black;
+    White   := 0,
+
+    Yellow  := 1
+) DWORD := Yellow;
 END_TYPE
 
 TYPE E_Color2 :
 (
-    Black := 16#000000
+    // White
+    White := 0, // White
+
+    Yellow, // Yellow
+    
+    Blue
 ) DWORD;
 END_TYPE
 
 TYPE E_Color3 :
 (
-    Black := 16#000000
-) := Black;
+    White := 0
+) := White;
 END_TYPE
+
+FUNCTION_BLOCK
+
+    VAR
+        _enum: E_Color1;
+    END_VAR
+
+    _enum := E_Color1.Yellow;
+END_FUNCTION_BLOCK

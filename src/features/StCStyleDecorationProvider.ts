@@ -6,6 +6,7 @@ export class StCStyleDecorationProvider {
     private thenDecorationType: TextEditorDecorationType;
     private varDecorationType: TextEditorDecorationType;
     private methodDecorationType: TextEditorDecorationType;
+    private structDecorationType: TextEditorDecorationType;
 
     constructor() {
 
@@ -15,7 +16,7 @@ export class StCStyleDecorationProvider {
                 color: new ThemeColor('editor.foreground'),
                 margin: '0 0.2em 0 0'
             },
-            textDecoration: 'none; display: none;', // Hide the actual text
+            textDecoration: 'none; display: none;'
         });
 
         this.thenDecorationType = window.createTextEditorDecorationType({
@@ -24,7 +25,7 @@ export class StCStyleDecorationProvider {
                 color: new ThemeColor('editor.foreground'),
                 margin: '0 0.2em 0 0'
             },
-            textDecoration: 'none; display: none;', // Hide the actual text
+            textDecoration: 'none; display: none;'
         });
 
         this.varDecorationType = window.createTextEditorDecorationType({
@@ -42,6 +43,15 @@ export class StCStyleDecorationProvider {
                 margin: '0 0 0 0.2em'
             }
         });
+
+        this.structDecorationType = window.createTextEditorDecorationType({
+            before: {
+                contentText: '{',
+                color: new ThemeColor('editor.foreground'),
+                margin: '0 0.2em 0 0'
+            },
+            textDecoration: 'none; display: none;'
+        });
     }
 
     public provideDecorations(document: TextDocument, editor: TextEditor) {
@@ -50,11 +60,13 @@ export class StCStyleDecorationProvider {
         const thenDecorations: DecorationOptions[] = [];
         const varDecorations: DecorationOptions[] = [];
         const methodDecorations: DecorationOptions[] = [];
+        const structDecorations: DecorationOptions[] = [];
 
-        const endRegex = /\b(END_SET|END_GET|END_CASE|END_WHILE|END_REPEAT|END_FOR|END_IF|END_VAR|END_METHOD|END_PROPERTY|END_FUNCTION_BLOCK|END_FUNCTION|END_INTERFACE|END_PROGRAM);?/g;
+        const endRegex = /\b(END_SET|END_GET|END_CASE|END_WHILE|END_REPEAT|END_FOR|END_IF|END_VAR|END_METHOD|END_PROPERTY|END_FUNCTION_BLOCK|END_FUNCTION|END_INTERFACE|END_PROGRAM|END_STRUCT);?/g;
         const thenRegex = /\bTHEN\b/g;
         const varRegex = /^\s*(VAR|VAR_INPUT|VAR_OUTPUT|VAR_IN_OUT|VAR_TEMP|VAR_GLOBAL|VAR_EXTERNAL|VAR_STAT|VAR_INST)\b.*$/;
         const methodRegex = /^\s*(METHOD|FUNCTION_BLOCK|FUNCTION|INTERFACE|PROGRAM|GET|SET)\b.*$/;
+        const structRegex = /^\s*STRUCT\b.*$/;
 
         // Get all selected lines (as a Set for fast lookup)
         const selectedLines = new Set<number>();
@@ -92,6 +104,18 @@ export class StCStyleDecorationProvider {
                 }
             }
 
+            // STRUCT decorations (add "{" before STRUCT)
+            if (structRegex.test(text) && !selectedLines.has(line)) {
+
+                const match = structRegex.exec(text);
+
+                if (match) {
+                    const start = new Position(line, match.index ?? 0);
+                    const end = new Position(line, (match.index ?? 0) + match[0].length);
+                    structDecorations.push({ range: new Range(start, end) });
+                }
+            }
+
             // VAR... decorations
             if (varRegex.test(text) && !selectedLines.has(line)) {
                 const endPos = new Position(line, text.length);
@@ -109,5 +133,6 @@ export class StCStyleDecorationProvider {
         editor.setDecorations(this.thenDecorationType, thenDecorations);
         editor.setDecorations(this.varDecorationType, varDecorations);
         editor.setDecorations(this.methodDecorationType, methodDecorations);
+        editor.setDecorations(this.structDecorationType, structDecorations);
     }
 }

@@ -51,8 +51,6 @@ export class StTypeInfo {
     public baseTypes: StSymbol[] | undefined;
     public interfaces: StSymbol[] | undefined;
     public subTypes: StSymbol[] | undefined;
-    public isInterface: boolean = false;
-    public isFunctionBlock: boolean = false;
 }
 
 export enum StSymbolKind {
@@ -68,7 +66,9 @@ export enum StSymbolKind {
     VariableUsage,
     MethodOrFunctionCall,
     TypeUsage,
-    Struct
+    Struct,
+    Enum,
+    EnumMember
 }
 
 export enum VariableKind {

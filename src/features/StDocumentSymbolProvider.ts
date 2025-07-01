@@ -18,16 +18,17 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
 
         const symbols: DocumentSymbol[] = [];
 
-        const topLevelUnit = [...sourceFile.symbolMap.values()].filter(x =>
+        const topLevelUnits = [...sourceFile.symbolMap.values()].filter(x =>
             x.kind === StSymbolKind.Program ||
             x.kind === StSymbolKind.FunctionBlock ||
             x.kind === StSymbolKind.Struct ||
+            x.kind === StSymbolKind.Enum ||
             x.kind === StSymbolKind.Function ||
             x.kind === StSymbolKind.Interface ||
             x.kind === StSymbolKind.VariableSection
         );
         
-        for (const compilationUnit of topLevelUnit) {
+        for (const compilationUnit of topLevelUnits) {
 
             const symbol = this.toSymbol(compilationUnit);
 
@@ -52,6 +53,12 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
             
             case StSymbolKind.Struct:
                 symbolKind = SymbolKind.Struct; break;
+            
+            case StSymbolKind.Enum:
+                symbolKind = SymbolKind.Enum; break;
+            
+            case StSymbolKind.EnumMember:
+                symbolKind = SymbolKind.EnumMember; break;
             
             case StSymbolKind.Function:
                 symbolKind = SymbolKind.Function; break;

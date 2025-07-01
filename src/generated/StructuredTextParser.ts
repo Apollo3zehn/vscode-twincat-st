@@ -139,7 +139,7 @@ export class StructuredTextParser extends antlr.Parser {
     public static readonly RULE_interface = 6;
     public static readonly RULE_varGlobalSection = 7;
     public static readonly RULE_typeDecl = 8;
-    public static readonly RULE_enumTypeDecl = 9;
+    public static readonly RULE_enumDecl = 9;
     public static readonly RULE_enumMember = 10;
     public static readonly RULE_structDecl = 11;
     public static readonly RULE_implementsClause = 12;
@@ -225,7 +225,7 @@ export class StructuredTextParser extends antlr.Parser {
     ];
     public static readonly ruleNames = [
         "compilationUnit", "program", "function", "functionBlock", "property", 
-        "method", "interface", "varGlobalSection", "typeDecl", "enumTypeDecl", 
+        "method", "interface", "varGlobalSection", "typeDecl", "enumDecl", 
         "enumMember", "structDecl", "implementsClause", "extendsClause", 
         "member", "varDeclSection", "varSectionType", "varDecl", "arraySpec", 
         "exprOrArrayInit", "arrayInit", "type", "builtinType", "statementSection", 
@@ -923,7 +923,7 @@ export class StructuredTextParser extends antlr.Parser {
                 this.state = 283;
                 this.match(StructuredTextParser.T__0);
                 this.state = 284;
-                this.enumTypeDecl();
+                this.enumDecl();
                 this.state = 285;
                 this.match(StructuredTextParser.END_TYPE);
                 }
@@ -982,9 +982,9 @@ export class StructuredTextParser extends antlr.Parser {
         }
         return localContext;
     }
-    public enumTypeDecl(): EnumTypeDeclContext {
-        let localContext = new EnumTypeDeclContext(this.context, this.state);
-        this.enterRule(localContext, 18, StructuredTextParser.RULE_enumTypeDecl);
+    public enumDecl(): EnumDeclContext {
+        let localContext = new EnumDeclContext(this.context, this.state);
+        this.enterRule(localContext, 18, StructuredTextParser.RULE_enumDecl);
         let _la: number;
         try {
             this.enterOuterAlt(localContext, 1);
@@ -3767,8 +3767,8 @@ export class TypeDeclContext extends antlr.ParserRuleContext {
     public ID(): antlr.TerminalNode {
         return this.getToken(StructuredTextParser.ID, 0)!;
     }
-    public enumTypeDecl(): EnumTypeDeclContext | null {
-        return this.getRuleContext(0, EnumTypeDeclContext);
+    public enumDecl(): EnumDeclContext | null {
+        return this.getRuleContext(0, EnumDeclContext);
     }
     public END_TYPE(): antlr.TerminalNode {
         return this.getToken(StructuredTextParser.END_TYPE, 0)!;
@@ -3801,7 +3801,7 @@ export class TypeDeclContext extends antlr.ParserRuleContext {
 }
 
 
-export class EnumTypeDeclContext extends antlr.ParserRuleContext {
+export class EnumDeclContext extends antlr.ParserRuleContext {
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }
@@ -3821,11 +3821,11 @@ export class EnumTypeDeclContext extends antlr.ParserRuleContext {
         return this.getToken(StructuredTextParser.ID, 0);
     }
     public override get ruleIndex(): number {
-        return StructuredTextParser.RULE_enumTypeDecl;
+        return StructuredTextParser.RULE_enumDecl;
     }
     public override accept<Result>(visitor: StructuredTextVisitor<Result>): Result | null {
-        if (visitor.visitEnumTypeDecl) {
-            return visitor.visitEnumTypeDecl(this);
+        if (visitor.visitEnumDecl) {
+            return visitor.visitEnumDecl(this);
         } else {
             return visitor.visitChildren(this);
         }

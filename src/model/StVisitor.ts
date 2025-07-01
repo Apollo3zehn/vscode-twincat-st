@@ -1,7 +1,7 @@
 import { ParserRuleContext, Token } from "antlr4ng";
 import { Range, Uri } from "vscode";
 import { SourceFile, StAccessModifier, StSymbol, StSymbolKind, StTypeInfo, VariableKind } from "../core.js";
-import { AccessModifierContext, ArgumentContext, AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, InterfaceContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StructDeclContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { AccessModifierContext, ArgumentContext, AssignmentContext, CallStatementContext, EnumDeclContext, EnumMemberContext, ExprContext, ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, InterfaceContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StructDeclContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 
 export class StVisitor extends StructuredTextVisitor<void> {
@@ -25,11 +25,22 @@ export class StVisitor extends StructuredTextVisitor<void> {
     public override visitTypeDecl = (ctx: TypeDeclContext): void => {
 
         const structDeclCtx = ctx.structDecl();
+        const enumDeclCtx = ctx.enumDecl();
 
         if (structDeclCtx) {
             this.getOrCreateStruct(ctx);
             this.visitChildren(structDeclCtx);
         }
+
+        else if (enumDeclCtx) {
+            this.getOrCreateEnum(ctx);
+            this.visitChildren(enumDeclCtx);
+        }
+    };
+
+    public override visitEnumMember = (ctx: EnumMemberContext): void => {
+        this.getOrCreateEnumMeber(ctx);
+        this.visitChildren(ctx);
     };
 
     public override visitInterface = (ctx: InterfaceContext): void => {
@@ -131,7 +142,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const idToken = ctx.ID().symbol;
         const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.Interface);
 
-        symbol.typeInfo = new StTypeInfo({ isInterface: true });
+        symbol.typeInfo = new StTypeInfo();
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
@@ -144,7 +155,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const idToken = ctx.ID().symbol;
         const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.FunctionBlock);
 
-        symbol.typeInfo = new StTypeInfo({ isFunctionBlock: true });
+        symbol.typeInfo = new StTypeInfo();
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
@@ -155,11 +166,93 @@ export class StVisitor extends StructuredTextVisitor<void> {
     private getOrCreateStruct(ctx: TypeDeclContext): StSymbol {
 
         const idToken = ctx.ID().symbol;
-        const accessModifier = ctx.accessModifier() ?? undefined;
         const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.Struct);
-        symbol.accessModifier = this.GetAccessModifier(accessModifier);
+
+        symbol.typeInfo = new StTypeInfo();
+        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
+
+        return symbol;
+    }
+
+    private getOrCreateEnum(ctx: TypeDeclContext): StSymbol {
+
+        const idToken = ctx.ID().symbol;
+        const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.Enum);
+
+        symbol.typeInfo = new StTypeInfo();
+        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
+
+        this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
+
+        return symbol;
+       
+    }
+
+    private getOrCreateEnumMeber(ctx: EnumMemberContext): StSymbol {
+
+        const idToken = ctx.ID().symbol;
+
+        const symbol = this.getOrCreate(
+            ctx,
+            idToken,
+            StSymbolKind.EnumMember,
+            () => {
+
+                const parentCtx = ctx.parent!.parent!;
+                const enumSymbol = this.getOrCreateEnum(parentCtx as TypeDeclContext);
+
+                return enumSymbol;
+            }
+        );
+
+        symbol.accessModifier = StAccessModifier.Public;
+
+        let variableKind: VariableKind | undefined = undefined;
+        
+        const parentCtx = ctx.parent!;
+
+        if (parentCtx instanceof VarDeclSectionContext) {
+
+            const sectionTypeCtx = (parentCtx as VarDeclSectionContext).varSectionType();
+            
+            if (sectionTypeCtx.VAR_INPUT()) {
+                variableKind = VariableKind.Input;
+                symbol.accessModifier = StAccessModifier.Private;
+            }
+                
+            else if (sectionTypeCtx.VAR_OUTPUT())
+                variableKind = VariableKind.Output;
+                
+            else if (sectionTypeCtx.VAR_IN_OUT())
+                variableKind = VariableKind.InOut;
+                
+            else if (sectionTypeCtx.VAR_TEMP())
+                variableKind = VariableKind.Local;
+                
+            else if (sectionTypeCtx.VAR_EXTERNAL())
+                variableKind = VariableKind.Global;
+                
+            else if (sectionTypeCtx.VAR_INST()) {
+                variableKind = VariableKind.Local;
+                symbol.accessModifier = StAccessModifier.Private;
+            }
+                
+            else if (sectionTypeCtx.VAR())
+                variableKind = VariableKind.Local;
+            
+        }
+        
+        else if (parentCtx instanceof VarGlobalSectionContext) {
+            variableKind = VariableKind.Global;
+        }
+        
+        else if (parentCtx instanceof StructDeclContext) {
+            variableKind = VariableKind.Input;
+        }
+        
+        symbol.variableKind = variableKind;
 
         return symbol;
     }

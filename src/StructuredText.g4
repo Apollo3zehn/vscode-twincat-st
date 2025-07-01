@@ -28,11 +28,11 @@ varGlobalSection    : attribute? VAR_GLOBAL                     modifier*      v
 // Type declarations
 // =======================
 typeDecl
-    : attribute* TYPE accessModifier? ID ':' enumTypeDecl END_TYPE
+    : attribute* TYPE accessModifier? ID ':' enumDecl END_TYPE
     | attribute* TYPE accessModifier? ID ':' structDecl END_TYPE
     ;
 
-enumTypeDecl
+enumDecl
     : '(' enumMember (',' enumMember)* ')' (type)? (':=' ID)? ';'
     ;
 

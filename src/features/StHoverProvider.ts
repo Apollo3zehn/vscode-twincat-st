@@ -1,6 +1,7 @@
 import { Hover, HoverProvider, MarkdownString, Position, ProviderResult, TextDocument } from "vscode";
 import { SourceFile, StSymbol, StSymbolKind, VariableKind } from "../core.js";
 import { findSymbolAtPosition, isInRange } from "../utils.js";
+import { EnumDeclContext, EnumMemberContext } from "../generated/StructuredTextParser.js";
 
 export class StHoverProvider implements HoverProvider {
 
@@ -117,6 +118,14 @@ export class StHoverProvider implements HoverProvider {
             
             case StSymbolKind.Struct:
                 return `STRUCT ${symbol.name}`;
+            
+            case StSymbolKind.EnumMember:
+                const enumMemberCtx = symbol.context as EnumMemberContext;
+                const expr = enumMemberCtx.expr();
+
+                return expr
+                    ? `${symbol.parent!.name}.${enumMemberCtx.ID()} := ${expr.getText()}`
+                    : `${symbol.parent!.name}.${enumMemberCtx.ID()}`;
             
             default:
                 return symbol.name ?? "";

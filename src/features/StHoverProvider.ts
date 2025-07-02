@@ -46,7 +46,7 @@ export class StHoverProvider implements HoverProvider {
             // Look for a comment that prefixes the current token
             const previous = tokenStream.get(startTokenIndex - 1);
 
-            if (previous.channel === 1 && previous.text !== undefined)
+            if (previous && previous.channel === 1 && previous.text !== undefined)
                 comment = previous.text;
 
             // Look for a comment that starts on the same line
@@ -54,6 +54,7 @@ export class StHoverProvider implements HoverProvider {
                 const next = tokenStream.get(endTokenIndex + 1);
 
                 if (
+                    next &&
                     next.channel === 1 &&
                     next.line - 1 === declarationSymbol.range.end.line &&
                     next.text !== undefined

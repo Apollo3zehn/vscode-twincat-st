@@ -18,7 +18,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
     //#region Visit
 
     public override visitProgram = (ctx: ProgramContext): void => {
-        this.getOrCreateProgram(ctx)
+        this.createProgram(ctx)
         this.visitChildren(ctx);
     };
 
@@ -28,28 +28,28 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const enumDeclCtx = ctx.enumDecl();
 
         if (structDeclCtx) {
-            this.getOrCreateStruct(ctx);
+            this.createStruct(ctx);
             this.visitChildren(structDeclCtx);
         }
 
         else if (enumDeclCtx) {
-            this.getOrCreateEnum(ctx);
+            this.createEnum(ctx);
             this.visitChildren(enumDeclCtx);
         }
     };
 
     public override visitEnumMember = (ctx: EnumMemberContext): void => {
-        this.getOrCreateEnumMeber(ctx);
+        this.createEnumMeber(ctx);
         this.visitChildren(ctx);
     };
 
     public override visitInterface = (ctx: InterfaceContext): void => {
-        this.getOrCreateInterface(ctx);
+        this.createInterface(ctx);
         this.visitChildren(ctx);
     };
 
     public override visitFunctionBlock = (ctx: FunctionBlockContext): void => {
-        this.getOrCreateFunctionBlock(ctx)
+        this.createFunctionBlock(ctx)
         this.visitChildren(ctx);
     };
 
@@ -58,27 +58,27 @@ export class StVisitor extends StructuredTextVisitor<void> {
     };
 
     public override visitFunction = (ctx: FunctionContext): void => {
-        this.getOrCreateFunction(ctx)
+        this.createFunction(ctx)
         this.visitChildren(ctx);
     };
 
     public override visitMethod = (ctx: MethodContext): void => {
-        this.getOrCreateMethod(ctx)
+        this.createMethod(ctx)
         this.visitChildren(ctx);
     };
 
     public override visitProperty = (ctx: PropertyContext): void => {
-        this.getOrCreateProperty(ctx)
+        this.createProperty(ctx)
         this.visitChildren(ctx);
     };
 
     public override visitVarDeclSection = (ctx: VarDeclSectionContext): void => {
-        this.getOrCreateVarDeclSection(ctx, (ctx as VarDeclSectionContext).varSectionType().start!)
+        this.createVarDeclSection(ctx, (ctx as VarDeclSectionContext).varSectionType().start!)
         this.visitChildren(ctx);
     };
 
     public override visitVarDecl = (ctx: VarDeclContext): void => {
-        this.getOrCreateVarDecl(ctx);
+        this.createVarDecl(ctx);
         this.visitChildren(ctx);
     };
 
@@ -91,7 +91,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const variableUsageToken = ctx.ID()?.symbol;
 
         if (variableUsageToken)
-            this.getOrCreateVariableUsage(ctx, variableUsageToken);
+            this.createVariableUsage(ctx, variableUsageToken);
 
         for (const expression of ctx.expr()) {
             this.visitExpr(expression);
@@ -111,25 +111,25 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         const idToken = idNode.symbol;
 
-        this.getOrCreateMethodOrFunctionCall(ctx, idToken);
+        this.createMethodOrFunctionCall(ctx, idToken);
         this.visitChildren(ctx);
     }
 
     public override visitArgument? = (ctx: ArgumentContext): void => {
-        this.getOrCreateArgument(ctx);
+        this.createArgument(ctx);
     }
 
     public override visitType? = (ctx: TypeContext): void | undefined => {
-        this.getOrCreateType(ctx)
+        this.createType(ctx)
     }
 
     //#endregion
 
-    //#region GetOrCreate
+    //#region Create
 
-    private getOrCreateProgram(ctx: ProgramContext): StSymbol {
+    private createProgram(ctx: ProgramContext): StSymbol {
         const idToken = ctx.ID().symbol;
-        const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.Program);
+        const symbol = this.create(ctx, idToken, StSymbolKind.Program);
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
@@ -137,10 +137,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
         return symbol;
     }
 
-    private getOrCreateInterface(ctx: InterfaceContext): StSymbol {
+    private createInterface(ctx: InterfaceContext): StSymbol {
 
         const idToken = ctx.ID().symbol;
-        const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.Interface);
+        const symbol = this.create(ctx, idToken, StSymbolKind.Interface);
 
         symbol.typeInfo = new StTypeInfo();
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
@@ -150,10 +150,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
         return symbol;
     }
 
-    private getOrCreateFunctionBlock(ctx: FunctionBlockContext): StSymbol {
+    private createFunctionBlock(ctx: FunctionBlockContext): StSymbol {
 
         const idToken = ctx.ID().symbol;
-        const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.FunctionBlock);
+        const symbol = this.create(ctx, idToken, StSymbolKind.FunctionBlock);
 
         symbol.typeInfo = new StTypeInfo();
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
@@ -163,10 +163,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
         return symbol;
     }
 
-    private getOrCreateStruct(ctx: TypeDeclContext): StSymbol {
+    private createStruct(ctx: TypeDeclContext): StSymbol {
 
         const idToken = ctx.ID().symbol;
-        const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.Struct);
+        const symbol = this.create(ctx, idToken, StSymbolKind.Struct);
 
         symbol.typeInfo = new StTypeInfo();
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
@@ -176,10 +176,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
         return symbol;
     }
 
-    private getOrCreateEnum(ctx: TypeDeclContext): StSymbol {
+    private createEnum(ctx: TypeDeclContext): StSymbol {
 
         const idToken = ctx.ID().symbol;
-        const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.Enum);
+        const symbol = this.create(ctx, idToken, StSymbolKind.Enum);
 
         symbol.typeInfo = new StTypeInfo();
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
@@ -190,21 +190,15 @@ export class StVisitor extends StructuredTextVisitor<void> {
        
     }
 
-    private getOrCreateEnumMeber(ctx: EnumMemberContext): StSymbol {
+    private createEnumMeber(ctx: EnumMemberContext): StSymbol {
 
         const idToken = ctx.ID().symbol;
 
-        const symbol = this.getOrCreate(
+        const symbol = this.create(
             ctx,
             idToken,
             StSymbolKind.EnumMember,
-            () => {
-
-                const parentCtx = ctx.parent!.parent!;
-                const enumSymbol = this.getOrCreateEnum(parentCtx as TypeDeclContext);
-
-                return enumSymbol;
-            }
+            () => ctx.parent?.parent ?? undefined
         );
 
         symbol.accessModifier = StAccessModifier.Public;
@@ -257,10 +251,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
         return symbol;
     }
 
-    private getOrCreateFunction(ctx: FunctionContext): StSymbol {
+    private createFunction(ctx: FunctionContext): StSymbol {
 
         const idToken = ctx.ID().symbol;
-        const symbol = this.getOrCreate(ctx, idToken, StSymbolKind.Function);
+        const symbol = this.create(ctx, idToken, StSymbolKind.Function);
 
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
@@ -269,30 +263,15 @@ export class StVisitor extends StructuredTextVisitor<void> {
         return symbol;
     }
 
-    private getOrCreateMethod(ctx: MethodContext): StSymbol {
+    private createMethod(ctx: MethodContext): StSymbol {
         
         const idToken = ctx.ID().symbol;
 
-        const symbol = this.getOrCreate(
+        const symbol = this.create(
             ctx,
             idToken,
             StSymbolKind.Method,
-            () => {
-                const grandParent = ctx.parent!.parent!;
-
-                switch (grandParent.constructor) {
-
-                    case InterfaceContext:
-                        return this.getOrCreateInterface(grandParent as InterfaceContext);
-                    
-                    case FunctionBlockContext:
-                        return this.getOrCreateFunctionBlock(grandParent as FunctionBlockContext);
-                                           
-                    default:
-                        return undefined;
-                   
-                } 
-            }
+            () => ctx.parent?.parent ?? undefined
         );
 
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
@@ -300,29 +279,14 @@ export class StVisitor extends StructuredTextVisitor<void> {
         return symbol;
     }
 
-    private getOrCreateProperty(ctx: PropertyContext): StSymbol {
+    private createProperty(ctx: PropertyContext): StSymbol {
         const idToken = ctx.ID().symbol;
 
-        const symbol = this.getOrCreate(
+        const symbol = this.create(
             ctx,
             idToken,
             StSymbolKind.Property,
-            () => {
-                const grandParent = ctx.parent!.parent!;
-
-                switch (grandParent.constructor) {
-
-                    case InterfaceContext:
-                        return this.getOrCreateInterface(grandParent as InterfaceContext);
-                    
-                    case FunctionBlockContext:
-                        return this.getOrCreateFunctionBlock(grandParent as FunctionBlockContext);
-                                           
-                    default:
-                        return undefined;
-                   
-                } 
-            }
+            () => ctx.parent?.parent ?? undefined
         );
 
         let variableKind: VariableKind | undefined;
@@ -353,17 +317,17 @@ export class StVisitor extends StructuredTextVisitor<void> {
         return symbol;
     }
 
-    private getOrCreateArgument(ctx: ArgumentContext) {
+    private createArgument(ctx: ArgumentContext) {
         const expressionId = ctx.expr().ID();
         const idToken = expressionId?.symbol;
 
         if (idToken)
-            this.getOrCreateVariableUsage(ctx, idToken);
+            this.createVariableUsage(ctx, idToken);
     }
 
-    private getOrCreateVarDeclSection(ctx: ParserRuleContext, nameToken: Token): StSymbol {
+    private createVarDeclSection(ctx: ParserRuleContext, nameToken: Token): StSymbol {
 
-        return this.getOrCreate(
+        return this.create(
             ctx,
             nameToken,
             StSymbolKind.VariableSection,
@@ -374,47 +338,26 @@ export class StVisitor extends StructuredTextVisitor<void> {
                 switch (parentCtx.constructor) {
 
                     case ProgramContext:
-                        return this.getOrCreateProgram(parentCtx as ProgramContext);
+                    case FunctionContext:
+                    case MethodContext:
+                    case PropertyContext:
+                        return ctx.parent ?? undefined
                     
                     case MemberContext:
-                       
-                        const grandParent = parentCtx.parent!;
-                       
-                        switch (grandParent.constructor) {
-
-                            case InterfaceContext:
-                                return this.getOrCreateInterface(grandParent as InterfaceContext);
-                            
-                            case FunctionBlockContext:
-                                return this.getOrCreateFunctionBlock(grandParent as FunctionBlockContext);
-                                                        
-                            default:
-                                return undefined;
-                            
-                        }
-                   
-                    case FunctionContext:
-                        return this.getOrCreateFunction(parentCtx as FunctionContext);
-                   
-                    case MethodContext:
-                        return this.getOrCreateMethod(parentCtx as MethodContext);
-                   
-                    case PropertyContext:
-                        return this.getOrCreateProperty(parentCtx as PropertyContext);
+                        return ctx.parent?.parent ?? undefined;
                         
                     default:
                         return undefined;
-                   
                 }
             }
         );
     }
 
-    private getOrCreateVarDecl(ctx: VarDeclContext): StSymbol {
+    private createVarDecl(ctx: VarDeclContext): StSymbol {
 
         const idToken = ctx.ID().symbol;
 
-        const symbol = this.getOrCreate(
+        const symbol = this.create(
             ctx,
             idToken,
             StSymbolKind.Variable,
@@ -424,29 +367,15 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
                 switch (parentCtx.constructor) {
 
-                    case VarDeclSectionContext:
-                        return this.getOrCreateVarDeclSection(
-                            parentCtx,
-                            (parentCtx as VarDeclSectionContext).varSectionType().start!
-                        );
-                    
+                    case VarDeclSectionContext:                 
                     case VarGlobalSectionContext:
-
-                        const varDeclSectionSymbol = this.getOrCreateVarDeclSection(
-                            parentCtx,
-                            (parentCtx as VarGlobalSectionContext).VAR_GLOBAL().symbol
-                        );
-
-                        this._sourceFile.varGlobalSectionMap.set(parentCtx, varDeclSectionSymbol);
-
-                        return varDeclSectionSymbol;
+                        return ctx.parent ?? undefined;
 
                     case StructDeclContext:
-                        return this.getOrCreateStruct(parentCtx.parent as TypeDeclContext);
+                        return ctx.parent?.parent ?? undefined;
                    
                     default:
                         return undefined;
-                    
                 }
             }
         );
@@ -511,30 +440,30 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         const idToken = assignTargetContext.ID().symbol;
 
-        this.getOrCreateVariableUsage(ctx, idToken);
+        this.createVariableUsage(ctx, idToken);
         this.visitExpr(ctx.expr());
     }
 
-    private getOrCreateMethodOrFunctionCall(ctx: ParserRuleContext, idToken: Token): StSymbol {
-        return this.getOrCreate(
+    private createMethodOrFunctionCall(ctx: ParserRuleContext, idToken: Token): StSymbol {
+        return this.create(
             ctx,
             idToken,
             StSymbolKind.MethodOrFunctionCall,
-            () => this.getOrCreateNearestParent(ctx)
+            () => this.getNearestParentContext(ctx)
         );
     }
 
-    private getOrCreateVariableUsage(ctx: ParserRuleContext, idToken: Token): StSymbol {
+    private createVariableUsage(ctx: ParserRuleContext, idToken: Token): StSymbol {
 
-        return this.getOrCreate(
+        return this.create(
             ctx,
             idToken,
             StSymbolKind.VariableUsage,
-            () => this.getOrCreateNearestParent(ctx)
+            () => this.getNearestParentContext(ctx)
         );
     }
 
-    private getOrCreateNearestParent(ctx: ParserRuleContext): StSymbol | undefined {
+    private getNearestParentContext(ctx: ParserRuleContext): ParserRuleContext | undefined {
 
         let current = ctx.parent ?? undefined;
 
@@ -552,37 +481,15 @@ export class StVisitor extends StructuredTextVisitor<void> {
                 switch (current.constructor) {
 
                     case ProgramContext:
-                        return this.getOrCreateProgram(current as ProgramContext);
-                    
                     case FunctionBlockContext:
-                        return this.getOrCreateFunctionBlock(current as FunctionBlockContext);
-                    
                     case FunctionContext:
-                        return this.getOrCreateFunction(current as FunctionContext);
-                   
                     case MethodContext:
-                        return this.getOrCreateMethod(current as MethodContext);
-                   
                     case PropertyContext:
-                        return this.getOrCreateProperty(current as PropertyContext);
-                    
                     case CallStatementContext:
+                        return current;
 
-                        const idNode = (current as CallStatementContext).ID();
-                        
-                        if (idNode) {
-                            return this.getOrCreateMethodOrFunctionCall(
-                                current,
-                                idNode.symbol);
-                        }
-
-                        else {
-                            return undefined;
-                        }
-                        
                     default:
                         return undefined;
-                   
                 }
             }
 
@@ -592,7 +499,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         return undefined;
     }
 
-    private getOrCreateType(ctx: TypeContext): StSymbol {
+    private createType(ctx: TypeContext): StSymbol {
 
         const builtinTypeNode = ctx.builtinType();
         let idToken: Token | undefined;
@@ -611,7 +518,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
             idToken = ctx.ID()!.symbol;
         }
 
-        return this.getOrCreate(
+        return this.create(
             ctx,
             idToken,
             StSymbolKind.TypeUsage,
@@ -620,33 +527,19 @@ export class StVisitor extends StructuredTextVisitor<void> {
                 let parentCtx = ctx.parent!;
 
                 switch (parentCtx.constructor) {
-                    case ImplementsClauseContext:
-                    case ExtendsClauseContext:
-                        parentCtx = parentCtx.parent!;
-                }
-
-                switch (parentCtx.constructor) {
 
                     case InterfaceContext:
-                        return this.getOrCreateInterface(parentCtx as InterfaceContext);
-
                     case FunctionBlockContext:
-                        return this.getOrCreateFunctionBlock(parentCtx as FunctionBlockContext);
-                                       
                     case Function:
-                        return this.getOrCreateFunction(parentCtx as FunctionContext);
-                                        
                     case MethodContext:
-                        return this.getOrCreateMethod(parentCtx as MethodContext);
-                   
                     case PropertyContext:
-                        return this.getOrCreateProperty(parentCtx as PropertyContext);
-                    
                     case VarDeclContext:
-                        return this.getOrCreateVarDecl(parentCtx as VarDeclContext);
-                    
+                        return ctx.parent ?? undefined;
+                        
                     case EnumDeclContext:
-                        return this.getOrCreateEnum(parentCtx.parent as TypeDeclContext);
+                    case ImplementsClauseContext:
+                    case ExtendsClauseContext:
+                        return ctx.parent?.parent ?? undefined;
                         
                     default:
                         return undefined;
@@ -656,28 +549,19 @@ export class StVisitor extends StructuredTextVisitor<void> {
         );
     }
 
-    private getOrCreate(
+    private create(
         ctx: ParserRuleContext,
         nameToken: Token | undefined,
         symbolKind: StSymbolKind,
-        createParentSymbol?: () => StSymbol | undefined
+        getParentContext?: () => ParserRuleContext | undefined
     ): StSymbol {
 
-        // Do nothing if symbol already exists
-        let symbol = this._sourceFile.symbolMap.get(ctx);
-
-        if (symbol)
-            return symbol;
-
         // Find optional parent
-        let parent: StSymbol | undefined;
+        const parentCtx = getParentContext?.();
 
-        if (ctx.parent) {
-            parent = this._sourceFile.symbolMap.get(ctx.parent);
-
-            if (!parent && createParentSymbol)
-                parent = createParentSymbol();
-        }
+        const parent = parentCtx
+            ? this._sourceFile.symbolMap.get(parentCtx)
+            :undefined;
         
         // Create symbol
         const range = this.getRangeFromContext(ctx);
@@ -690,7 +574,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
             ? nameToken.text
             : undefined;
 
-        symbol = new StSymbol(
+        const symbol = new StSymbol(
             this._documentUri,
             nameToken,
             name,

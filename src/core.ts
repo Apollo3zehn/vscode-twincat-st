@@ -35,6 +35,7 @@ export class StSymbol {
 
     public accessModifier: StAccessModifier | undefined;
     public type: StSymbol | undefined;
+    public isBuiltinType: boolean | undefined;
     public typeInfo: StTypeInfo | undefined;
     public declaration: StSymbol | undefined;
     public references: StSymbol[] | undefined;

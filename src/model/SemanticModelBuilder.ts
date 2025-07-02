@@ -46,7 +46,7 @@ export class SemanticModelBuilder {
 
                     case StSymbolKind.TypeUsage:
                         
-                        if ((ctx as TypeContext).builtinType())
+                        if (symbol.isBuiltinType)
                             continue;
                         
                         symbol.declaration = this.findTypeDeclaringSymbol(symbol);
@@ -182,6 +182,7 @@ export class SemanticModelBuilder {
                     (
                         typeDeclaration.kind === StSymbolKind.FunctionBlock ||
                         typeDeclaration.kind === StSymbolKind.Struct ||
+                        typeDeclaration.kind === StSymbolKind.Enum ||
                         typeDeclaration.kind === StSymbolKind.Interface
                     ) &&
                     typeDeclaration.name === symbol.name

@@ -1,4 +1,4 @@
-TYPE E_Color1 :
+TYPE MyColor1 :
 (
     White   := 0,
 
@@ -6,28 +6,18 @@ TYPE E_Color1 :
 ) DWORD := Yellow;
 END_TYPE
 
-TYPE E_Color2 :
+TYPE INTERNAL MyColor2 :
 (
-    // White
-    White := 0, // White
+    White := 0,
 
-    Yellow, // Yellow
+    Yellow,
     
     Blue
 ) DWORD;
 END_TYPE
 
-TYPE E_Color3 :
+TYPE MyColor3 :
 (
     White := 0
 ) := White;
 END_TYPE
-
-FUNCTION_BLOCK ColorTester
-
-    VAR
-        _enum: E_Color1;
-    END_VAR
-
-    _enum := E_Color1.Yellow;
-END_FUNCTION_BLOCK

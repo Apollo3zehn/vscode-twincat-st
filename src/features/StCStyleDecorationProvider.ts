@@ -65,7 +65,7 @@ export class StCStyleDecorationProvider {
         const endRegex = /\b(END_SET|END_GET|END_CASE|END_WHILE|END_REPEAT|END_FOR|END_IF|END_VAR|END_METHOD|END_PROPERTY|END_FUNCTION_BLOCK|END_FUNCTION|END_INTERFACE|END_PROGRAM|END_STRUCT);?/g;
         const thenRegex = /\bTHEN\b/g;
         const varRegex = /^\s*(VAR|VAR_INPUT|VAR_OUTPUT|VAR_IN_OUT|VAR_TEMP|VAR_GLOBAL|VAR_EXTERNAL|VAR_STAT|VAR_INST)\b.*$/;
-        const methodRegex = /^\s*(METHOD|FUNCTION_BLOCK|FUNCTION|INTERFACE|PROGRAM|GET|SET)\b.*$/;
+        const definitionRegex = /^\s*(METHOD|FUNCTION_BLOCK|FUNCTION|INTERFACE|PROGRAM|GET|SET)\b.*$/;
         const structRegex = /^\s*STRUCT\b.*$/;
 
         // Get all selected lines (as a Set for fast lookup)
@@ -122,8 +122,8 @@ export class StCStyleDecorationProvider {
                 varDecorations.push({ range: new Range(endPos, endPos) });
             }
 
-            // METHOD ... decorations (add " {" at end of METHOD line)
-            if (methodRegex.test(text) && !selectedLines.has(line)) {
+            // definition ... decorations (add " {" at end of definition line)
+            if (definitionRegex.test(text) && !selectedLines.has(line)) {
                 const endPos = new Position(line, text.length);
                 methodDecorations.push({ range: new Range(endPos, endPos) });
             }

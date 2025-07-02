@@ -4,6 +4,11 @@ Experimental TwinCAT Structured Text support
 # TODO
 - Properly subscribe and unsubscribe events (`context.subscriptions.push`)
 - Full qualified name support (e.g. _counter.Reset()) and also for enums;
+- colorization:
+    - methods without return value (FB_CounteBase.st)
+    - IF ELSE, etc
+    - method calls
+    - variable initializer
 - attribute
 - function
 - numbers (hex, dec, oct, bin, float, negative, scientific, complex?)

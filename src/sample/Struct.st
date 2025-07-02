@@ -1,11 +1,9 @@
-// This is my struct.
-TYPE ST_MyStruct :
+TYPE MyStruct :
 STRUCT
-    // a
     a: BOOL;
 
-    b: INT; // b
+    b: INT;
     
-	c: BOOL := 1; // c
+	c: BOOL := 1;
 END_STRUCT
 END_TYPE

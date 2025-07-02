@@ -25,7 +25,7 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
             x.kind === StSymbolKind.Enum ||
             x.kind === StSymbolKind.Function ||
             x.kind === StSymbolKind.Interface ||
-            x.kind === StSymbolKind.VariableSection
+            (x.kind === StSymbolKind.VariableSection && x.name === "VAR_GLOBAL")
         );
         
         for (const compilationUnit of topLevelUnits) {

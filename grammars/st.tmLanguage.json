@@ -6,17 +6,12 @@
   "uuid": "b8e7c7a0-7c2b-4e6e-9b7e-structured-text-tmgrammar",
   "patterns": [
     { "include": "#comments" },
-    { "include": "#strings" },
-    { "include": "#keywords" },
-    { "include": "#numbers" },
-    { "include": "#typedefs" },
-    { "include": "#types" },
-    { "include": "#sections" },
+    { "include": "#varsections" },
+    { "include": "#programs" },
     { "include": "#functions" },
-    { "include": "#properties" },
-    { "include": "#methods" },
-    { "include": "#operators" },
-    { "include": "#identifiers" }
+    { "include": "#functionblocks" },
+    { "include": "#interfaces" },
+    { "include": "#typedefs" }
   ],
   "repository": {
     "comments": {
@@ -84,14 +79,105 @@
         { "name": "constant.numeric.integer.st", "match": "\\b(BYTE|D?WORD|L?WORD|U?(S|D|L)?INT)#(2|8|16)?#[0-9A-Fa-f_]+\\b" }
       ]
     },
+    "programs": {
+      "patterns": [
+        {
+          "begin": "^\\s*(PROGRAM)\\s+([^\\s]+)(?:\\s+([^\\s]+))?",
+          "beginCaptures": {
+            "1": { "name": "storage.modifier.st" },
+            "2": { "patterns": [{ "include": "#keywords"}, { "name": "support.type.st" }] },
+            "3": { "name": "support.type.st" }
+          },
+          "end": "^\\s*END_PROGRAM\\s*$",
+          "endCaptures": {
+            "0": { "name": "storage.modifier.st" }
+          },
+          "patterns": [
+            { "include": "#varsections" },
+            { "include": "#implementation" }
+          ]
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "begin": "^\\s*(FUNCTION)\\s+([^\\s]+)(?:\\s+([^\\s]+))?\\s*:\\s*([^\\s]+)",
+          "beginCaptures": {
+            "1": { "name": "keyword.other.st" },
+            "2": { "name": "entity.name.function.st", "patterns": [{ "include": "#keywords" }] },
+            "3": { "name": "entity.name.function.st" },
+            "4": { "patterns": [{ "include": "#types"}] }
+          },
+          "end": "^\\s*END_FUNCTION\\s*$",
+          "endCaptures": {
+            "0": { "name": "keyword.other.st" }
+          },
+          "patterns": [
+            { "include": "#comments" },
+            { "include": "#varsections" },
+            { "include": "#implementation" }
+          ]
+        }
+      ]
+    },
+    "functionblocks": {
+      "patterns": [
+        {
+          "begin": "^\\s*(FUNCTION_BLOCK)\\s+([^\\s]+)(?:\\s+([^\\s]+))?",
+          "beginCaptures": {
+            "1": { "name": "keyword.other.st" },
+            "2": { "name": "support.type.st", "patterns": [{ "include": "#keywords"}] },
+            "3": { "name": "support.type.st" }
+          },
+          "end": "^\\s*END_FUNCTION_BLOCK\\s*$",
+          "endCaptures": {
+            "0": { "name": "keyword.other.st" }
+          },
+          "patterns": [
+            { "include": "#comments" },
+            { "include": "#varsections" },
+            { "include": "#properties" },
+            { "include": "#methods" },
+            { "include": "#implementation" }
+          ]
+        }
+      ]
+    },
+    "interfaces": {
+      "patterns": [
+        {
+          "begin": "^\\s*(INTERFACE)\\s+([^\\s]+)(?:\\s+([^\\s]+))?",
+          "beginCaptures": {
+            "1": { "name": "keyword.other.st" },
+            "2": { "name": "support.type.st", "patterns": [{ "include": "#keywords"}] },
+            "3": { "name": "support.type.st" }
+          },
+          "end": "^\\s*END_INTERFACE\\s*$",
+          "endCaptures": {
+            "0": { "name": "keyword.other.st" }
+          },
+          "patterns": [
+            { "include": "#comments" },
+            { "include": "#properties" },
+            { "include": "#methods" }
+          ]
+        }
+      ]
+    },
     "typedefs": {
       "patterns": [
         {
-          "begin": "(?<=\\bTYPE\\b\\s*)([A-Za-z_][A-Za-z0-9_]+)\\s*:",
-          "beginCaptures": {
-            "1": { "name": "support.type.st" }
+          "begin": "^\\s*(TYPE)\\s+([^\\s]+)(?:\\s+([^\\s]+))?",
+          "captures": {
+            "1": { "name": "keyword.other.st" },
+            "2": { "name": "support.type.st", "patterns": [{ "include": "#keywords"}] },
+            "3": { "name": "support.type.st" }
           },
-          "end": "(?=\\bEND_TYPE\\b)",
+          "end": "^\\s*END_TYPE\\s*$",
+          "endCaptures": {
+            "0": { "name": "keyword.other.st" }
+          },
           "patterns": [
             { "include": "#enums" },
             { "include": "#structs" }
@@ -102,19 +188,15 @@
     "enums": {
       "patterns": [
         {
-          "begin": "\\(",
-          "end": "\\)\\s*(?:(\\w+)\\s*)?(?:(:=)\\s*(\\w+))?;",
+          "begin": "^\\s*\\(",
+          "end": "^\\s*\\)\\s*(?:(\\w+)\\s*)?(?:(:=)\\s*(\\w+))?;",
           "endCaptures": {
-            "1": { "name": "support.type.st" },
+            "1": { "name": "storage.type.st" },
             "2": { "name": "keyword.operator" },
             "3": { "name": "variable.other.enummember" }
           },
           "patterns": [
             { "include": "#comments" },
-            {
-              "name": "variable.other.enummember",
-              "match": "^\\s*\\b[A-Za-z_][A-Za-z0-9_]*\\b"
-            },
             {
               "name": "variable.other.enummember",
               "match": "^\\s*\\b[A-Za-z_][A-Za-z0-9_]*\\b"
@@ -130,13 +212,13 @@
     "structs": {
       "patterns": [
         {
-          "begin": "STRUCT",
+          "begin": "^\\s*STRUCT",
           "beginCaptures": {
-            "0": { "name": "storage.type.class.st" }
+            "0": { "name": "keyword.other.st" }
           },
-          "end": "END_STRUCT",
+          "end": "^\\s*END_STRUCT",
           "endCaptures": {
-            "0": { "name": "storage.type.class.st" }
+            "0": { "name": "keyword.other.st" }
           },
           "patterns": [
             { "include": "#comments" },
@@ -148,61 +230,53 @@
         }
       ]
     },
-    "types": {
+    "varsections": {
       "patterns": [
         {
-          "name": "support.type.st",
-          "match": "(?<=\\b(FUNCTION_BLOCK|PROGRAM|FUNCTION|INTERFACE|STRUCT|CLASS)\\s+)([a-zA-Z_][a-zA-Z0-9_]*)"
-        },
-        {
-          "name": "support.type.st",
-          "match": "(?<=\\bIMPLEMENTS\\s+)([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*(,|EXTENDS|$))"
-        },
-        {
-          "name": "support.type.st",
-          "match": "(?<=,\\s*)([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*(,|EXTENDS|$))"
-        },
-        {
-          "name": "support.type.st",
-          "match": "(?<=\\bEXTENDS\\s+)([a-zA-Z_][a-zA-Z0-9_]*)"
-        },
+          "begin": "^\\s*(VAR_INPUT|VAR_OUTPUT|VAR_INOUT|VAR_INST|VAR_GLOBAL|VAR)",
+          "beginCaptures": {
+            "0": { "name": "keyword.other.st" }
+          },
+          "end": "^\\s*END_VAR\\s*$",
+          "endCaptures": {
+            "0": { "name": "keyword.other.st" }
+          },
+          "patterns": [
+            { "include": "#comments" },
+            { "include": "#declarations" }
+          ]
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
         {
           "name": "storage.type.st",
           "match": "\\b(INT|REAL|BOOL|STRING|DINT|BYTE|WORD|DWORD|SINT|USINT|UINT|UDINT|LINT|ULINT|LREAL|TIME|DATE|TIME_OF_DAY|DATE_AND_TIME)\\b"
         },
         {
           "name": "support.type.st",
-          "match": "(?<=:\\s*)([a-zA-Z_][a-zA-Z0-9_]*)"
+          "match": "[a-zA-Z_][a-zA-Z0-9_]*"
         }
       ]
     },
-    "sections": {
+    "methods": {
       "patterns": [
         {
-          "name": "meta.section.var_input.st",
-          "begin": "\\bVAR_INPUT\\b",
-          "end": "\\bEND_VAR\\b",
+          "begin": "^\\s*(METHOD)\\s+([^\\s]+)(?:\\s+([^\\s]+))?\\s*:\\s*([^\\s]+)",
+          "beginCaptures": {
+            "1": { "name": "keyword.other.st" },
+            "2": { "name": "entity.name.function.member.st", "patterns": [{ "include": "#keywords" }] },
+            "3": { "name": "entity.name.function.member.st" },
+            "4": { "patterns": [{ "include": "#types"}] }
+          },
+          "end": "^\\s*END_METHOD\\s*$",
+          "endCaptures": {
+            "0": { "name": "keyword.other.st" }
+          },
           "patterns": [
-            { "include": "#identifiers" },
-            { "include": "#types" }
-          ]
-        },
-        {
-          "name": "meta.section.var_output.st",
-          "begin": "\\bVAR_OUTPUT\\b",
-          "end": "\\bEND_VAR\\b",
-          "patterns": [
-            { "include": "#identifiers" },
-            { "include": "#types" }
-          ]
-        },
-        {
-          "name": "meta.section.var.st",
-          "begin": "\\bVAR\\b",
-          "end": "\\bEND_VAR\\b",
-          "patterns": [
-            { "include": "#identifiers" },
-            { "include": "#types" }
+            { "include": "#varsections" },
+            { "include": "#implementation" }
           ]
         }
       ]
@@ -210,30 +284,69 @@
     "properties": {
       "patterns": [
         {
-          "name": "meta.property.st",
-          "begin": "\\bPROPERTY\\b\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+          "begin": "^\\s*(PROPERTY)\\s+([^\\s]+)(?:\\s+([^\\s]+))?\\s*:\\s*([^\\s]+)",
           "beginCaptures": {
-            "1": { "name": "entity.name.property.st" }
+            "1": { "name": "keyword.other.st" },
+            "2": { "name": "variable.other.property.st", "patterns": [{ "include": "#keywords"}] },
+            "3": { "name": "variable.other.property.st" },
+            "4": { "patterns": [{ "include": "#types" }] }
           },
-          "end": "\\bEND_PROPERTY\\b",
+          "end": "^\\s*END_PROPERTY\\s*$",
+          "endCaptures": {
+            "0": { "name": "keyword.other.st" }
+          },
           "patterns": [
             { "include": "#keywords" },
-            { "include": "#operators" },
-            { "include": "#identifiers" }
+            { "include": "#implementation" }
           ]
+        }
+      ]
+    },
+    "implementation": {
+      "patterns": [
+        { "include": "#comments" },
+        { "include": "#assignments" }
+      ]
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "match": "\\s*([^\\s]+)\\s*:\\s*([^\\s]+)",
+          "captures": {
+            "1": { "patterns": [{ "include": "#identifiers" }] },
+            "2": { "patterns": [{ "include": "#types" }] }
+          }
+        }
+      ]
+    },
+    "assignments": {
+      "patterns": [
+        {
+          "match": "^\\s*([^\\s]+)\\s*(:=|REF=)\\s*([^\\s]+)",
+          "captures": {
+            "1": { "patterns": [{ "include": "#identifiers" }] },
+            "2": { "name": "keyword.operator.assignment.st" },
+            "3": { "patterns": [{ "include": "#expression" }] }
+          }
         }
       ]
     },
     "operators": {
       "patterns": [
-        { "name": "entity.name.function.st", "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*(?=\\()" },
-        { "name": "entity.name.function.st", "match": "\\.([a-zA-Z_][a-zA-Z0-9_]*)\\s*(?=\\()" },
         { "name": "keyword.operator.assignment.st", "match": ":=|=" },
         { "name": "keyword.operator.call.st", "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\s*\\(" },
         { "name": "keyword.operator.member.st", "match": "\\." },
         { "name": "keyword.operator.arithmetic.st", "match": "\\+|\\-|\\*|\\/|MOD" },
         { "name": "keyword.operator.comparison.st", "match": "<=|>=|<>|<|>|=" },
         { "name": "keyword.other.st", "match": "\\b(AND|OR|XOR|NOT|SHL|SHR|ROL|ROR)\\b" }
+      ]
+    },
+    "expression": {
+      "patterns": [
+        { "include": "#numbers" },
+        { "include": "#keywords" },
+        { "include": "#operators" },
+        { "include": "#identifiers" }
       ]
     },
     "identifiers": {

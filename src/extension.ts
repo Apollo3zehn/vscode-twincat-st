@@ -9,7 +9,6 @@ import { StReferenceProvider } from './features/StReferenceProvider.js';
 import { StTypeDefinitionProvider } from './features/StTypeDefinitionProvider.js';
 import { StTypeHierarchyProvider } from './features/StTypeHierarchyProvider.js';
 import { StHoverProvider } from './features/StHoverProvider.js';
-import { STSemanticTokenProvider } from './features/StSemanticTokenProvider.js';
 import { StCStyleDecorationProvider } from './features/StCStyleDecorationProvider.js';
 import { StRenameProvider } from './features/StRenameProvider.js';
 
@@ -47,15 +46,6 @@ export async function activate(context: ExtensionContext) {
 
     if (window.activeTextEditor)
         decorationProvider.provideDecorations(window.activeTextEditor.document, window.activeTextEditor)
-
-    // TODO: move this into the StSemanticTokensProvider.ts file
-    const tokenTypes = ['function'];
-    const tokenModifiers: string[] = [];
-
-    context.subscriptions.push(languages.registerDocumentSemanticTokensProvider(
-        documentSelector, new STSemanticTokenProvider(model),
-        new SemanticTokensLegend(tokenTypes, tokenModifiers)
-    ))
 
     context.subscriptions.push(languages.registerHoverProvider(
         documentSelector, new StHoverProvider(model)

@@ -39,7 +39,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
     };
 
     public override visitEnumMember = (ctx: EnumMemberContext): void => {
-        this.createEnumMeber(ctx);
+        this.createEnumMember(ctx);
         this.visitChildren(ctx);
     };
 
@@ -74,6 +74,11 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
     public override visitVarDeclSection = (ctx: VarDeclSectionContext): void => {
         this.createVarDeclSection(ctx, (ctx as VarDeclSectionContext).varSectionType().start!)
+        this.visitChildren(ctx);
+    };
+
+    public override visitVarGlobalSection = (ctx: VarGlobalSectionContext): void => {
+        this.createVarGlobalSection(ctx);
         this.visitChildren(ctx);
     };
 
@@ -190,7 +195,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
        
     }
 
-    private createEnumMeber(ctx: EnumMemberContext): StSymbol {
+    private createEnumMember(ctx: EnumMemberContext): StSymbol {
 
         const idToken = ctx.ID().symbol;
 
@@ -202,51 +207,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
         );
 
         symbol.accessModifier = StAccessModifier.Public;
-
-        let variableKind: VariableKind | undefined = undefined;
-        
-        const parentCtx = ctx.parent!;
-
-        if (parentCtx instanceof VarDeclSectionContext) {
-
-            const sectionTypeCtx = (parentCtx as VarDeclSectionContext).varSectionType();
-            
-            if (sectionTypeCtx.VAR_INPUT()) {
-                variableKind = VariableKind.Input;
-                symbol.accessModifier = StAccessModifier.Private;
-            }
-                
-            else if (sectionTypeCtx.VAR_OUTPUT())
-                variableKind = VariableKind.Output;
-                
-            else if (sectionTypeCtx.VAR_IN_OUT())
-                variableKind = VariableKind.InOut;
-                
-            else if (sectionTypeCtx.VAR_TEMP())
-                variableKind = VariableKind.Local;
-                
-            else if (sectionTypeCtx.VAR_EXTERNAL())
-                variableKind = VariableKind.Global;
-                
-            else if (sectionTypeCtx.VAR_INST()) {
-                variableKind = VariableKind.Local;
-                symbol.accessModifier = StAccessModifier.Private;
-            }
-                
-            else if (sectionTypeCtx.VAR())
-                variableKind = VariableKind.Local;
-            
-        }
-        
-        else if (parentCtx instanceof VarGlobalSectionContext) {
-            variableKind = VariableKind.Global;
-        }
-        
-        else if (parentCtx instanceof StructDeclContext) {
-            variableKind = VariableKind.Input;
-        }
-        
-        symbol.variableKind = variableKind;
 
         return symbol;
     }
@@ -325,7 +285,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
             this.createVariableUsage(ctx, idToken);
     }
 
-    private createVarDeclSection(ctx: ParserRuleContext, nameToken: Token): StSymbol {
+    private createVarDeclSection(ctx: VarDeclSectionContext, nameToken: Token): StSymbol {
 
         return this.create(
             ctx,
@@ -350,6 +310,15 @@ export class StVisitor extends StructuredTextVisitor<void> {
                         return undefined;
                 }
             }
+        );
+    }
+
+    private createVarGlobalSection(ctx: VarGlobalSectionContext): StSymbol {
+
+        return this.create(
+            ctx,
+            ctx.VAR_GLOBAL().symbol,
+            StSymbolKind.VariableSection
         );
     }
 
@@ -518,7 +487,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
             idToken = ctx.ID()!.symbol;
         }
 
-        return this.create(
+        const symbol = this.create(
             ctx,
             idToken,
             StSymbolKind.TypeUsage,
@@ -547,6 +516,11 @@ export class StVisitor extends StructuredTextVisitor<void> {
                 }
             }
         );
+
+        if (builtinTypeNode)
+            symbol.isBuiltinType = true;
+        
+        return symbol;
     }
 
     private create(

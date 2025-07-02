@@ -22,6 +22,7 @@ export class StDiagnosticsProvider {
 
         for (const symbol of sourceFile.symbolMap.values()) {
 
+            // --- Unused variable/method/function diagnostics ---
             if (
                 (
                     symbol.kind === StSymbolKind.Variable ||
@@ -41,6 +42,19 @@ export class StDiagnosticsProvider {
                 );
 
                 diagnostic.tags = [DiagnosticTag.Unnecessary];
+                diagnostics.push(diagnostic);
+            }
+
+            // --- Type could not be resolved diagnostics ---
+            if (
+                symbol.kind === StSymbolKind.TypeUsage &&
+                (!symbol.isBuiltinType && !symbol.declaration)
+            ) {
+                const diagnostic = new Diagnostic(
+                    symbol.selectionRange ?? symbol.range,
+                    `Type '${symbol.name ?? "?"}' could not be resolved.`,
+                    DiagnosticSeverity.Error
+                );
                 diagnostics.push(diagnostic);
             }
         }

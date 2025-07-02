@@ -643,7 +643,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
                         return this.getOrCreateProperty(parentCtx as PropertyContext);
                     
                     case VarDeclContext:
-                        return this.getOrCreateVarDecl(parentCtx as VarDeclContext);                      
+                        return this.getOrCreateVarDecl(parentCtx as VarDeclContext);
+                    
+                    case EnumDeclContext:
+                        return this.getOrCreateEnum(parentCtx.parent as TypeDeclContext);
                         
                     default:
                         return undefined;

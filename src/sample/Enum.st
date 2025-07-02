@@ -23,7 +23,7 @@ TYPE E_Color3 :
 ) := White;
 END_TYPE
 
-FUNCTION_BLOCK
+FUNCTION_BLOCK ColorTester
 
     VAR
         _enum: E_Color1;

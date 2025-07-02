@@ -13,3 +13,23 @@ Experimental TwinCAT Structured Text support
 - Virtual file system
 - TwinCAT remote control (compiling)
 - Suggestions / Error tolerant parser
+
+# Var types:
+
+TE1000XAE -> Plc -> Reference programming -> Variables
+
+    Local Variables - VAR
+    Input Variables - VAR_INPUT
+    Output Variables - VAR_OUTPUT
+    Input/Output Variables - VAR_IN_OUT, VAR_IN_OUT CONSTANT
+    Global Variables - VAR_GLOBAL
+    Temporary Variable - VAR_TEMP
+    Static Variables - VAR_STAT
+    External Variables - VAR_EXTERNAL
+    Instance Variables - VAR_INST
+    Constant variables - CONSTANT
+    Generic constant variables - VAR_GENERIC CONSTANT
+    Remanent Variables - PERSISTENT, RETAIN
+    SUPER
+    THIS
+    Variable types - attribute keywords

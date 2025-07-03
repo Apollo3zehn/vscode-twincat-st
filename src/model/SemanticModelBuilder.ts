@@ -2,7 +2,7 @@ import { CharStream, CommonTokenStream, ParserRuleContext, Token } from "antlr4n
 import { TextDocument, Uri, workspace } from "vscode";
 import { logger, SourceFile, StSymbol, StSymbolKind } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
-import { ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, MethodContext, ProgramContext, PropertyContext, StructuredTextParser, TypeContext, VarDeclContext } from "../generated/StructuredTextParser.js";
+import { EnumDeclContext, ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, MethodContext, ProgramContext, PropertyContext, StructuredTextParser, TypeContext, TypeDeclContext, VarDeclContext } from "../generated/StructuredTextParser.js";
 import { StVisitor } from "./StVisitor.js";
 
 export class SemanticModelBuilder {
@@ -107,6 +107,10 @@ export class SemanticModelBuilder {
                         this.findAndAssignTypeUsageSymbol(symbol);
                         break;
 
+                    case StSymbolKind.EnumMember:
+                        this.findAndAssignTypeUsageSymbol(symbol, true);
+                        break;
+
                     case StSymbolKind.VariableUsage:
                         this.findAndAssignVariableDeclaringSymbol(ctx, symbol, sourceFile);
                         break;
@@ -198,12 +202,16 @@ export class SemanticModelBuilder {
         }
     }
     
-    private findAndAssignTypeUsageSymbol(symbol: StSymbol): StSymbol | undefined {
+    private findAndAssignTypeUsageSymbol(symbol: StSymbol, searchInParent: boolean = false) {
         
-        if (!symbol.children)
+        const children = searchInParent
+            ? symbol.parent?.children
+            : symbol.children;
+
+        if (!children)
             return;
 
-        const typeSymbol = symbol.children
+        const typeSymbol = children
             .find(child => child.kind === StSymbolKind.TypeUsage);
 
         if (typeSymbol)
@@ -274,17 +282,23 @@ export class SemanticModelBuilder {
         // Search for variable declaration in this level
         for (const child of parent.children) {
 
-            if (child.kind === StSymbolKind.VariableSection && child.children) {
+            if (child.children) {
+
+                if (child.kind === StSymbolKind.VariableSection && child.children) {
                 
-                for (const varDecl of child.children) {
-                    if (
-                        varDecl.kind === StSymbolKind.Variable &&
-                        varDecl.name === name
-                    ) {
-                        return varDecl;
+                    for (const varDecl of child.children) {
+                        if (
+                            varDecl.kind === StSymbolKind.Variable &&
+                            varDecl.name === name
+                        ) {
+                            return varDecl;
+                        }
                     }
                 }
             }
+
+            if (child.kind === StSymbolKind.EnumMember && child.name === name)
+                return child;
         }
 
         // Try next level up (parent of parent)
@@ -305,7 +319,8 @@ export class SemanticModelBuilder {
                 current instanceof FunctionBlockContext ||
                 current instanceof FunctionContext ||
                 current instanceof PropertyContext ||
-                current instanceof MethodContext
+                current instanceof MethodContext ||
+                current instanceof TypeDeclContext
             ) {
                 return sourceFile.symbolMap.get(current);
             }

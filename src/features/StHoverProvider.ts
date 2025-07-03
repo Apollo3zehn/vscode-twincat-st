@@ -1,7 +1,7 @@
 import { Hover, HoverProvider, MarkdownString, Position, ProviderResult, TextDocument } from "vscode";
 import { SourceFile, StSymbol, StSymbolKind, VariableKind } from "../core.js";
+import { EnumMemberContext } from "../generated/StructuredTextParser.js";
 import { findSymbolAtPosition, isInRange } from "../utils.js";
-import { EnumDeclContext, EnumMemberContext } from "../generated/StructuredTextParser.js";
 
 export class StHoverProvider implements HoverProvider {
 

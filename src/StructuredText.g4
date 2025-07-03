@@ -16,13 +16,13 @@ compilationUnit
 // =======================
 // Program organization units
 // =======================
-program             : attribute? PROGRAM        accessModifier?             ID varDeclSection* statementSection END_PROGRAM ;
-function            : attribute? FUNCTION       accessModifier?             ID ':' type implementsClause? extendsClause? varDeclSection* statementSection END_FUNCTION ;
-functionBlock       : attribute? FUNCTION_BLOCK accessModifier? modifier*   ID implementsClause? extendsClause? member* statementSection END_FUNCTION_BLOCK ;
-property            : attribute? PROPERTY       accessModifier? modifier*   ID ':' type varDeclSection* propertyBody END_PROPERTY ;
-method              : attribute? METHOD         accessModifier? modifier*   ID (':' type)? varDeclSection* statementSection END_METHOD ;
-interface           : attribute? INTERFACE      accessModifier?             ID extendsClause? member* END_INTERFACE ;
-varGlobalSection    : attribute? VAR_GLOBAL                     modifier*      varDecl+ END_VAR ;
+program             : attribute? PROGRAM        accessModifier?             ID                                                  varDeclSection* statementSection    END_PROGRAM ;
+function            : attribute? FUNCTION       accessModifier?             ID (':' type)?                                      varDeclSection* statementSection    END_FUNCTION ;
+method              : attribute? METHOD         accessModifier? modifier*   ID (':' type)?                                      varDeclSection* statementSection    END_METHOD ;
+property            : attribute? PROPERTY       accessModifier? modifier*   ID ':' type                                         varDeclSection* propertyBody        END_PROPERTY ;
+functionBlock       : attribute? FUNCTION_BLOCK accessModifier? modifier*   ID              extendsClause? implementsClause?    member*         statementSection    END_FUNCTION_BLOCK ;
+interface           : attribute? INTERFACE      accessModifier?             ID              extendsClause?                      member*                             END_INTERFACE ;
+varGlobalSection    : attribute? VAR_GLOBAL     accessModifier? modifier*                                                       varDecl+                            END_VAR ;
 
 // =======================
 // Type declarations
@@ -33,11 +33,15 @@ typeDecl
     ;
 
 enumDecl
-    : '(' enumMember (',' enumMember)* ')' (type)? (':=' ID)? ';'
+    : '(' enumMember (',' enumMember)* ')' (type)? (':=' initialValue)? ';'
     ;
 
 enumMember
     : ID (':=' expr)?
+    ;
+
+initialValue
+    : ID
     ;
 
 structDecl

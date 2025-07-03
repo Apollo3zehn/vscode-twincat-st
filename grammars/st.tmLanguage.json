@@ -82,10 +82,10 @@
     "programs": {
       "patterns": [
         {
-          "begin": "^\\s*(PROGRAM)\\s+([^\\s]+)(?:\\s+([^\\s]+))?",
+          "begin": "^\\s*(PROGRAM)\\s+(?:(PUBLIC|PRIVATE|PROTECTED|INTERNAL)\\s+)?([^\\s]+)",
           "beginCaptures": {
-            "1": { "name": "storage.modifier.st" },
-            "2": { "patterns": [{ "include": "#keywords"}, { "name": "support.type.st" }] },
+            "1": { "name": "keyword.other.st" },
+            "2": { "patterns": [{ "include": "#keywords"}] },
             "3": { "name": "support.type.st" }
           },
           "end": "^\\s*END_PROGRAM\\s*$",
@@ -124,11 +124,20 @@
     "functionblocks": {
       "patterns": [
         {
-          "begin": "^\\s*(FUNCTION_BLOCK)\\s+([^\\s]+)(?:\\s+([^\\s]+))?",
+          "begin": "^\\s*(FUNCTION_BLOCK)\\s+((?:(?:PUBLIC|PRIVATE|PROTECTED|INTERNAL|ABSTRACT)\\s+)*)([^\\s]+)\\s*(.*)",
           "beginCaptures": {
             "1": { "name": "keyword.other.st" },
-            "2": { "name": "support.type.st", "patterns": [{ "include": "#keywords"}] },
-            "3": { "name": "support.type.st" }
+            "2": { "patterns": [{ "include": "#keywords"}] },
+            "3": { "name": "support.type.st" },
+            "4": { "patterns": [
+              {
+                "match": "((?:EXTENDS|IMPLEMENTS).*?)(?=(IMPLEMENTS.*|$))",
+                "captures": {
+                  "1": { "patterns": [{ "include": "#extends"}, { "include": "#implements"}] },
+                  "2": { "patterns": [{ "include": "#extends"}, { "include": "#implements"}] }
+                }
+              }
+            ]}
           },
           "end": "^\\s*END_FUNCTION_BLOCK\\s*$",
           "endCaptures": {
@@ -136,6 +145,8 @@
           },
           "patterns": [
             { "include": "#comments" },
+            { "include": "#extends" },
+            { "include": "#implements" },
             { "include": "#varsections" },
             { "include": "#properties" },
             { "include": "#methods" },
@@ -147,11 +158,12 @@
     "interfaces": {
       "patterns": [
         {
-          "begin": "^\\s*(INTERFACE)\\s+([^\\s]+)(?:\\s+([^\\s]+))?",
+          "begin": "^\\s*(INTERFACE)\\s+(?:(PUBLIC|PRIVATE|PROTECTED|INTERNAL)\\s+)?([^\\s]+)\\s*(.*)",
           "beginCaptures": {
             "1": { "name": "keyword.other.st" },
-            "2": { "name": "support.type.st", "patterns": [{ "include": "#keywords"}] },
-            "3": { "name": "support.type.st" }
+            "2": { "patterns": [{ "include": "#keywords"}] },
+            "3": { "name": "support.type.st" },
+            "4": { "patterns": [{ "include": "#extends"}]}
           },
           "end": "^\\s*END_INTERFACE\\s*$",
           "endCaptures": {
@@ -168,10 +180,10 @@
     "typedefs": {
       "patterns": [
         {
-          "begin": "^\\s*(TYPE)\\s+([^\\s]+)(?:\\s+([^\\s]+))?",
+          "begin": "^\\s*(TYPE)\\s+(?:(PUBLIC|PRIVATE|PROTECTED|INTERNAL)\\s+)?([^\\s]+)\\s*:",
           "captures": {
             "1": { "name": "keyword.other.st" },
-            "2": { "name": "support.type.st", "patterns": [{ "include": "#keywords"}] },
+            "2": { "patterns": [{ "include": "#keywords"}] },
             "3": { "name": "support.type.st" }
           },
           "end": "^\\s*END_TYPE\\s*$",
@@ -263,12 +275,12 @@
     "methods": {
       "patterns": [
         {
-          "begin": "^\\s*(METHOD)\\s+([^\\s]+)(?:\\s+([^\\s]+))?\\s*:\\s*([^\\s]+)",
+          "begin": "^\\s*(METHOD)\\s+((?:(?:PUBLIC|PRIVATE|PROTECTED|INTERNAL|ABSTRACT)\\s+)*)([^\\s]+)\\s*(?::\\s*([^\\s]+))?",
           "beginCaptures": {
             "1": { "name": "keyword.other.st" },
-            "2": { "name": "entity.name.function.member.st", "patterns": [{ "include": "#keywords" }] },
+            "2": { "patterns": [{ "include": "#keywords"}] },
             "3": { "name": "entity.name.function.member.st" },
-            "4": { "patterns": [{ "include": "#types"}] }
+            "4": { "patterns": [{ "include": "#types"}]}
           },
           "end": "^\\s*END_METHOD\\s*$",
           "endCaptures": {
@@ -284,12 +296,12 @@
     "properties": {
       "patterns": [
         {
-          "begin": "^\\s*(PROPERTY)\\s+([^\\s]+)(?:\\s+([^\\s]+))?\\s*:\\s*([^\\s]+)",
+          "begin": "^\\s*(PROPERTY)\\s+((?:(?:PUBLIC|PRIVATE|PROTECTED|INTERNAL|ABSTRACT)\\s+)*)([^\\s]+)\\s*(?::\\s*([^\\s]+))?",
           "beginCaptures": {
             "1": { "name": "keyword.other.st" },
-            "2": { "name": "variable.other.property.st", "patterns": [{ "include": "#keywords"}] },
+            "2": { "patterns": [{ "include": "#keywords"}] },
             "3": { "name": "variable.other.property.st" },
-            "4": { "patterns": [{ "include": "#types" }] }
+            "4": { "patterns": [{ "include": "#types"}]}
           },
           "end": "^\\s*END_PROPERTY\\s*$",
           "endCaptures": {
@@ -306,6 +318,28 @@
       "patterns": [
         { "include": "#comments" },
         { "include": "#assignments" }
+      ]
+    },
+    "extends": {
+      "patterns": [
+        {
+          "match": "(EXTENDS)\\s*(.*)",
+          "captures": {
+            "1": { "name": "keyword.other.st" },
+            "2": { "patterns": [{ "include": "#types" }] }
+          }
+        }
+      ]
+    },
+    "implements": {
+      "patterns": [
+        {
+          "match": "(IMPLEMENTS)\\s*(.*)",
+          "captures": {
+            "1": { "name": "keyword.other.st" },
+            "2": { "patterns": [{ "include": "#types" }] }
+          }
+        }
       ]
     },
     "declarations": {

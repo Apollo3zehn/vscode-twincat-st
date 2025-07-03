@@ -1,4 +1,4 @@
-FUNCTION_BLOCK ColorTester
+FUNCTION_BLOCK TypeUsage
 
     VAR
         _functionBlock: MyFunctionBlock;

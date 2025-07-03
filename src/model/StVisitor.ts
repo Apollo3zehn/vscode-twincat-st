@@ -28,12 +28,12 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const enumDeclCtx = ctx.enumDecl();
 
         if (structDeclCtx) {
-            this.createStruct(ctx);
+            this.createStruct(structDeclCtx);
             this.visitChildren(structDeclCtx);
         }
 
         else if (enumDeclCtx) {
-            this.createEnum(ctx);
+            this.createEnum(enumDeclCtx);
             this.visitChildren(enumDeclCtx);
         }
     };
@@ -132,17 +132,15 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
     //#region Create
 
-    private createProgram(ctx: ProgramContext): StSymbol {
+    private createProgram(ctx: ProgramContext) {
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, StSymbolKind.Program);
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
-
-        return symbol;
     }
 
-    private createInterface(ctx: InterfaceContext): StSymbol {
+    private createInterface(ctx: InterfaceContext) {
 
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, StSymbolKind.Interface);
@@ -151,11 +149,9 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
-
-        return symbol;
     }
 
-    private createFunctionBlock(ctx: FunctionBlockContext): StSymbol {
+    private createFunctionBlock(ctx: FunctionBlockContext) {
 
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, StSymbolKind.FunctionBlock);
@@ -164,38 +160,40 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
-
-        return symbol;
     }
 
-    private createStruct(ctx: TypeDeclContext): StSymbol {
+    private createStruct(ctx: StructDeclContext) {
 
-        const idToken = ctx.ID().symbol;
-        const symbol = this.create(ctx, idToken, StSymbolKind.Struct);
+        const typeDeclCtx = ctx.parent as TypeDeclContext;
+        const idToken = typeDeclCtx.ID().symbol;
+        const symbol = this.create(typeDeclCtx, idToken, StSymbolKind.Struct);
 
         symbol.typeInfo = new StTypeInfo();
-        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
+        symbol.accessModifier = this.GetAccessModifier(typeDeclCtx.accessModifier() ?? undefined);
+
+        this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
+    }
+
+    private createEnum(ctx: EnumDeclContext) {
+
+        const typeDeclCtx = ctx.parent as TypeDeclContext;
+        const idToken = typeDeclCtx.ID().symbol;
+        const symbol = this.create(typeDeclCtx, idToken, StSymbolKind.Enum);
+
+        symbol.typeInfo = new StTypeInfo();
+        symbol.accessModifier = this.GetAccessModifier(typeDeclCtx.accessModifier() ?? undefined);
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
 
-        return symbol;
+        // Must come AFTER this._sourceFile.typeDeclarationsMap.set(ctx, symbol),
+        // otherwise both symbols will not be properly connected
+        const initialValueCtx = ctx.initialValue();
+
+        if (initialValueCtx)
+            this.createVariableUsage(initialValueCtx, initialValueCtx.ID().symbol)
     }
 
-    private createEnum(ctx: TypeDeclContext): StSymbol {
-
-        const idToken = ctx.ID().symbol;
-        const symbol = this.create(ctx, idToken, StSymbolKind.Enum);
-
-        symbol.typeInfo = new StTypeInfo();
-        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
-
-        this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
-
-        return symbol;
-       
-    }
-
-    private createEnumMember(ctx: EnumMemberContext): StSymbol {
+    private createEnumMember(ctx: EnumMemberContext) {
 
         const idToken = ctx.ID().symbol;
 
@@ -207,11 +205,9 @@ export class StVisitor extends StructuredTextVisitor<void> {
         );
 
         symbol.accessModifier = StAccessModifier.Public;
-
-        return symbol;
     }
 
-    private createFunction(ctx: FunctionContext): StSymbol {
+    private createFunction(ctx: FunctionContext) {
 
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, StSymbolKind.Function);
@@ -219,11 +215,9 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
-
-        return symbol;
     }
 
-    private createMethod(ctx: MethodContext): StSymbol {
+    private createMethod(ctx: MethodContext) {
         
         const idToken = ctx.ID().symbol;
 
@@ -235,11 +229,9 @@ export class StVisitor extends StructuredTextVisitor<void> {
         );
 
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
-
-        return symbol;
     }
 
-    private createProperty(ctx: PropertyContext): StSymbol {
+    private createProperty(ctx: PropertyContext) {
         const idToken = ctx.ID().symbol;
 
         const symbol = this.create(
@@ -273,8 +265,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
         }
 
         symbol.variableKind = variableKind;
-
-        return symbol;
     }
 
     private createArgument(ctx: ArgumentContext) {
@@ -285,9 +275,9 @@ export class StVisitor extends StructuredTextVisitor<void> {
             this.createVariableUsage(ctx, idToken);
     }
 
-    private createVarDeclSection(ctx: VarDeclSectionContext, nameToken: Token): StSymbol {
+    private createVarDeclSection(ctx: VarDeclSectionContext, nameToken: Token) {
 
-        return this.create(
+        this.create(
             ctx,
             nameToken,
             StSymbolKind.VariableSection,
@@ -313,16 +303,16 @@ export class StVisitor extends StructuredTextVisitor<void> {
         );
     }
 
-    private createVarGlobalSection(ctx: VarGlobalSectionContext): StSymbol {
+    private createVarGlobalSection(ctx: VarGlobalSectionContext) {
 
-        return this.create(
+        this.create(
             ctx,
             ctx.VAR_GLOBAL().symbol,
             StSymbolKind.VariableSection
         );
     }
 
-    private createVarDecl(ctx: VarDeclContext): StSymbol {
+    private createVarDecl(ctx: VarDeclContext) {
 
         const idToken = ctx.ID().symbol;
 
@@ -383,7 +373,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
                 
             else if (sectionTypeCtx.VAR())
                 variableKind = VariableKind.Local;
-            
         }
         
         else if (parentCtx instanceof VarGlobalSectionContext) {
@@ -395,8 +384,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
         }
         
         symbol.variableKind = variableKind;
-
-        return symbol;
     }
     
     private processAssignment(ctx: AssignmentContext) {
@@ -413,8 +400,8 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this.visitExpr(ctx.expr());
     }
 
-    private createMethodOrFunctionCall(ctx: ParserRuleContext, idToken: Token): StSymbol {
-        return this.create(
+    private createMethodOrFunctionCall(ctx: ParserRuleContext, idToken: Token) {
+        this.create(
             ctx,
             idToken,
             StSymbolKind.MethodOrFunctionCall,
@@ -422,9 +409,8 @@ export class StVisitor extends StructuredTextVisitor<void> {
         );
     }
 
-    private createVariableUsage(ctx: ParserRuleContext, idToken: Token): StSymbol {
-
-        return this.create(
+    private createVariableUsage(ctx: ParserRuleContext, idToken: Token) {
+        this.create(
             ctx,
             idToken,
             StSymbolKind.VariableUsage,
@@ -445,21 +431,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
                 current instanceof MethodContext ||
                 current instanceof PropertyContext ||
                 current instanceof ArgumentContext ||
-                current instanceof CallStatementContext
+                current instanceof CallStatementContext || 
+                current instanceof TypeDeclContext
             ) {
-                switch (current.constructor) {
-
-                    case ProgramContext:
-                    case FunctionBlockContext:
-                    case FunctionContext:
-                    case MethodContext:
-                    case PropertyContext:
-                    case CallStatementContext:
-                        return current;
-
-                    default:
-                        return undefined;
-                }
+                return current;
             }
 
             current = current.parent ?? undefined;
@@ -468,7 +443,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         return undefined;
     }
 
-    private createType(ctx: TypeContext): StSymbol {
+    private createType(ctx: TypeContext) {
 
         const builtinTypeNode = ctx.builtinType();
         let idToken: Token | undefined;
@@ -497,6 +472,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
                 switch (parentCtx.constructor) {
 
+                    // Parent
                     case InterfaceContext:
                     case FunctionBlockContext:
                     case Function:
@@ -505,6 +481,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
                     case VarDeclContext:
                         return ctx.parent ?? undefined;
                         
+                    // Grandparent
                     case EnumDeclContext:
                     case ImplementsClauseContext:
                     case ExtendsClauseContext:
@@ -519,8 +496,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         if (builtinTypeNode)
             symbol.isBuiltinType = true;
-        
-        return symbol;
     }
 
     private create(

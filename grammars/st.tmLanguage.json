@@ -82,11 +82,10 @@
     "programs": {
       "patterns": [
         {
-          "begin": "^\\s*(PROGRAM)\\s+(?:(PUBLIC|PRIVATE|PROTECTED|INTERNAL)\\s+)?([^\\s]+)",
+          "begin": "^\\s*(PROGRAM)\\s(.*)",
           "beginCaptures": {
             "1": { "name": "keyword.other.st" },
-            "2": { "patterns": [{ "include": "#keywords"}] },
-            "3": { "name": "support.type.st" }
+            "2": { "patterns": [{ "include": "#keywords"}, { "include": "#types"}] }
           },
           "end": "^\\s*END_PROGRAM\\s*$",
           "endCaptures": {
@@ -102,12 +101,24 @@
     "functions": {
       "patterns": [
         {
-          "begin": "^\\s*(FUNCTION)\\s+([^\\s]+)(?:\\s+([^\\s]+))?\\s*:\\s*([^\\s]+)",
+          "begin": "^\\s*(FUNCTION)\\s(.*)",
           "beginCaptures": {
             "1": { "name": "keyword.other.st" },
-            "2": { "name": "entity.name.function.st", "patterns": [{ "include": "#keywords" }] },
-            "3": { "name": "entity.name.function.st" },
-            "4": { "patterns": [{ "include": "#types"}] }
+            "2": { 
+              "patterns": [
+                { "include": "#keywords"},
+                { 
+                  "match": ":\\s*(.*)",
+                  "captures": {
+                    "1": { "patterns": [{ "include": "#types" }] }
+                  }
+                },
+                {
+                  "match": "\\w+",
+                  "name": "entity.name.function.st" 
+                }
+              ]
+            }
           },
           "end": "^\\s*END_FUNCTION\\s*$",
           "endCaptures": {
@@ -121,23 +132,79 @@
         }
       ]
     },
+    "methods": {
+      "patterns": [
+        {
+          "begin": "^\\s*(METHOD)\\s(.*)",
+          "beginCaptures": {
+            "1": { "name": "keyword.other.st" },
+            "2": { 
+              "patterns": [
+                { "include": "#keywords"},
+                { 
+                  "match": ":\\s*(.*)",
+                  "captures": {
+                    "1": { "patterns": [{ "include": "#types" }] }
+                  }
+                },
+                {
+                  "match": "\\w+",
+                  "name": "entity.name.function.member.st" 
+                }
+              ]
+            }
+          },
+          "end": "^\\s*END_METHOD\\s*$",
+          "endCaptures": {
+            "0": { "name": "keyword.other.st" }
+          },
+          "patterns": [
+            { "include": "#varsections" },
+            { "include": "#implementation" }
+          ]
+        }
+      ]
+    },
+    "properties": {
+      "patterns": [
+        {
+          "begin": "^\\s*(PROPERTY)\\s(.*)",
+          "beginCaptures": {
+            "1": { "name": "keyword.other.st" },
+            "2": { 
+              "patterns": [
+                { "include": "#keywords"},
+                { 
+                  "match": ":\\s*(.*)",
+                  "captures": {
+                    "1": { "patterns": [{ "include": "#types" }] }
+                  }
+                },
+                {
+                  "match": "\\w+",
+                  "name": "variable.other.property.st" 
+                }
+              ]
+            }
+          },
+          "end": "^\\s*END_PROPERTY\\s*$",
+          "endCaptures": {
+            "0": { "name": "keyword.other.st" }
+          },
+          "patterns": [
+            { "include": "#keywords" },
+            { "include": "#implementation" }
+          ]
+        }
+      ]
+    },
     "functionblocks": {
       "patterns": [
         {
-          "begin": "^\\s*(FUNCTION_BLOCK)\\s+((?:(?:PUBLIC|PRIVATE|PROTECTED|INTERNAL|ABSTRACT)\\s+)*)([^\\s]+)\\s*(.*)",
+          "begin": "^\\s*(FUNCTION_BLOCK)\\s(.*)",
           "beginCaptures": {
             "1": { "name": "keyword.other.st" },
-            "2": { "patterns": [{ "include": "#keywords"}] },
-            "3": { "name": "support.type.st" },
-            "4": { "patterns": [
-              {
-                "match": "((?:EXTENDS|IMPLEMENTS).*?)(?=(IMPLEMENTS.*|$))",
-                "captures": {
-                  "1": { "patterns": [{ "include": "#extends"}, { "include": "#implements"}] },
-                  "2": { "patterns": [{ "include": "#extends"}, { "include": "#implements"}] }
-                }
-              }
-            ]}
+            "2": { "patterns": [{ "include": "#keywords"}, { "include": "#types"}] }
           },
           "end": "^\\s*END_FUNCTION_BLOCK\\s*$",
           "endCaptures": {
@@ -158,12 +225,10 @@
     "interfaces": {
       "patterns": [
         {
-          "begin": "^\\s*(INTERFACE)\\s+(?:(PUBLIC|PRIVATE|PROTECTED|INTERNAL)\\s+)?([^\\s]+)\\s*(.*)",
+          "begin": "^\\s*(INTERFACE)\\s(.*)",
           "beginCaptures": {
             "1": { "name": "keyword.other.st" },
-            "2": { "patterns": [{ "include": "#keywords"}] },
-            "3": { "name": "support.type.st" },
-            "4": { "patterns": [{ "include": "#extends"}]}
+            "2": { "patterns": [{ "include": "#keywords"}, { "include": "#types"}] }
           },
           "end": "^\\s*END_INTERFACE\\s*$",
           "endCaptures": {
@@ -180,11 +245,10 @@
     "typedefs": {
       "patterns": [
         {
-          "begin": "^\\s*(TYPE)\\s+(?:(PUBLIC|PRIVATE|PROTECTED|INTERNAL)\\s+)?([^\\s]+)\\s*:",
-          "captures": {
+          "begin": "^\\s*(TYPE)\\s(.*)",
+          "beginCaptures": {
             "1": { "name": "keyword.other.st" },
-            "2": { "patterns": [{ "include": "#keywords"}] },
-            "3": { "name": "support.type.st" }
+            "2": { "patterns": [{ "include": "#keywords"}, { "include": "#types"}] }
           },
           "end": "^\\s*END_TYPE\\s*$",
           "endCaptures": {
@@ -201,11 +265,20 @@
       "patterns": [
         {
           "begin": "^\\s*\\(",
-          "end": "^\\s*\\)\\s*(?:(\\w+)\\s*)?(?:(:=)\\s*(\\w+))?;",
+          "end": "^\\s*\\)(.*)",
           "endCaptures": {
-            "1": { "name": "storage.type.st" },
-            "2": { "name": "keyword.operator" },
-            "3": { "name": "variable.other.enummember" }
+            "1": { 
+              "patterns": [
+                { 
+                  "match": "\\s*(\\w+)?(?:\\s*(:=)\\s*(\\w+))?",
+                  "captures": {
+                    "1": { "name": "storage.type.st" },
+                    "2": { "name": "keyword.operator" },
+                    "3": { "name": "variable.other.enummember" }
+                  }
+                }
+              ]
+            }
           },
           "patterns": [
             { "include": "#comments" },
@@ -245,9 +318,10 @@
     "varsections": {
       "patterns": [
         {
-          "begin": "^\\s*(VAR_INPUT|VAR_OUTPUT|VAR_INOUT|VAR_INST|VAR_GLOBAL|VAR)",
+          "begin": "^\\s*(VAR_INPUT|VAR_OUTPUT|VAR_INOUT|VAR_INST|VAR_GLOBAL|VAR)(\\s.*)",
           "beginCaptures": {
-            "0": { "name": "keyword.other.st" }
+            "1": { "name": "keyword.other.st" },
+            "2": { "patterns": [{ "include": "#keywords"}] }
           },
           "end": "^\\s*END_VAR\\s*$",
           "endCaptures": {
@@ -269,48 +343,6 @@
         {
           "name": "support.type.st",
           "match": "[a-zA-Z_][a-zA-Z0-9_]*"
-        }
-      ]
-    },
-    "methods": {
-      "patterns": [
-        {
-          "begin": "^\\s*(METHOD)\\s+((?:(?:PUBLIC|PRIVATE|PROTECTED|INTERNAL|ABSTRACT)\\s+)*)([^\\s]+)\\s*(?::\\s*([^\\s]+))?",
-          "beginCaptures": {
-            "1": { "name": "keyword.other.st" },
-            "2": { "patterns": [{ "include": "#keywords"}] },
-            "3": { "name": "entity.name.function.member.st" },
-            "4": { "patterns": [{ "include": "#types"}]}
-          },
-          "end": "^\\s*END_METHOD\\s*$",
-          "endCaptures": {
-            "0": { "name": "keyword.other.st" }
-          },
-          "patterns": [
-            { "include": "#varsections" },
-            { "include": "#implementation" }
-          ]
-        }
-      ]
-    },
-    "properties": {
-      "patterns": [
-        {
-          "begin": "^\\s*(PROPERTY)\\s+((?:(?:PUBLIC|PRIVATE|PROTECTED|INTERNAL|ABSTRACT)\\s+)*)([^\\s]+)\\s*(?::\\s*([^\\s]+))?",
-          "beginCaptures": {
-            "1": { "name": "keyword.other.st" },
-            "2": { "patterns": [{ "include": "#keywords"}] },
-            "3": { "name": "variable.other.property.st" },
-            "4": { "patterns": [{ "include": "#types"}]}
-          },
-          "end": "^\\s*END_PROPERTY\\s*$",
-          "endCaptures": {
-            "0": { "name": "keyword.other.st" }
-          },
-          "patterns": [
-            { "include": "#keywords" },
-            { "include": "#implementation" }
-          ]
         }
       ]
     },

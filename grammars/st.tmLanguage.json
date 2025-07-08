@@ -346,7 +346,7 @@
       "patterns": [
         {
           "name": "storage.type.st",
-          "match": "\\b(REFERENCE TO|INT|REAL|BOOL|STRING|DINT|BYTE|WORD|DWORD|SINT|USINT|UINT|UDINT|LINT|ULINT|LREAL|TIME|DATE|TIME_OF_DAY|DATE_AND_TIME)\\b"
+          "match": "\\b(POINTER TO|REFERENCE TO|INT|REAL|BOOL|STRING|DINT|BYTE|WORD|DWORD|SINT|USINT|UINT|UDINT|LINT|ULINT|LREAL|TIME|DATE|TIME_OF_DAY|DATE_AND_TIME)\\b"
         },
         {
           "name": "support.type.st",
@@ -397,11 +397,12 @@
     "declarations": {
       "patterns": [
         {
-          "match": "\\s*([^\\s]+)\\s*:\\s*([^;|:=]+)\\s*(?::=(.*))?",
+          "match": "\\s*([^\\s]+)\\s*:\\s*(.*?(?=;|:=|REF=))\\s*(?:(:=|REF=)\\s*(.*))?",
           "captures": {
             "1": { "patterns": [{ "include": "#identifiers" }] },
             "2": { "patterns": [{ "include": "#types" }] },
-            "3": { "patterns": [{ "include": "#expression" }] }
+            "3": { "patterns": [{ "include": "#operators" }] },
+            "4": { "patterns": [{ "include": "#expression" }] }
           }
         }
       ]
@@ -412,7 +413,7 @@
           "match": "^\\s*([^\\s]+)\\s*(:=|REF=)\\s*(.*)",
           "captures": {
             "1": { "patterns": [{ "include": "#identifiers" }] },
-            "2": { "name": "keyword.operator.assignment.st" },
+            "2": { "patterns": [{ "include": "#operators" }] },
             "3": { "patterns": [{ "include": "#expression" }] }
           }
         }
@@ -420,8 +421,9 @@
     },
     "operators": {
       "patterns": [
-        { "name": "keyword.operator.assignment.st", "match": ":=|=" },
-        { "name": "keyword.operator.call.st", "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\s*\\(" },
+        { "name": "keyword.other.st", "match": "REF=" },
+        { "name": "keyword.operator.assignment.st", "match": ":=" },
+        { "name": "entity.name.function", "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\s*\\(" },
         { "name": "keyword.operator.member.st", "match": "\\." },
         { "name": "keyword.operator.arithmetic.st", "match": "\\+|\\-|\\*|\\/|MOD" },
         { "name": "keyword.operator.comparison.st", "match": "<=|>=|<>|<|>|=" },

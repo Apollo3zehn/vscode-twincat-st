@@ -9,5 +9,5 @@ PROGRAM MAIN
 
     _counter(enable := _enable, count := _count, success => _success);
     _counter.Reset();
-    _counter.Value = 99;
+    _counter.Value := 99;
 END_PROGRAM

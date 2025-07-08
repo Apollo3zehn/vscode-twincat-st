@@ -1,4 +1,4 @@
-TYPE MyColor1 :
+TYPE MyEnum1 :
 (
     White   := 0,
 
@@ -6,7 +6,7 @@ TYPE MyColor1 :
 ) DWORD := Yellow;
 END_TYPE
 
-TYPE INTERNAL MyColor2 :
+TYPE INTERNAL MyEnum2 :
 (
     White := 0,
 
@@ -16,7 +16,7 @@ TYPE INTERNAL MyColor2 :
 ) DWORD;
 END_TYPE
 
-TYPE MyColor3 :
+TYPE MyEnum3 :
 (
     White := 0
 ) := White;

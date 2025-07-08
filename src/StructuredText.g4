@@ -64,7 +64,10 @@ member              : method | property | varDeclSection ;
 // =======================
 varDeclSection      : varSectionType modifier* varDecl+ END_VAR ;
 varSectionType      : VAR | VAR_INPUT | VAR_OUTPUT | VAR_IN_OUT | VAR_TEMP | VAR_EXTERNAL | VAR_INST | VAR_STAT ;
-varDecl             : attribute? ID ':' (REFERENCE_TO)? arraySpec? type (':=' exprOrArrayInit)? ';' ;
+varDecl             : attribute? ID ':' REFERENCE_TO type ('REF=' expr)? ';'
+                    | attribute? ID ':' POINTER_TO type (':=' expr)? ';'
+                    | attribute? ID ':' arraySpec? type (':=' exprOrArrayInit)? ';'
+                    ;
 arraySpec           : ARRAY '[' NUMBER '..' NUMBER ']' OF ;
 exprOrArrayInit     : expr | arrayInit ;
 arrayInit           : '[' expr (',' expr)* ']' ;
@@ -105,7 +108,7 @@ statement           : assignment
 // =======================
 assignment
     : assignTarget ':=' expr ';'
-    | assignTarget '=' expr ';'
+    | assignTarget 'REF=' expr ';'
     ;
 
 assignTarget
@@ -115,7 +118,7 @@ assignTarget
     ;
 
 arrayIndex          : '[' expr ']' ;
-callStatement       : (ID | memberQualifier '.' ID) '(' argumentList? ')' ';' ;
+callStatement       : (ID CARET? | memberQualifier '.' ID CARET?) '(' argumentList? ')' ';' ;
 argumentList        : argument (',' argument)* ;
 argument            : ID (':=' | '=>') expr | expr ;
 
@@ -246,12 +249,13 @@ PUBLIC              : 'PUBLIC' ;
 PRIVATE             : 'PRIVATE' ;
 PROTECTED           : 'PROTECTED' ;
 INTERNAL            : 'INTERNAL' ;
-REFERENCE_TO        : 'REFERENCE TO' ;
 MOD                 : 'MOD' ;
 TYPE                : 'TYPE' ;
 END_TYPE            : 'END_TYPE' ;
 THIS                : 'THIS' ;
 CARET               : '^' ;
+REFERENCE_TO        : 'REFERENCE TO' ;
+POINTER_TO          : 'POINTER TO' ;
 
 // =======================
 // Literals and identifiers

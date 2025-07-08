@@ -1,4 +1,4 @@
-FUNCTION_BLOCK MyLiterals
+FUNCTION_BLOCK Literals
     VAR
         // BOOL
         bool_false:         BOOL    := FALSE;

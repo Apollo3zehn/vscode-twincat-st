@@ -30,7 +30,6 @@ import { BuiltinTypeContext } from "./StructuredTextParser.js";
 import { StatementSectionContext } from "./StructuredTextParser.js";
 import { StatementContext } from "./StructuredTextParser.js";
 import { AssignmentContext } from "./StructuredTextParser.js";
-import { AssignTargetContext } from "./StructuredTextParser.js";
 import { ArrayIndexContext } from "./StructuredTextParser.js";
 import { CallStatementContext } from "./StructuredTextParser.js";
 import { ArgumentListContext } from "./StructuredTextParser.js";
@@ -46,6 +45,7 @@ import { ReturnStatementContext } from "./StructuredTextParser.js";
 import { ExitStatementContext } from "./StructuredTextParser.js";
 import { ContinueStatementContext } from "./StructuredTextParser.js";
 import { MemberQualifierContext } from "./StructuredTextParser.js";
+import { PrimaryContext } from "./StructuredTextParser.js";
 import { ExprContext } from "./StructuredTextParser.js";
 import { PropertyBodyContext } from "./StructuredTextParser.js";
 import { GetterContext } from "./StructuredTextParser.js";
@@ -228,12 +228,6 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      */
     visitAssignment?: (ctx: AssignmentContext) => Result;
     /**
-     * Visit a parse tree produced by `StructuredTextParser.assignTarget`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitAssignTarget?: (ctx: AssignTargetContext) => Result;
-    /**
      * Visit a parse tree produced by `StructuredTextParser.arrayIndex`.
      * @param ctx the parse tree
      * @return the visitor result
@@ -323,6 +317,12 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      * @return the visitor result
      */
     visitMemberQualifier?: (ctx: MemberQualifierContext) => Result;
+    /**
+     * Visit a parse tree produced by `StructuredTextParser.primary`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPrimary?: (ctx: PrimaryContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.expr`.
      * @param ctx the parse tree

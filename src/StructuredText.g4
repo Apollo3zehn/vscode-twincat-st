@@ -107,18 +107,12 @@ statement           : assignment
 // Assignments and calls
 // =======================
 assignment
-    : assignTarget ':=' expr ';'
-    | assignTarget 'REF=' expr ';'
-    ;
-
-assignTarget
-    : ID (arrayIndex)?
-    | memberQualifier '.' ID (arrayIndex)?
-    | THIS CARET
+    : memberQualifier ':=' expr ';'
+    | memberQualifier 'REF=' expr ';'
     ;
 
 arrayIndex          : '[' expr ']' ;
-callStatement       : (ID CARET? | memberQualifier '.' ID CARET?) '(' argumentList? ')' ';' ;
+callStatement       : (memberQualifier '.')? ID '(' argumentList? ')' ';';
 argumentList        : argument (',' argument)* ;
 argument            : ID (':=' | '=>') expr | expr ;
 
@@ -143,7 +137,15 @@ continueStatement   : CONTINUE ';' ;
 // =======================
 // Expressions
 // =======================
-memberQualifier     : (ID (arrayIndex)?) | (THIS CARET) ;
+memberQualifier     : primary
+                    | memberQualifier '.' ID
+                    | memberQualifier CARET
+                    ;
+
+primary
+    : THIS
+    | ID (arrayIndex)?
+    ;
 
 expr
     : expr op=('*'|'/'|MOD) expr

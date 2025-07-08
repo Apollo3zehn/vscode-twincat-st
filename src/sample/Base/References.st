@@ -1,7 +1,5 @@
 FUNCTION_BLOCK Referenced
-    METHOD Method
-        //
-    END_METHOD
+    //
 END_FUNCTION_BLOCK
 
 FUNCTION_BLOCK References
@@ -13,8 +11,5 @@ FUNCTION_BLOCK References
     END_VAR
 
     ref REF= original;
-    ref.Method();
-
     ptr := ADR(original);
-    ptr^.Method();
 END_FUNCTION_BLOCK

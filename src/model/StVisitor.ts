@@ -1,7 +1,7 @@
 import { ParserRuleContext, Token } from "antlr4ng";
 import { Range, Uri } from "vscode";
-import { SourceFile, StAccessModifier, StSymbol, StSymbolKind, StTypeInfo, VariableKind } from "../core.js";
-import { AccessModifierContext, ArgumentContext, AssignmentContext, CallStatementContext, EnumDeclContext, EnumMemberContext, ExprContext, ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, InterfaceContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StructDeclContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { logger, SourceFile, StAccessModifier, StSymbol, StSymbolKind, StTypeInfo, VariableKind } from "../core.js";
+import { AccessModifierContext, ArgumentContext, AssignmentContext, CallStatementContext, EnumDeclContext, EnumMemberContext, ExprContext, ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, InterfaceContext, MemberContext, MemberQualifierContext, MethodContext, PrimaryContext, ProgramContext, PropertyContext, StructDeclContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 
 export class StVisitor extends StructuredTextVisitor<void> {
@@ -91,6 +91,28 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this.processAssignment(ctx);
     };
 
+    public override visitMemberQualifier = (ctx: MemberQualifierContext): void => {
+        
+        const idToken = ctx.ID()?.symbol
+
+        if (idToken)
+            this.createVariableUsage(ctx, idToken);
+
+        this.visitChildren(ctx);
+    }
+
+    public override visitPrimary = (ctx: PrimaryContext): void => {
+        
+        const idToken =
+            ctx.ID()?.symbol ??
+            ctx.THIS()?.symbol
+        
+        logger.appendLine(idToken?.text ?? "?");
+
+        if (idToken)
+            this.createVariableUsage(ctx, idToken);
+    }
+
     public override visitExpr = (ctx: ExprContext): void => {
 
         const variableUsageToken = ctx.ID()?.symbol;
@@ -105,16 +127,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
     public override visitCallStatement? = (ctx: CallStatementContext): void => {
 
-        /* Qualified member assignment is not yet supported */
-        if (ctx.memberQualifier())
-            return;
-
-        const idNode = ctx.ID();
-
-        if (!idNode)
-            return;
-
-        const idToken = idNode.symbol;
+        const idToken = ctx.ID().symbol;
 
         this.createMethodOrFunctionCall(ctx, idToken);
         this.visitChildren(ctx);
@@ -388,18 +401,17 @@ export class StVisitor extends StructuredTextVisitor<void> {
     
     private processAssignment(ctx: AssignmentContext) {
 
-        const assignTargetContext = ctx.assignTarget();
+        const memberQualifierContext = ctx.memberQualifier();
 
-        /* Qualified member assignment is not yet supported */
-        if (assignTargetContext.memberQualifier())
+        if (!memberQualifierContext)
             return;
 
         /* Assignment to a variable ... */
-        let idToken = assignTargetContext.ID()?.symbol
+        let idToken = memberQualifierContext.ID()?.symbol
 
         /* Or assignment to this */
-        if (!idToken && assignTargetContext.THIS() && assignTargetContext.CARET())
-            idToken = assignTargetContext.THIS()?.symbol;
+        if (!idToken && memberQualifierContext.primary()?.THIS() && memberQualifierContext.CARET())
+            idToken = memberQualifierContext.ID()?.symbol;
 
         if (idToken)
             this.createVariableUsage(ctx, idToken);

@@ -2,7 +2,7 @@ import { CharStream, CommonTokenStream, ParserRuleContext, Token } from "antlr4n
 import { TextDocument, Uri, workspace } from "vscode";
 import { logger, SourceFile, StSymbol, StSymbolKind } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
-import { EnumDeclContext, ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, MethodContext, ProgramContext, PropertyContext, StructuredTextParser, TypeContext, TypeDeclContext, VarDeclContext } from "../generated/StructuredTextParser.js";
+import { ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, MethodContext, ProgramContext, PropertyContext, StructuredTextParser, TypeDeclContext } from "../generated/StructuredTextParser.js";
 import { StVisitor } from "./StVisitor.js";
 
 export class SemanticModelBuilder {

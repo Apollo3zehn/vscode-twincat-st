@@ -22,7 +22,7 @@ method              : attribute? METHOD         accessModifier? modifier*   ID (
 property            : attribute? PROPERTY       accessModifier? modifier*   ID ':' type                                         varDeclSection* propertyBody        END_PROPERTY ;
 functionBlock       : attribute? FUNCTION_BLOCK accessModifier? modifier*   ID              extendsClause? implementsClause?    member*         statementSection    END_FUNCTION_BLOCK ;
 interface           : attribute? INTERFACE      accessModifier?             ID              extendsClause?                      member*                             END_INTERFACE ;
-varGlobalSection    : attribute? VAR_GLOBAL     accessModifier? modifier*                                                       varDecl+                            END_VAR ;
+varGlobalSection    : attribute? VAR_GLOBAL     accessModifier? modifier*   ID                                                       varDecl+                            END_VAR ;
 
 // =======================
 // Type declarations
@@ -259,7 +259,7 @@ NUMBER              : [0-9]+ ('.' [0-9]+)? ;
 HEX_NUMBER          : '16#' [0-9A-Fa-f]+ ;
 
 // Time literal support (e.g., T#10S, T#2.5MS, etc.)
-TIME_LITERAL        : 'T#' [0-9]+ ('.' [0-9]+)? ( 'MS' | 'S' | 'M' | 'H' | 'D' ) ;
+TIME_LITERAL        : 'T#' [0-9]+ ( 'MS' | 'S' | 'M' | 'H' | 'D' ) ;
 
 // =======================
 // String literal support

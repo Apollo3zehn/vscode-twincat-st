@@ -1,0 +1,5 @@
+VAR_GLOBAL CONSTANT MyGVL
+	MyValueA: INT := 0;
+
+	MyValueB: INT := 0;
+END_VAR

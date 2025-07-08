@@ -12,9 +12,6 @@
       "Formatters"
   ],
   "type": "module",
-  "activationEvents": [
-    "onLanguage:st"
-  ],
   "main": "./out/extension.js",
   "contributes": {
     "languages": [
@@ -26,7 +23,8 @@
         ],
         "extensions": [
             ".st"
-        ]
+        ],
+        "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [

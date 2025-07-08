@@ -1,6 +1,6 @@
 INTERFACE MyInterface
     
-    PROPERTY Value : INT
+    PROPERTY MyValue : INT
         GET
             //
         END_GET
@@ -9,7 +9,7 @@ INTERFACE MyInterface
         END_SET
     END_PROPERTY
 
-    METHOD Reset : BOOL
+    METHOD MyMethod : BOOL
         //
     END_METHOD
 END_INTERFACE

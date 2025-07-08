@@ -55,6 +55,7 @@ export class StDiagnosticsProvider {
                     `Type '${symbol.name ?? "?"}' could not be resolved.`,
                     DiagnosticSeverity.Error
                 );
+                
                 diagnostics.push(diagnostic);
             }
         }

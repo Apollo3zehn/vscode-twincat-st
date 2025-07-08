@@ -1,3 +1,0 @@
-FUNCTION_BLOCK MyFunctionBlock
-    //
-END_FUNCTION_BLOCK

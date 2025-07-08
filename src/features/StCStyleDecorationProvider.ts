@@ -45,12 +45,11 @@ export class StCStyleDecorationProvider {
         });
 
         this.structDecorationType = window.createTextEditorDecorationType({
-            before: {
-                contentText: '{',
+            after: {
+                contentText: ' {',
                 color: new ThemeColor('editor.foreground'),
-                margin: '0 0.2em 0 0'
-            },
-            textDecoration: 'none; display: none;'
+                margin: '0 0 0 0.2em'
+            }
         });
     }
 
@@ -104,15 +103,15 @@ export class StCStyleDecorationProvider {
                 }
             }
 
-            // STRUCT decorations (add "{" before STRUCT)
+            // STRUCT decorations (add "{" after STRUCT)
             if (structRegex.test(text) && !selectedLines.has(line)) {
 
                 const match = structRegex.exec(text);
-
+                
                 if (match) {
-                    const start = new Position(line, match.index ?? 0);
-                    const end = new Position(line, (match.index ?? 0) + match[0].length);
-                    structDecorations.push({ range: new Range(start, end) });
+                    // The end of the match is right after "STRUCT"
+                    const start = new Position(line, match[0].indexOf("STRUCT") + "STRUCT".length);
+                    structDecorations.push({ range: new Range(start, start) });
                 }
             }
 

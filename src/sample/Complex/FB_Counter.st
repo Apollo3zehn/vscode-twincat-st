@@ -1,7 +1,7 @@
 FUNCTION_BLOCK FB_Counter EXTENDS FB_CounterBase IMPLEMENTS I_Counter, I_Reset
 
     VAR_INPUT
-        enable: BOOL;
+        enable: BOOL := FALSE;
         count:  REFERENCE TO BOOL;
         unused: INT;
     END_VAR
@@ -31,12 +31,12 @@ FUNCTION_BLOCK FB_Counter EXTENDS FB_CounterBase IMPLEMENTS I_Counter, I_Reset
             _unused:        BOOL;
         END_VAR
 
-        _value      := DEFAULT_INT;
+        _value      := Defaults.DEFAULT_INT;
         _resetCount := _resetCount MOD 5 + 1;
     END_METHOD
 
     METHOD PRIVATE UnusedMethod : BOOL
-        _value := DEFAULT_INT;
+        _value := Defaults.DEFAULT_INT;
     END_METHOD
 
     METHOD PRIVATE IncreaseByTwo : BOOL
@@ -44,7 +44,7 @@ FUNCTION_BLOCK FB_Counter EXTENDS FB_CounterBase IMPLEMENTS I_Counter, I_Reset
     END_METHOD
 
     IF enable OR FALSE THEN
-        IncreaseByTwo();
+        THIS^.IncreaseByTwo();
         count := count + 1;
     END_IF;
 END_FUNCTION_BLOCK

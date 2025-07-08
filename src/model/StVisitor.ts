@@ -394,9 +394,16 @@ export class StVisitor extends StructuredTextVisitor<void> {
         if (assignTargetContext.memberQualifier())
             return;
 
-        const idToken = assignTargetContext.ID().symbol;
+        /* Assignment to a variable ... */
+        let idToken = assignTargetContext.ID()?.symbol
 
-        this.createVariableUsage(ctx, idToken);
+        /* Or assignment to this */
+        if (!idToken && assignTargetContext.THIS() && assignTargetContext.CARET())
+            idToken = assignTargetContext.THIS()?.symbol;
+
+        if (idToken)
+            this.createVariableUsage(ctx, idToken);
+
         this.visitExpr(ctx.expr());
     }
 

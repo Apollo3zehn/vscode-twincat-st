@@ -111,6 +111,7 @@ assignment
 assignTarget
     : ID (arrayIndex)?
     | memberQualifier '.' ID (arrayIndex)?
+    | THIS CARET
     ;
 
 arrayIndex          : '[' expr ']' ;
@@ -139,23 +140,23 @@ continueStatement   : CONTINUE ';' ;
 // =======================
 // Expressions
 // =======================
-memberQualifier     : ID (arrayIndex)? ;
+memberQualifier     : (ID (arrayIndex)?) | (THIS CARET) ;
 
 expr
     : expr op=('*'|'/'|MOD) expr
     | expr op=('+'|'-') expr
     | expr op=('='|'<'|'>'|'<='|'>='|'<>') expr
     | expr op=('AND'|'OR'|'XOR') expr
-    | '(' expr ')'                                  // parenthesized expression
+    | '(' expr ')'
     | NUMBER
-    | HEX_NUMBER
     | BOOL
     | TIME_LITERAL
     | STRING_LITERAL
-    | ID '(' argumentList? ')'                      // unqualified member call
-    | ID (arrayIndex)?                              // unqualified member access or array access
-    | memberQualifier '.' ID '(' argumentList? ')'  // qualified member call
-    | memberQualifier '.' ID (arrayIndex)?          // qualified member access or array access
+    | ID '(' argumentList? ')'
+    | ID (arrayIndex)?
+    | memberQualifier '.' ID '(' argumentList? ')'
+    | memberQualifier '.' ID (arrayIndex)?
+    | THIS CARET
     ;
 
 // =======================
@@ -249,22 +250,37 @@ REFERENCE_TO        : 'REFERENCE TO' ;
 MOD                 : 'MOD' ;
 TYPE                : 'TYPE' ;
 END_TYPE            : 'END_TYPE' ;
+THIS                : 'THIS' ;
+CARET               : '^' ;
 
 // =======================
 // Literals and identifiers
 // =======================
 BOOL                : 'TRUE' | 'FALSE' ;
-ID                  : [a-zA-Z_][a-zA-Z0-9_]* ;
-NUMBER              : [0-9]+ ('.' [0-9]+)? ;
-HEX_NUMBER          : '16#' [0-9A-Fa-f]+ ;
-
-// Time literal support (e.g., T#10S, T#2.5MS, etc.)
+NUMBER              : '-'? (
+                        // Typed numbers: INT#1, REAL#1.23, INT#16#FF, etc.
+                        [a-zA-Z_][a-zA-Z0-9_]* '#' (
+                            [0-9]+ ('.' [0-9]+)? ([eE][+\-]?[0-9]+)?        // decimal or float or scientific
+                            | '2#' [01_]+                                   // binary
+                            | '8#' [0-7_]+                                  // octal
+                            | '16#' [0-9A-Fa-f_]+                           // hex
+                        )
+                        // Untyped based numbers: 16#0A, 2#1010, etc.
+                        | (
+                            [0-9]+ ('.' [0-9]+)? ([eE][+\-]?[0-9]+)?        // decimal or float or scientific
+                            | '2#' [01_]+                                   // binary
+                            | '8#' [0-7_]+                                  // octal
+                            | '16#' [0-9A-Fa-f_]+                           // hex
+                        )
+                        // Plain decimal or float or scientific: 1, -1, 1.23, -1.23, 1e3, -1.23e-2
+                        | [0-9]+ ('.' [0-9]+)? ([eE][+\-]?[0-9]+)?
+                    )
+                    ;
 TIME_LITERAL        : 'T#' [0-9]+ ( 'MS' | 'S' | 'M' | 'H' | 'D' ) ;
+ID                  : [a-zA-Z_][a-zA-Z0-9_]* ;
 
-// =======================
-// String literal support
-// =======================
-STRING_LITERAL      : '"' (~["\r\n])* '"' ;
+// String literal support (double and single quoted)
+STRING_LITERAL      : '"' (~["\r\n])* '"' | '\'' (~['\r\n])* '\'' ;
 
 // =======================
 // Whitespace and comments

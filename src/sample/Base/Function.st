@@ -5,4 +5,4 @@ FUNCTION MyFunction
     END_VAR
 
     var_a := TRUE;
-END_FUNCTION_BLOCK
+END_FUNCTION

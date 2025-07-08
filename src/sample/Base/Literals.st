@@ -1,4 +1,4 @@
-FUNCTION MyLiterals
+FUNCTION_BLOCK MyLiterals
     VAR
         // BOOL
         bool_false:         BOOL    := FALSE;
@@ -7,7 +7,7 @@ FUNCTION MyLiterals
         // INT
         int_positive:       INT     := 10;
         int_negative:       INT     := -10;
-        int_typed:          INT     := INT#1;
+        int_typed:          INT     := -INT#1;
 
         // REAL
         real_positive:      REAL    := 1.99;
@@ -20,7 +20,7 @@ FUNCTION MyLiterals
 
         // OCTAL
         int_octal:          INT     := 8#12;
-        int_octal_typed:    INT     := INT#8#77
+        int_octal_typed:    INT     := INT#8#77;
 
         // BINARY
         int_binary:         INT     := 2#1010;
@@ -30,4 +30,4 @@ FUNCTION MyLiterals
         string_quoted_dbl:  STRING  := "The string";
         string_quoted_sgl:  STRING  := 'The string';
     END_VAR
-END_FUNCTION
+END_FUNCTION_BLOCK

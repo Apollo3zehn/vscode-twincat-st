@@ -146,16 +146,16 @@ expr
     | expr op=('+'|'-') expr
     | expr op=('='|'<'|'>'|'<='|'>='|'<>') expr
     | expr op=('AND'|'OR'|'XOR') expr
-    | ID '(' argumentList? ')'                      // unqualified member call
-    | ID (arrayIndex)?                              // unqualified member access or array access
-    | memberQualifier '.' ID '(' argumentList? ')'  // qualified member call
-    | memberQualifier '.' ID (arrayIndex)?          // qualified member access or array access
     | '(' expr ')'                                  // parenthesized expression
     | NUMBER
     | HEX_NUMBER
     | BOOL
     | TIME_LITERAL
     | STRING_LITERAL
+    | ID '(' argumentList? ')'                      // unqualified member call
+    | ID (arrayIndex)?                              // unqualified member access or array access
+    | memberQualifier '.' ID '(' argumentList? ')'  // qualified member call
+    | memberQualifier '.' ID (arrayIndex)?          // qualified member access or array access
     ;
 
 // =======================

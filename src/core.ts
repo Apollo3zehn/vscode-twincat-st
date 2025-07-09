@@ -27,20 +27,32 @@ export class StSymbol {
         public readonly name: string | undefined,
         public readonly kind: StSymbolKind,
         public readonly context: ParserRuleContext,
-        public readonly parent: StSymbol | undefined,
         public readonly range: Range,
         public readonly selectionRange: Range | undefined) {
         //
     }
 
-    public accessModifier: StAccessModifier | undefined;
-    public type: StSymbol | undefined;
-    public isBuiltinType: boolean | undefined;
-    public typeInfo: StTypeInfo | undefined;
-    public declaration: StSymbol | undefined;
-    public references: StSymbol[] | undefined;
-    public variableKind: VariableKind | undefined;
-    public children: StSymbol[] | undefined
+    public accessModifier: StAccessModifier | undefined;    // for many things
+    public type: StSymbol | undefined;                      // for variable declarations 
+    public isBuiltinType: boolean | undefined;              // for type declarations (TODO: move to TypeInfo?)
+    public typeInfo: StTypeInfo | undefined;                // for type declarations
+    public declaration: StSymbol | undefined;               // for variable and type usages
+    public references: StSymbol[] | undefined;              // for many things
+    public variableKind: VariableKind | undefined;          // for variable declarations
+    public parent: StSymbol | undefined;                   // for variable declarations
+    public variables: StSymbol[] | undefined;               // for function blocks, functions, methods, global variable lists, enums, structs
+    public methods: StSymbol[] | undefined;                 // for function blocks, interfaces
+    public properties: StSymbol[] | undefined;              // for function blocks, interfaces
+
+    // Variables = normal variables + GVL members + Enum members + Struct members
+
+    public addChild<K extends 'variables' | 'methods' | 'properties'>(key: K, symbol: StSymbol): void {
+
+        if (!this[key])
+            this[key] = [];
+
+        this[key]!.push(symbol);
+    }
 }
 
 export class StTypeInfo {
@@ -57,7 +69,6 @@ export class StTypeInfo {
 export enum StSymbolKind {
     Unknown,
     Variable,
-    VariableSection,
     Program,
     Function,
     Method,
@@ -73,6 +84,7 @@ export enum StSymbolKind {
 }
 
 export enum VariableKind {
+    None,
     Local,
     Global,
     Input,

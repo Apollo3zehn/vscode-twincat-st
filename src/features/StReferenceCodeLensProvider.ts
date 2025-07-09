@@ -1,5 +1,5 @@
 import { CodeLens, CodeLensProvider, Location, TextDocument } from 'vscode';
-import { SourceFile, StSymbolKind, VariableKind } from '../core.js';
+import { SourceFile, StAccessModifier, StSymbolKind, VariableKind } from '../core.js';
 
 export class StReferencesCodeLensProvider implements CodeLensProvider {
     
@@ -26,11 +26,12 @@ export class StReferencesCodeLensProvider implements CodeLensProvider {
                 symbol.kind === StSymbolKind.Interface ||
                 symbol.kind === StSymbolKind.Function ||
                 symbol.kind === StSymbolKind.Variable ||
+                symbol.kind === StSymbolKind.Property ||
                 symbol.kind === StSymbolKind.Method ||
                 symbol.kind === StSymbolKind.Enum ||
                 symbol.kind === StSymbolKind.EnumMember
             ) {
-                if (symbol.variableKind == VariableKind.Local)
+                if (symbol.accessModifier == StAccessModifier.Private)
                     continue;
 
                 // Reference count

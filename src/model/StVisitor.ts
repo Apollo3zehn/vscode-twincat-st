@@ -1,13 +1,17 @@
 import { ParserRuleContext, Token } from "antlr4ng";
 import { Range, Uri } from "vscode";
 import { logger, SourceFile, StAccessModifier, StSymbol, StSymbolKind, StTypeInfo, VariableKind } from "../core.js";
-import { AccessModifierContext, ArgumentContext, AssignmentContext, CallStatementContext, EnumDeclContext, EnumMemberContext, ExprContext, ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, InterfaceContext, MemberContext, MemberQualifierContext, MethodContext, PrimaryContext, ProgramContext, PropertyContext, StructDeclContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { AccessModifierContext, ArgumentContext, AssignmentContext, CallStatementContext, EnumDeclContext, EnumMemberContext, ExprContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberContext, MemberQualifierContext, MethodContext, PrimaryContext, ProgramContext, PropertyContext, StructDeclContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 
 export class StVisitor extends StructuredTextVisitor<void> {
 
     private _sourceFile: SourceFile;
     private _documentUri: Uri;
+    private _parent: StSymbol | undefined;
+    private _declaration: StSymbol | undefined;
+    private _variableKind: VariableKind = VariableKind.None;
+    private _accessModifier: StAccessModifier = StAccessModifier.Public;
 
     constructor(sourceFile: SourceFile, documentUri: Uri) {
         super();
@@ -43,6 +47,11 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this.visitChildren(ctx);
     };
 
+    public override visitInitialValue = (ctx: InitialValueContext): void => {
+        const idToken = ctx.ID().symbol
+        this.createVariableUsage(ctx, idToken)
+    };
+
     public override visitInterface = (ctx: InterfaceContext): void => {
         this.createInterface(ctx);
         this.visitChildren(ctx);
@@ -73,12 +82,12 @@ export class StVisitor extends StructuredTextVisitor<void> {
     };
 
     public override visitVarDeclSection = (ctx: VarDeclSectionContext): void => {
-        this.createVarDeclSection(ctx, (ctx as VarDeclSectionContext).varSectionType().start!)
+        this.processVarDeclSection(ctx)
         this.visitChildren(ctx);
     };
 
     public override visitVarGlobalSection = (ctx: VarGlobalSectionContext): void => {
-        this.createVarGlobalSection(ctx);
+        this.processVarGlobalSection(ctx);
         this.visitChildren(ctx);
     };
 
@@ -146,11 +155,14 @@ export class StVisitor extends StructuredTextVisitor<void> {
     //#region Create
 
     private createProgram(ctx: ProgramContext) {
+
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, StSymbolKind.Program);
 
-        this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
+
+        this._parent = symbol;
+        this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
     }
 
     private createInterface(ctx: InterfaceContext) {
@@ -161,6 +173,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.typeInfo = new StTypeInfo();
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
+        this._parent = symbol;
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
     }
 
@@ -172,6 +185,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.typeInfo = new StTypeInfo();
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
+        this._parent = symbol;
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
     }
 
@@ -184,6 +198,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.typeInfo = new StTypeInfo();
         symbol.accessModifier = this.GetAccessModifier(typeDeclCtx.accessModifier() ?? undefined);
 
+        this._parent = symbol;
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
     }
 
@@ -197,27 +212,8 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(typeDeclCtx.accessModifier() ?? undefined);
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
-
-        // Must come AFTER this._sourceFile.typeDeclarationsMap.set(ctx, symbol),
-        // otherwise both symbols will not be properly connected
-        const initialValueCtx = ctx.initialValue();
-
-        if (initialValueCtx)
-            this.createVariableUsage(initialValueCtx, initialValueCtx.ID().symbol)
-    }
-
-    private createEnumMember(ctx: EnumMemberContext) {
-
-        const idToken = ctx.ID().symbol;
-
-        const symbol = this.create(
-            ctx,
-            idToken,
-            StSymbolKind.EnumMember,
-            () => ctx.parent?.parent ?? undefined
-        );
-
-        symbol.accessModifier = StAccessModifier.Public;
+        this._parent = symbol;
+        this._declaration = symbol;
     }
 
     private createFunction(ctx: FunctionContext) {
@@ -228,6 +224,8 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._sourceFile.typeDeclarationsMap.set(ctx, symbol);
+        this._parent = symbol;
+        this._declaration = symbol;
     }
 
     private createMethod(ctx: MethodContext) {
@@ -237,11 +235,27 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const symbol = this.create(
             ctx,
             idToken,
-            StSymbolKind.Method,
-            () => ctx.parent?.parent ?? undefined
+            StSymbolKind.Method
         );
 
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
+
+        this._parent?.addChild("methods", symbol);
+        this._parent = symbol;
+        this._declaration = symbol;
+    }
+
+    private createEnumMember(ctx: EnumMemberContext) {
+
+        const idToken = ctx.ID().symbol;
+
+        const symbol = this.create(
+            ctx,
+            idToken,
+            StSymbolKind.EnumMember
+        );
+
+        symbol.accessModifier = StAccessModifier.Public;
     }
 
     private createProperty(ctx: PropertyContext) {
@@ -250,14 +264,12 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const symbol = this.create(
             ctx,
             idToken,
-            StSymbolKind.Property,
-            () => ctx.parent?.parent ?? undefined
+            StSymbolKind.Property
         );
 
         let variableKind: VariableKind | undefined;
 
         const propertyBodyCtx = ctx.propertyBody();
-            
         const getter = propertyBodyCtx.getter();
         const setter = propertyBodyCtx.setter();
 
@@ -278,51 +290,9 @@ export class StVisitor extends StructuredTextVisitor<void> {
         }
 
         symbol.variableKind = variableKind;
-    }
 
-    private createArgument(ctx: ArgumentContext) {
-        const expressionId = ctx.expr().ID();
-        const idToken = expressionId?.symbol;
-
-        if (idToken)
-            this.createVariableUsage(ctx, idToken);
-    }
-
-    private createVarDeclSection(ctx: VarDeclSectionContext, nameToken: Token) {
-
-        this.create(
-            ctx,
-            nameToken,
-            StSymbolKind.VariableSection,
-            () => {
-
-                const parentCtx = ctx.parent!;
-
-                switch (parentCtx.constructor) {
-
-                    case ProgramContext:
-                    case FunctionContext:
-                    case MethodContext:
-                    case PropertyContext:
-                        return ctx.parent ?? undefined
-                    
-                    case MemberContext:
-                        return ctx.parent?.parent ?? undefined;
-                        
-                    default:
-                        return undefined;
-                }
-            }
-        );
-    }
-
-    private createVarGlobalSection(ctx: VarGlobalSectionContext) {
-
-        this.create(
-            ctx,
-            ctx.VAR_GLOBAL().symbol,
-            StSymbolKind.VariableSection
-        );
+        this._parent?.addChild("properties", symbol);
+        this._declaration = symbol;
     }
 
     private createVarDecl(ctx: VarDeclContext) {
@@ -332,99 +302,21 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const symbol = this.create(
             ctx,
             idToken,
-            StSymbolKind.Variable,
-            () => {
-
-                const parentCtx = ctx.parent!;
-
-                switch (parentCtx.constructor) {
-
-                    case VarDeclSectionContext:                 
-                    case VarGlobalSectionContext:
-                        return ctx.parent ?? undefined;
-
-                    case StructDeclContext:
-                        return ctx.parent?.parent ?? undefined;
-                   
-                    default:
-                        return undefined;
-                }
-            }
+            StSymbolKind.Variable
         );
-
-        symbol.accessModifier = StAccessModifier.Public;
-
-        let variableKind: VariableKind | undefined = undefined;
         
-        const parentCtx = ctx.parent!;
+        symbol.variableKind = this._variableKind;
+        symbol.accessModifier = this._accessModifier
 
-        if (parentCtx instanceof VarDeclSectionContext) {
-
-            const sectionTypeCtx = (parentCtx as VarDeclSectionContext).varSectionType();
-            
-            if (sectionTypeCtx.VAR_INPUT()) {
-                variableKind = VariableKind.Input;
-                symbol.accessModifier = StAccessModifier.Private;
-            }
-                
-            else if (sectionTypeCtx.VAR_OUTPUT())
-                variableKind = VariableKind.Output;
-                
-            else if (sectionTypeCtx.VAR_IN_OUT())
-                variableKind = VariableKind.InOut;
-                
-            else if (sectionTypeCtx.VAR_TEMP())
-                variableKind = VariableKind.Local;
-                
-            else if (sectionTypeCtx.VAR_EXTERNAL())
-                variableKind = VariableKind.Global;
-                
-            else if (sectionTypeCtx.VAR_INST()) {
-                variableKind = VariableKind.Local;
-                symbol.accessModifier = StAccessModifier.Private;
-            }
-                
-            else if (sectionTypeCtx.VAR())
-                variableKind = VariableKind.Local;
-        }
-        
-        else if (parentCtx instanceof VarGlobalSectionContext) {
-            variableKind = VariableKind.Global;
-        }
-        
-        else if (parentCtx instanceof StructDeclContext) {
-            variableKind = VariableKind.Input;
-        }
-        
-        symbol.variableKind = variableKind;
-    }
-    
-    private processAssignment(ctx: AssignmentContext) {
-
-        const memberQualifierContext = ctx.memberQualifier();
-
-        if (!memberQualifierContext)
-            return;
-
-        /* Assignment to a variable ... */
-        let idToken = memberQualifierContext.ID()?.symbol
-
-        /* Or assignment to this */
-        if (!idToken && memberQualifierContext.primary()?.THIS() && memberQualifierContext.CARET())
-            idToken = memberQualifierContext.ID()?.symbol;
-
-        if (idToken)
-            this.createVariableUsage(ctx, idToken);
-
-        this.visitExpr(ctx.expr());
+        this._parent?.addChild("variables", symbol);
+        this._declaration = symbol;
     }
 
     private createMethodOrFunctionCall(ctx: ParserRuleContext, idToken: Token) {
         this.create(
             ctx,
             idToken,
-            StSymbolKind.MethodOrFunctionCall,
-            () => this.getNearestParentContext(ctx)
+            StSymbolKind.MethodOrFunctionCall
         );
     }
 
@@ -432,34 +324,8 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this.create(
             ctx,
             idToken,
-            StSymbolKind.VariableUsage,
-            () => this.getNearestParentContext(ctx)
+            StSymbolKind.VariableUsage
         );
-    }
-
-    private getNearestParentContext(ctx: ParserRuleContext): ParserRuleContext | undefined {
-
-        let current = ctx.parent ?? undefined;
-
-        while (current) {
-
-            if (
-                current instanceof ProgramContext ||
-                current instanceof FunctionBlockContext ||
-                current instanceof FunctionContext ||
-                current instanceof MethodContext ||
-                current instanceof PropertyContext ||
-                current instanceof ArgumentContext ||
-                current instanceof CallStatementContext || 
-                current instanceof TypeDeclContext
-            ) {
-                return current;
-            }
-
-            current = current.parent ?? undefined;
-        }
-
-        return undefined;
     }
 
     private createType(ctx: TypeContext) {
@@ -484,52 +350,29 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const symbol = this.create(
             ctx,
             idToken,
-            StSymbolKind.TypeUsage,
-            () => {
-
-                let parentCtx = ctx.parent!;
-
-                switch (parentCtx.constructor) {
-
-                    // Parent
-                    case InterfaceContext:
-                    case FunctionBlockContext:
-                    case Function:
-                    case MethodContext:
-                    case PropertyContext:
-                    case VarDeclContext:
-                        return ctx.parent ?? undefined;
-                        
-                    // Grandparent
-                    case EnumDeclContext:
-                    case ImplementsClauseContext:
-                    case ExtendsClauseContext:
-                        return ctx.parent?.parent ?? undefined;
-                        
-                    default:
-                        return undefined;
-                   
-                }
-            }
+            StSymbolKind.TypeUsage
         );
 
         if (builtinTypeNode)
             symbol.isBuiltinType = true;
+
+        if (this._declaration)
+            this._declaration.type = symbol;
+    }
+
+    private createArgument(ctx: ArgumentContext) {
+        const expressionId = ctx.expr().ID();
+        const idToken = expressionId?.symbol;
+
+        if (idToken)
+            this.createVariableUsage(ctx, idToken);
     }
 
     private create(
         ctx: ParserRuleContext,
         nameToken: Token | undefined,
-        symbolKind: StSymbolKind,
-        getParentContext?: () => ParserRuleContext | undefined
+        symbolKind: StSymbolKind
     ): StSymbol {
-
-        // Find optional parent
-        const parentCtx = getParentContext?.();
-
-        const parent = parentCtx
-            ? this._sourceFile.symbolMap.get(parentCtx)
-            :undefined;
         
         // Create symbol
         const range = this.getRangeFromContext(ctx);
@@ -548,13 +391,12 @@ export class StVisitor extends StructuredTextVisitor<void> {
             name,
             symbolKind,
             ctx,
-            parent,
             range,
             selectionRange
         );
 
-        // Add symbol to parent
-        this.addSymbolToParent(parent, symbol);
+        // Assign parent
+        symbol.parent = this._parent;
 
         // Add symbol to source file
         this._sourceFile.symbolMap.set(ctx, symbol);
@@ -562,19 +404,66 @@ export class StVisitor extends StructuredTextVisitor<void> {
         return symbol;
     }
 
+    private processVarDeclSection(ctx: VarDeclSectionContext) {
+
+        this._accessModifier = StAccessModifier.Public;
+
+        const sectionTypeCtx = ctx.varSectionType();
+            
+        if (sectionTypeCtx.VAR_INPUT())
+            this._variableKind = VariableKind.Input;
+            
+        else if (sectionTypeCtx.VAR_OUTPUT())
+            this._variableKind = VariableKind.Output;
+            
+        else if (sectionTypeCtx.VAR_IN_OUT())
+            this._variableKind = VariableKind.InOut;
+            
+        else if (sectionTypeCtx.VAR_TEMP())
+            this._variableKind = VariableKind.Local;
+            
+        else if (sectionTypeCtx.VAR_EXTERNAL())
+            this._variableKind = VariableKind.Global;
+            
+        else if (sectionTypeCtx.VAR_INST()) {
+            this._variableKind = VariableKind.Local;
+            this._accessModifier = StAccessModifier.Private;
+        }
+            
+        else if (sectionTypeCtx.VAR()) {
+            this._variableKind = VariableKind.Local;
+            this._accessModifier = StAccessModifier.Private;
+        }
+    }
+
+    private processVarGlobalSection(ctx: VarGlobalSectionContext) {
+        this._accessModifier = StAccessModifier.Public;
+        this._variableKind = VariableKind.Global;
+    }
+
+    private processAssignment(ctx: AssignmentContext) {
+
+        const memberQualifierContext = ctx.memberQualifier();
+
+        if (!memberQualifierContext)
+            return;
+
+        /* Assignment to a variable ... */
+        let idToken = memberQualifierContext.ID()?.symbol
+
+        /* Or assignment to this */
+        if (!idToken && memberQualifierContext.primary()?.THIS() && memberQualifierContext.CARET())
+            idToken = memberQualifierContext.ID()?.symbol;
+
+        if (idToken)
+            this.createVariableUsage(ctx, idToken);
+
+        this.visitExpr(ctx.expr());
+    }
+
     //#endregion
 
     //#region Utils
-
-    private addSymbolToParent(parent: StSymbol | undefined, symbol: StSymbol) {
-        if (parent) {
-
-            if (!parent.children)
-                parent.children = [];
-
-            parent.children.push(symbol);
-        }
-    }
 
     private getRangeFromToken(token: Token): Range {
         return new Range(

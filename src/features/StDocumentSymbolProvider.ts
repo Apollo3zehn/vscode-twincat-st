@@ -1,5 +1,5 @@
-import { SourceFile, StSymbol, StSymbolKind, VariableKind } from '../core.js';
 import { CancellationToken, DocumentSymbol, DocumentSymbolProvider, ProviderResult, SymbolInformation, SymbolKind, TextDocument } from 'vscode';
+import { SourceFile, StSymbol, StSymbolKind } from '../core.js';
 
 export class StDocumentSymbolProvider implements DocumentSymbolProvider {
 
@@ -24,8 +24,7 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
             x.kind === StSymbolKind.Struct ||
             x.kind === StSymbolKind.Enum ||
             x.kind === StSymbolKind.Function ||
-            x.kind === StSymbolKind.Interface ||
-            (x.kind === StSymbolKind.VariableSection && x.name === "VAR_GLOBAL")
+            x.kind === StSymbolKind.Interface
         );
         
         for (const compilationUnit of topLevelUnits) {
@@ -75,9 +74,6 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
             case StSymbolKind.Variable:
                 symbolKind = SymbolKind.Variable; break;
             
-            case StSymbolKind.VariableSection:
-                symbolKind = SymbolKind.Variable; break;
-            
             default:
                 return undefined;
         }
@@ -90,13 +86,34 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
             stSymbol.selectionRange ?? stSymbol.range,
         );
 
-        if (stSymbol.children) {
-            for (const childStSymbol of stSymbol.children) {
+        if (stSymbol.variables) {
+            for (const variable of stSymbol.variables) {
 
-                const childSymbol = this.toSymbol(childStSymbol);
+                const variableSymbol = this.toSymbol(variable);
 
-                if (childSymbol)
-                    symbol.children.push(childSymbol);
+                if (variableSymbol)
+                    symbol.children.push(variableSymbol);
+            }
+        }
+
+        if (stSymbol.properties) {
+            for (const variable of stSymbol.properties) {
+
+                const variableSymbol = this.toSymbol(variable);
+
+                if (variableSymbol)
+                    symbol.children.push(variableSymbol);
+            }
+        }
+
+
+        if (stSymbol.methods) {
+            for (const variable of stSymbol.methods) {
+
+                const variableSymbol = this.toSymbol(variable);
+
+                if (variableSymbol)
+                    symbol.children.push(variableSymbol);
             }
         }
 

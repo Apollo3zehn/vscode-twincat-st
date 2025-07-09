@@ -10,8 +10,11 @@
     { "include": "#programs" },
     { "include": "#functions" },
     { "include": "#functionblocks" },
+    { "include": "#methods" },
+    { "include": "#properties" },
     { "include": "#interfaces" },
-    { "include": "#typedefs" }
+    { "include": "#typedefs" },
+    { "include": "#declarations" }
   ],
   "repository": {
     "comments": {

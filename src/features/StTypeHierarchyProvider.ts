@@ -38,14 +38,17 @@ export class StTypeHierarchyProvider implements TypeHierarchyProvider {
                 break;
         }
 
-        if (
-            foundSymbol &&
-            (
+        if (foundSymbol) {
+            if (
                 foundSymbol.kind === StSymbolKind.FunctionBlock ||
                 foundSymbol.kind === StSymbolKind.Interface
-            )
-        ) {
-            return [this.toTypeHierarchyItem(foundSymbol)];
+            ) {
+                return [this.toTypeHierarchyItem(foundSymbol)];
+            }
+
+            else if (foundSymbol.kind === StSymbolKind.TypeUsage && foundSymbol.declaration) {
+                return [this.toTypeHierarchyItem(foundSymbol.declaration)];
+            }
         }
 
         return [];

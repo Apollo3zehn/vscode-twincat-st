@@ -12,7 +12,7 @@ FUNCTION_BLOCK INTERNAL FB_AccessModifier
         //
     END_METHOD
 
-    PROPERTY INTERNAL A : INT
+    PROPERTY INTERNAL P_AccessModifier : INT
         GET PRIVATE
             //
         END_GET

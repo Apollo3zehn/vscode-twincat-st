@@ -37,7 +37,7 @@ export class StDiagnosticsProvider {
             ) {
                 const diagnostic = new Diagnostic(
                     symbol.selectionRange ?? symbol.range,
-                    `Variable '${symbol.name!}' is never used.`,
+                    `'${symbol.name!}' is never used.`,
                     DiagnosticSeverity.Hint
                 );
 

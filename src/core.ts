@@ -33,20 +33,34 @@ export class StSymbol {
     }
 
     public accessModifier: StAccessModifier | undefined;    // for many things
-    public type: StSymbol | undefined;                      // for variable declarations 
-    public isBuiltinType: boolean | undefined;              // for type declarations (TODO: move to TypeInfo?)
-    public typeInfo: StTypeInfo | undefined;                // for type declarations
-    public declaration: StSymbol | undefined;               // for variable and type usages
     public references: StSymbol[] | undefined;              // for many things
+
+    public isBuiltinType: boolean | undefined;              // for type declarations
+    public typeInfo: StTypeInfo | undefined;                // for type declarations
+
+    public type: StSymbol | undefined;                      // for variable declarations 
     public variableKind: VariableKind | undefined;          // for variable declarations
-    public parent: StSymbol | undefined;                   // for variable declarations
+    public parent: StSymbol | undefined;                    // for variable declarations
+
+    public declaration: StSymbol | undefined;               // for variable and type usages
+    
     public variables: StSymbol[] | undefined;               // for function blocks, functions, methods, global variable lists, enums, structs
     public methods: StSymbol[] | undefined;                 // for function blocks, interfaces
     public properties: StSymbol[] | undefined;              // for function blocks, interfaces
 
+    public children: StSymbol[] | undefined;                // for hover provider
+
     // Variables = normal variables + GVL members + Enum members + Struct members
 
-    public addChild<K extends 'variables' | 'methods' | 'properties'>(key: K, symbol: StSymbol): void {
+    public addChild(symbol: StSymbol): void {
+
+        if (!this.children)
+            this.children = [];
+
+        this.children!.push(symbol);
+    }
+
+    public add<K extends 'variables' | 'methods' | 'properties'>(key: K, symbol: StSymbol): void {
 
         if (!this[key])
             this[key] = [];

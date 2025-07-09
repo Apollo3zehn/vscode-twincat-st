@@ -74,6 +74,12 @@ export class StVisitor extends StructuredTextVisitor<void> {
     public override visitMethod = (ctx: MethodContext): void => {
         this.createMethod(ctx)
         this.visitChildren(ctx);
+
+        /* Workaround for the fact that a method can act as a parent itself.
+         * This is no final solution as more problems of this kind may arise
+         * in future. E.g. a method call is a parent for its arguments.
+         */
+        this._parent = this._parent?.parent;
     };
 
     public override visitProperty = (ctx: PropertyContext): void => {
@@ -240,7 +246,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
-        this._parent?.addChild("methods", symbol);
+        this._parent?.add("methods", symbol);
         this._parent = symbol;
         this._declaration = symbol;
     }
@@ -291,7 +297,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.variableKind = variableKind;
 
-        this._parent?.addChild("properties", symbol);
+        this._parent?.add("properties", symbol);
         this._declaration = symbol;
     }
 
@@ -308,7 +314,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.variableKind = this._variableKind;
         symbol.accessModifier = this._accessModifier
 
-        this._parent?.addChild("variables", symbol);
+        this._parent?.add("variables", symbol);
         this._declaration = symbol;
     }
 
@@ -398,13 +404,21 @@ export class StVisitor extends StructuredTextVisitor<void> {
         // Assign parent
         symbol.parent = this._parent;
 
+        // Add symbol to parent's children
+        if (this._parent)
+            this._parent.addChild(symbol);
+
         // Add symbol to source file
         this._sourceFile.symbolMap.set(ctx, symbol);
 
         return symbol;
     }
 
-    private processVarDeclSection(ctx: VarDeclSectionContext) {
+    //#endregion
+
+    //#region Process
+
+        private processVarDeclSection(ctx: VarDeclSectionContext) {
 
         this._accessModifier = StAccessModifier.Public;
 

@@ -1,5 +1,5 @@
 import { Hover, HoverProvider, MarkdownString, Position, ProviderResult, TextDocument } from "vscode";
-import { SourceFile, StSymbol, StSymbolKind, VariableKind } from "../core.js";
+import { SourceFile, StAccessModifier, StSymbol, StSymbolKind, VariableKind } from "../core.js";
 import { EnumMemberContext } from "../generated/StructuredTextParser.js";
 import { findSymbolAtPosition, isInRange } from "../utils.js";
 
@@ -80,45 +80,53 @@ export class StHoverProvider implements HoverProvider {
 
     private getSymbolSignature(symbol: StSymbol): string {
 
+        const accessModifier = symbol.accessModifier
+            ? ` ${StAccessModifier[symbol.accessModifier].toUpperCase()}`
+            : "";
+
         switch (symbol.kind) {
 
             case StSymbolKind.Variable:
-
-                const variableKind1 = symbol.variableKind;
-
-                const variableKindString1 = variableKind1 !== undefined
-                    ? ("VAR_" + VariableKind[variableKind1].toUpperCase()).replace("_LOCAL", "")
-                    : "?"
-                
-                return `${variableKindString1} ${symbol.name}: ${symbol.type?.name ?? "?"}`;
+                return `${symbol.parent!.name}.${symbol.name}: ${symbol.type?.name ?? "?"}`;
             
-            case StSymbolKind.VariableUsage:
-
-                const variableKind2 = symbol.declaration?.variableKind;
-
-                const variableKindString2 = variableKind2 !== undefined
-                    ? ("VAR_" + VariableKind[variableKind2].toUpperCase()).replace("_LOCAL", "")
-                    : "?"
-                
-                return `${variableKindString2} ${symbol.name}: ${symbol.declaration?.type?.name ?? "?"}`;
+            case StSymbolKind.VariableUsage:                
+                const declaration = symbol.declaration;
+                return `${declaration?.parent?.name ?? "?"}.${symbol.name}: ${declaration?.type?.name ?? "?"}`;
             
-            case StSymbolKind.Method:
-                return `METHOD ${symbol.name} : ${symbol.type?.name ?? "?"}`;
-            
-            case StSymbolKind.Function:
-                return `FUNCTION ${symbol.name} : ${symbol.type?.name ?? "?"}`;
+            case StSymbolKind.TypeUsage:
+
+                if (symbol.declaration)
+                    return this.getSymbolSignature(symbol.declaration);
+
+                else
+                    return symbol.name ?? "";
             
             case StSymbolKind.MethodOrFunctionCall:
                 return `${symbol.name} : ${symbol.declaration?.type?.name ?? "?"}`;
             
+            case StSymbolKind.Method:
+                return `METHOD${accessModifier} ${symbol.name} : ${symbol.type?.name ?? "?"}`;
+            
+            case StSymbolKind.Function:
+                return `FUNCTION${accessModifier} ${symbol.name} : ${symbol.type?.name ?? "?"}`;
+            
             case StSymbolKind.Property:
-                return `PROPERTY ${symbol.name}`;
+                return `PROPERTY${accessModifier} ${symbol.name} : ${symbol.type?.name ?? "?"}`;
             
             case StSymbolKind.FunctionBlock:
-                return `FUNCTION_BLOCK ${symbol.name}`;
+                return `FUNCTION_BLOCK${accessModifier} ${symbol.name}`;
+            
+            case StSymbolKind.Interface:
+                return `INTERFACE${accessModifier} ${symbol.name}`;
+            
+            case StSymbolKind.Program:
+                return `PROGRAM${accessModifier} ${symbol.name}`;
             
             case StSymbolKind.Struct:
-                return `STRUCT ${symbol.name}`;
+                return `TYPE${accessModifier} ${symbol.name}`;
+            
+            case StSymbolKind.Enum:
+                return `TYPE${accessModifier} ${symbol.name} : ${symbol.type?.name ?? "INT"}`;
             
             case StSymbolKind.EnumMember:
                 const enumMemberCtx = symbol.context as EnumMemberContext;

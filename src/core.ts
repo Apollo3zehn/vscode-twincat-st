@@ -7,14 +7,18 @@ export const documentSelector = [
     { language: "st", pattern: "**/*.st" }
 ];
 
-export class SourceFile {
+export class StModel {
+    public readonly sourceFileMap = new Map<string, StSourceFile>()
+    public readonly globalScopeMap = new Map<ParserRuleContext, StSymbol>()
+    public readonly typeDeclarationsMap = new Map<ParserRuleContext, StSymbol>()
+}
+
+export class StSourceFile {
     constructor(
         public readonly uri: Uri,
         public readonly uriAsString: string,
         public readonly tokenStream: CommonTokenStream,
-        public readonly symbolMap: Map<ParserRuleContext, StSymbol>,
-        public readonly typeDeclarationsMap: Map<ParserRuleContext, StSymbol>,
-        public readonly varGlobalSectionMap: Map<ParserRuleContext, StSymbol>) {
+        public readonly symbolMap: Map<ParserRuleContext, StSymbol>) {
         //
     }
 }

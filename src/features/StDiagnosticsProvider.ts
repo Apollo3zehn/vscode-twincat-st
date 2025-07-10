@@ -1,11 +1,11 @@
 import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, TextDocument } from "vscode";
-import { SourceFile, StAccessModifier, StSymbolKind } from "../core.js";
+import { StAccessModifier, StModel, StSymbolKind } from "../core.js";
 
 export class StDiagnosticsProvider {
     private _diagnosticCollection: DiagnosticCollection;
 
     constructor(
-        private model: Map<string, SourceFile>
+        private model: StModel
     ) {
         this._diagnosticCollection = languages.createDiagnosticCollection("twincat-st");
     }
@@ -13,7 +13,7 @@ export class StDiagnosticsProvider {
     public updateDiagnostics(document: TextDocument): void {
 
         const diagnostics: Diagnostic[] = [];
-        const sourceFile = this.model.get(document.uri.toString());
+        const sourceFile = this.model.sourceFileMap.get(document.uri.toString());
         
         if (!sourceFile) {
             this._diagnosticCollection.set(document.uri, []);

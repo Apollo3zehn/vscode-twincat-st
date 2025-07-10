@@ -1,19 +1,19 @@
 import { Hover, HoverProvider, MarkdownString, Position, ProviderResult, TextDocument } from "vscode";
-import { SourceFile, StAccessModifier, StSymbol, StSymbolKind, VariableKind } from "../core.js";
+import { StAccessModifier, StModel, StSymbol, StSymbolKind } from "../core.js";
 import { EnumMemberContext } from "../generated/StructuredTextParser.js";
 import { findSymbolAtPosition, isInRange } from "../utils.js";
 
 export class StHoverProvider implements HoverProvider {
 
-    private _model: Map<string, SourceFile>;
+    private _model: StModel;
     
-    constructor(model: Map<string, SourceFile>) {
+    constructor(model: StModel) {
         this._model = model;
     }
 
     provideHover(document: TextDocument, position: Position): ProviderResult<Hover> {
         
-        const sourceFile = this._model.get(document.uri.toString());
+        const sourceFile = this._model.sourceFileMap.get(document.uri.toString());
 
         if (!sourceFile)
             return;

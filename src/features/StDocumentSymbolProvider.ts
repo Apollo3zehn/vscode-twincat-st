@@ -1,17 +1,17 @@
 import { CancellationToken, DocumentSymbol, DocumentSymbolProvider, ProviderResult, SymbolInformation, SymbolKind, TextDocument } from 'vscode';
-import { SourceFile, StSymbol, StSymbolKind } from '../core.js';
+import { StModel, StSymbol, StSymbolKind } from '../core.js';
 
 export class StDocumentSymbolProvider implements DocumentSymbolProvider {
 
-    private _model: Map<string, SourceFile>;
+    private _model: StModel;
 
-    constructor(model: Map<string, SourceFile>) {
+    constructor(model: StModel) {
         this._model = model;
     }
 
     provideDocumentSymbols(document: TextDocument, token: CancellationToken): ProviderResult<SymbolInformation[] | DocumentSymbol[]> {
 
-        const sourceFile = this._model.get(document.uri.toString());
+        const sourceFile = this._model.sourceFileMap.get(document.uri.toString());
 
         if (!sourceFile)
             return;

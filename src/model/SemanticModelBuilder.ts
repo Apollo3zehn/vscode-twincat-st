@@ -1,15 +1,15 @@
-import { CharStream, CommonTokenStream, ParserRuleContext, Token } from "antlr4ng";
+import { CharStream, CommonTokenStream, ParserRuleContext } from "antlr4ng";
 import { TextDocument, Uri, workspace } from "vscode";
-import { logger, SourceFile, StSymbol, StSymbolKind } from "../core.js";
+import { logger, StModel, StSourceFile, StSymbol, StSymbolKind } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
-import { ExtendsClauseContext, FunctionBlockContext, FunctionContext, ImplementsClauseContext, MethodContext, ProgramContext, PropertyContext, StructuredTextParser, TypeDeclContext } from "../generated/StructuredTextParser.js";
+import { ExtendsClauseContext, ImplementsClauseContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
 import { StVisitor } from "./StVisitor.js";
 
 export class SemanticModelBuilder {
 
-    private _model = new Map<string, SourceFile>();
+    private _model = new StModel();
 
-    public async build(): Promise<Map<string, SourceFile>> {
+    public async build(): Promise<StModel> {
     
         logger.appendLine(`Build model`);
 
@@ -35,7 +35,7 @@ export class SemanticModelBuilder {
         await Promise.all(tasks);
 
         // Find interconnections
-        for (const sourceFile of this._model.values()) {
+        for (const sourceFile of this._model.sourceFileMap.values()) {
             
             for (const [ctx, symbol] of sourceFile.symbolMap) {
                 
@@ -131,33 +131,31 @@ export class SemanticModelBuilder {
         const parser = new StructuredTextParser(tokenStream);
         const tree = parser.compilationUnit();
         const sourceFile = this.getOrCreateSourceFile(uri, tokenStream);
-        const visitor = new StVisitor(sourceFile, uri);
+        const visitor = new StVisitor(this._model, sourceFile, uri);
 
         tree.accept(visitor);
     }
 
-    private getOrCreateSourceFile(fileUri: Uri, tokenStream: CommonTokenStream): SourceFile {
+    private getOrCreateSourceFile(fileUri: Uri, tokenStream: CommonTokenStream): StSourceFile {
         
-        let sourceFile: SourceFile;
+        let sourceFile: StSourceFile;
         let fileUriAsString = fileUri.toString();
 
-        if (this._model.has(fileUriAsString)) {
-            sourceFile = this._model.get(fileUriAsString)!;
+        if (this._model.sourceFileMap.has(fileUriAsString)) {
+            sourceFile = this._model.sourceFileMap.get(fileUriAsString)!;
         }
 
         else {
             logger.appendLine(`Create source file ${fileUri}`);
 
-            sourceFile = new SourceFile(
+            sourceFile = new StSourceFile(
                 fileUri,
                 fileUriAsString,
                 tokenStream,
-                new Map<ParserRuleContext, StSymbol>(),
-                new Map<ParserRuleContext, StSymbol>(),
                 new Map<ParserRuleContext, StSymbol>()
             );
             
-            this._model.set(fileUriAsString, sourceFile);
+            this._model.sourceFileMap.set(fileUriAsString, sourceFile);
         }
 
         return sourceFile;
@@ -167,26 +165,23 @@ export class SemanticModelBuilder {
 
     private findTypeDeclaringSymbol(symbol: StSymbol): StSymbol | undefined {
 
-        for (const sourceFile of this._model.values()) {
+        for (const typeDeclaration of this._model.typeDeclarationsMap.values()) {
 
-            for (const typeDeclaration of sourceFile.typeDeclarationsMap.values()) {
+            if (
+                (
+                    typeDeclaration.kind === StSymbolKind.FunctionBlock ||
+                    typeDeclaration.kind === StSymbolKind.Struct ||
+                    typeDeclaration.kind === StSymbolKind.Enum ||
+                    typeDeclaration.kind === StSymbolKind.Interface
+                ) &&
+                typeDeclaration.name === symbol.name
+            ) {
+                if (!typeDeclaration.references)
+                    typeDeclaration.references = [];
 
-                if (
-                    (
-                        typeDeclaration.kind === StSymbolKind.FunctionBlock ||
-                        typeDeclaration.kind === StSymbolKind.Struct ||
-                        typeDeclaration.kind === StSymbolKind.Enum ||
-                        typeDeclaration.kind === StSymbolKind.Interface
-                    ) &&
-                    typeDeclaration.name === symbol.name
-                ) {
-                    if (!typeDeclaration.references)
-                        typeDeclaration.references = [];
+                typeDeclaration.references.push(symbol);
 
-                    typeDeclaration.references.push(symbol);
-
-                    return typeDeclaration;
-                }
+                return typeDeclaration;
             }
         }
     }
@@ -196,87 +191,11 @@ export class SemanticModelBuilder {
     private findAndAssignVariableDeclaringSymbol(
         ctx: ParserRuleContext,
         symbol: StSymbol,
-        sourceFile: SourceFile
+        sourceFile: StSourceFile
     ) {
 
-        // if (!symbol.id)
-        //     return;
-
-        // let declaringSymbol = this.findVariableDeclaringSymbolInParent(
-        //     ctx,
-        //     symbol,
-        //     symbol.id,
-        //     sourceFile
-        // );
-
-        // if (declaringSymbol)
-        //     this.ConnectDeclaringSymbols(symbol, declaringSymbol);
-
-        // // Try to find the variable declaration in global variable blocks
-        // if (!declaringSymbol) {
-
-        //     for (const sourceFile of this._model.values()) {
-                
-        //         for (const varGlobalSection of sourceFile.varGlobalSectionMap.values()) {
-                    
-        //             if (!varGlobalSection.children)
-        //                 continue;
-                    
-        //             for (const varDeclSymbol of varGlobalSection.children) {
-                        
-        //                 if (varDeclSymbol.name === symbol.name) {
-        //                     this.ConnectDeclaringSymbols(symbol, varDeclSymbol);
-        //                     return;
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-    }
-
-    // private findVariableDeclaringSymbolInParent(
-    //     ctx: ParserRuleContext,
-    //     symbol: StSymbol,
-    //     id: Token,
-    //     sourceFile: SourceFile
-    // ): StSymbol | undefined {
         
-    //     const parent = symbol.parent2;
-
-    //     if (!parent || !parent.children)
-    //         return undefined;
-
-    //     const name = id.text;
-
-    //     // Shortcut for properties
-    //     if (parent.kind === StSymbolKind.Property && parent.name === name)
-    //         return parent;
-
-    //     // Search for variable declaration in this level
-    //     for (const child of parent.children) {
-
-    //         if (child.children) {
-
-    //             if (child.kind === StSymbolKind.VariableSection && child.children) {
-                
-    //                 for (const varDecl of child.children) {
-    //                     if (
-    //                         varDecl.kind === StSymbolKind.Variable &&
-    //                         varDecl.name === name
-    //                     ) {
-    //                         return varDecl;
-    //                     }
-    //                 }
-    //             }
-    //         }
-
-    //         if (child.kind === StSymbolKind.EnumMember && child.name === name)
-    //             return child;
-    //     }
-
-    //     // Try next level up (parent of parent)
-    //     return this.findVariableDeclaringSymbolInParent(parent.context, symbol, id, sourceFile);
-    // }
+    }
 
     //#endregion
 
@@ -285,36 +204,10 @@ export class SemanticModelBuilder {
     private findMethodOrFunctionDeclaringSymbol(
         ctx: ParserRuleContext,
         symbol: StSymbol,
-        sourceFile: SourceFile
+        sourceFile: StSourceFile
     ) {
 
-        // if (!symbol.id)
-        //     return;
-
-        // let declaringSymbol: StSymbol | undefined;
-
-        // // Either this call is a for a normal method or function ...
-        // declaringSymbol = this.findMethodOrFunctionDeclaringSymbolInParent(
-        //     ctx,
-        //     symbol,
-        //     symbol.id,
-        //     sourceFile
-        // );
-
-        // // ... or it is a function block variable that is being called
-        // if (!declaringSymbol) {
-
-        //     declaringSymbol = this.findVariableDeclaringSymbolInParent(
-        //         ctx,
-        //         symbol,
-        //         symbol.id,
-        //         sourceFile
-        //     );
-        // }
-
-        // //
-        // if (declaringSymbol)
-        //     this.ConnectDeclaringSymbols(symbol, declaringSymbol);
+        
     }
 
     // private findMethodOrFunctionDeclaringSymbolInParent(

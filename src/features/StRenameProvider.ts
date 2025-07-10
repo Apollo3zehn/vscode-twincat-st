@@ -1,12 +1,12 @@
 import { Position, ProviderResult, Range, RenameProvider, TextDocument, WorkspaceEdit } from "vscode";
-import { SourceFile } from "../core.js";
+import { StModel } from "../core.js";
 import { findSymbolAtPosition, isInRange } from "../utils.js";
 
 export class StRenameProvider implements RenameProvider {
 
-    private _model: Map<string, SourceFile>;
+    private _model: StModel;
 
-    constructor(model: Map<string, SourceFile>) {
+    constructor(model: StModel) {
         this._model = model;
     }
 
@@ -16,7 +16,7 @@ export class StRenameProvider implements RenameProvider {
         newName: string
     ): ProviderResult<WorkspaceEdit> {
 
-        const sourceFile = this._model.get(document.uri.toString());
+        const sourceFile = this._model.sourceFileMap.get(document.uri.toString());
 
         if (!sourceFile)
             return;
@@ -53,7 +53,7 @@ export class StRenameProvider implements RenameProvider {
         document: TextDocument,
         position: Position
     ): ProviderResult<Range | { range: Range; placeholder: string }> {
-        const sourceFile = this._model.get(document.uri.toString());
+        const sourceFile = this._model.sourceFileMap.get(document.uri.toString());
 
         if (!sourceFile)
             return Promise.reject("The element can't be renamed");

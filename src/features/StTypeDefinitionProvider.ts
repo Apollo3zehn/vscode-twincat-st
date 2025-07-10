@@ -1,12 +1,12 @@
 import { CancellationToken, Location, Position, ProviderResult, TextDocument, TypeDefinitionProvider } from "vscode";
-import { SourceFile, StSymbol, StSymbolKind } from "../core.js";
+import { StModel, StSymbol, StSymbolKind } from "../core.js";
 import { findSymbolAtPosition } from "../utils.js";
 
 export class StTypeDefinitionProvider implements TypeDefinitionProvider {
 
-    private _model: Map<string, SourceFile>;
+    private _model: StModel;
 
-    constructor(model: Map<string, SourceFile>) {
+    constructor(model: StModel) {
         this._model = model;
     }
 
@@ -17,7 +17,7 @@ export class StTypeDefinitionProvider implements TypeDefinitionProvider {
     ): ProviderResult<Location | Location[]> {
 
         // Find the source file
-        const sourceFile = this._model.get(document.uri.toString());
+        const sourceFile = this._model.sourceFileMap.get(document.uri.toString());
 
         if (!sourceFile)
             return;

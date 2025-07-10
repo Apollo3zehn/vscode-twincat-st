@@ -7,14 +7,14 @@ import {
     TypeHierarchyItem,
     TypeHierarchyProvider
 } from "vscode";
-import { SourceFile, StSymbol, StSymbolKind } from "../core.js";
+import { StModel, StSymbol, StSymbolKind } from "../core.js";
 import { findSymbolAtPosition } from "../utils.js";
 
 export class StTypeHierarchyProvider implements TypeHierarchyProvider {
     
-    private _model: Map<string, SourceFile>;
+    private _model: StModel;
 
-    constructor(model: Map<string, SourceFile>) {
+    constructor(model: StModel) {
         this._model = model;
     }
 
@@ -24,7 +24,7 @@ export class StTypeHierarchyProvider implements TypeHierarchyProvider {
         token: CancellationToken
     ): ProviderResult<TypeHierarchyItem | TypeHierarchyItem[]> {
 
-        const sourceFile = this._model.get(document.uri.toString());
+        const sourceFile = this._model.sourceFileMap.get(document.uri.toString());
 
         if (!sourceFile)
             return [];
@@ -114,16 +114,12 @@ export class StTypeHierarchyProvider implements TypeHierarchyProvider {
 
     private findSymbolByItem(item: TypeHierarchyItem): StSymbol | undefined {
 
-        for (const file of this._model.values()) {
-
-            for (const symbol of file.typeDeclarationsMap.values()) {
-
-                if (
-                    symbol.name === item.name &&
-                    symbol.documentUri.toString() === item.uri.toString()
-                ) {
-                    return symbol;
-                }
+        for (const symbol of this._model.typeDeclarationsMap.values()) {
+            if (
+                symbol.name === item.name &&
+                symbol.documentUri.toString() === item.uri.toString()
+            ) {
+                return symbol;
             }
         }
 

@@ -274,8 +274,10 @@ export class SemanticModelBuilder {
             // The left-most symbol can be defined anywhere
             if (i == 0) {
 
-                if (qualifier.name === "THIS")
+                if (qualifier.name === "THIS") {
+                    qualifier.declaration = scope;
                     continue;
+                }
 
                 // Try to resolve in current scope
                 if (!qualifier.declaration)

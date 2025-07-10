@@ -55,4 +55,5 @@ FUNCTION_BLOCK MemberQualifier
     // TODO: Enum
     // Semantic token for GVL?
     // TODO: Functions
+    // Hover: Prettify
 END_FUNCTION_BLOCK

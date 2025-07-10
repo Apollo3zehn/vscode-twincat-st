@@ -352,6 +352,15 @@
           "match": "\\b(POINTER TO|REFERENCE TO|INT|REAL|BOOL|STRING|DINT|BYTE|WORD|DWORD|SINT|USINT|UINT|UDINT|LINT|ULINT|LREAL|TIME|DATE|TIME_OF_DAY|DATE_AND_TIME)\\b"
         },
         {
+          "match": "(ARRAY)\\s*(\\[.*?\\])\\s*(OF)\\s*(.*)",
+          "captures": {
+            "1": { "name": "keyword.other.st" },
+            "2": { "name": "keyword.other.st", "patterns": [{ "include": "#numbers" }] },
+            "3": { "name": "keyword.other.st" },
+            "4": { "patterns": [{ "include": "#types" }] }
+          }
+        },
+        {
           "name": "support.type.st",
           "match": "[a-zA-Z_][a-zA-Z0-9_]*"
         }

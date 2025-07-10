@@ -1,0 +1,5 @@
+FUNCTION_BLOCK Array
+    VAR
+        array: ARRAY [0..1] OF INT;
+    END_VAR
+END_FUNCTION_BLOCK

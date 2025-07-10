@@ -1,4 +1,4 @@
-import { commands, ExtensionContext, languages, window, workspace } from 'vscode';
+import { commands, ExtensionContext, languages, SemanticTokensLegend, window, workspace } from 'vscode';
 import { documentSelector } from './core.js';
 import { StCStyleDecorationProvider } from './features/StCStyleDecorationProvider.js';
 import { StDefinitionProvider } from './features/StDefinitionProvider.js';
@@ -8,6 +8,7 @@ import { StHoverProvider } from './features/StHoverProvider.js';
 import { StReferencesCodeLensProvider as StReferenceCodeLensProvider } from './features/StReferenceCodeLensProvider.js';
 import { StReferenceProvider } from './features/StReferenceProvider.js';
 import { StRenameProvider } from './features/StRenameProvider.js';
+import { StSemanticTokenProvider } from './features/StSemanticTokenProvider.js';
 import { StTypeDefinitionProvider } from './features/StTypeDefinitionProvider.js';
 import { StTypeHierarchyProvider } from './features/StTypeHierarchyProvider.js';
 import { SemanticModelBuilder } from './model/StModelBuilder.js';
@@ -99,6 +100,20 @@ export async function activate(context: ExtensionContext) {
         languages.registerRenameProvider(
             documentSelector,
             new StRenameProvider(model)
+        )
+    );
+
+    // TODO: Move to separate file
+    const legend = new SemanticTokensLegend(
+        ["class"],  // tokenTypes
+        []          // tokenModifiers
+    );
+
+    context.subscriptions.push(
+        languages.registerDocumentSemanticTokensProvider(
+            { language: "st" },
+            new StSemanticTokenProvider(model),
+            legend
         )
     );
 }

@@ -1,6 +1,6 @@
 import { Position, ProviderResult, Range, RenameProvider, TextDocument, WorkspaceEdit } from "vscode";
 import { StModel } from "../core.js";
-import { findSymbolAtPosition, isInRange } from "../utils.js";
+import { isInRange } from "../utils.js";
 
 export class StRenameProvider implements RenameProvider {
 
@@ -23,13 +23,9 @@ export class StRenameProvider implements RenameProvider {
 
         // Find the symbol at the position
         const foundSymbol = Array.from(sourceFile.symbolMap.values())
-            .map(symbol => findSymbolAtPosition(symbol, position))
-            .find(s => s !== undefined);
+            .find(symbol => isInRange(symbol.selectionRange, position));
 
         if (!foundSymbol)
-            return;
-
-        if (!isInRange(foundSymbol.selectionRange, position))
             return;
 
         // Get all references (including declaration)
@@ -59,16 +55,9 @@ export class StRenameProvider implements RenameProvider {
             return Promise.reject("The element can't be renamed");
 
         const foundSymbol = Array.from(sourceFile.symbolMap.values())
-            .map(symbol => findSymbolAtPosition(symbol, position))
-            .find(symbol => symbol !== undefined);
+            .find(symbol => isInRange(symbol.selectionRange, position));
 
         if (!foundSymbol)
-            return Promise.reject("The element can't be renamed");
-
-        if (!foundSymbol.selectionRange)
-            return Promise.reject("The element can't be renamed");
-
-        if (!isInRange(foundSymbol.selectionRange, position))
             return Promise.reject("The element can't be renamed");
 
         return foundSymbol.selectionRange;

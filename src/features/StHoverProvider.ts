@@ -1,7 +1,7 @@
 import { Hover, HoverProvider, MarkdownString, Position, ProviderResult, TextDocument } from "vscode";
 import { StAccessModifier, StModel, StSymbol, StSymbolKind } from "../core.js";
 import { EnumMemberContext } from "../generated/StructuredTextParser.js";
-import { findSymbolAtPosition, isInRange } from "../utils.js";
+import { isInRange } from "../utils.js";
 
 export class StHoverProvider implements HoverProvider {
 
@@ -20,13 +20,9 @@ export class StHoverProvider implements HoverProvider {
 
         // Find the symbol at the given position
         const foundSymbol = Array.from(sourceFile.symbolMap.values())
-            .map(symbol => findSymbolAtPosition(symbol, position))
-            .find(s => s !== undefined);
+            .find(symbol => isInRange(symbol.selectionRange, position));
     
         if (!foundSymbol)
-            return;
-
-        if (!isInRange(foundSymbol.selectionRange, position))
             return;
 
         // Build hover content
@@ -121,6 +117,9 @@ export class StHoverProvider implements HoverProvider {
             
             case StSymbolKind.Program:
                 return `PROGRAM${accessModifier} ${symbol.name}`;
+            
+            case StSymbolKind.Gvl:
+                return `VAR_GLOBAL ${accessModifier} ${symbol.name}`;
             
             case StSymbolKind.Struct:
                 return `TYPE${accessModifier} ${symbol.name}`;

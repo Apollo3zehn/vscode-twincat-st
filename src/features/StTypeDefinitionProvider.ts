@@ -1,6 +1,6 @@
 import { CancellationToken, Location, Position, ProviderResult, TextDocument, TypeDefinitionProvider } from "vscode";
 import { StModel, StSymbol, StSymbolKind } from "../core.js";
-import { findSymbolAtPosition } from "../utils.js";
+import { isInRange } from "../utils.js";
 
 export class StTypeDefinitionProvider implements TypeDefinitionProvider {
 
@@ -24,13 +24,12 @@ export class StTypeDefinitionProvider implements TypeDefinitionProvider {
 
         // Find the symbol
         const foundSymbol = Array.from(sourceFile.symbolMap.values())
-            .map(symbol => findSymbolAtPosition(symbol, position))
-            .find(s => s !== undefined);
+            .find(symbol => isInRange(symbol.selectionRange, position));
 
         if (!foundSymbol)
             return;
 
-        let typeDeclaringSymbol: StSymbol | undefined;
+        let typeDeclaringSymbol: StSymbol | null | undefined;
 
         if (foundSymbol.kind === StSymbolKind.Variable) {
             typeDeclaringSymbol = foundSymbol.type?.declaration;

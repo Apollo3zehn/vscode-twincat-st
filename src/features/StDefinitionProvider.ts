@@ -1,6 +1,6 @@
 import { CancellationToken, Definition, DefinitionProvider, Location, Position, ProviderResult, TextDocument } from "vscode";
 import { StModel, StSymbolKind } from "../core.js";
-import { findSymbolAtPosition } from "../utils.js";
+import { isInRange } from "../utils.js";
 
 export class StDefinitionProvider implements DefinitionProvider {
 
@@ -24,8 +24,7 @@ export class StDefinitionProvider implements DefinitionProvider {
 
         // Find the symbol
         const foundSymbol = Array.from(sourceFile.symbolMap.values())
-            .map(symbol => findSymbolAtPosition(symbol, position))
-            .find(x => x !== undefined);
+            .find(symbol => isInRange(symbol.selectionRange, position));
 
         if (foundSymbol?.declaration) {
     

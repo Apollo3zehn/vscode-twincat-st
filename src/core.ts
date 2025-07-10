@@ -1,7 +1,7 @@
 import { CommonTokenStream, ParserRuleContext, Token } from "antlr4ng";
 import { Range, Uri, window } from "vscode";
 
-export const logger = window.createOutputChannel('TwinCAT Structured Text');
+export const logger = window.createOutputChannel("TwinCAT Structured Text");
 
 export const documentSelector = [
     { language: "st", pattern: "**/*.st" }
@@ -28,7 +28,7 @@ export class StSymbol {
     constructor(
         public readonly documentUri: Uri,
         public readonly id: Token | undefined,
-        public readonly name: string | undefined,
+        public readonly name: string,
         public readonly kind: StSymbolKind,
         public readonly context: ParserRuleContext,
         public readonly range: Range,
@@ -46,11 +46,13 @@ export class StSymbol {
     public variableKind: VariableKind | undefined;          // for variable declarations
     public parent: StSymbol | undefined;                    // for variable declarations
 
-    public declaration: StSymbol | undefined;               // for variable and type usages
+    public declaration: StSymbol | null | undefined;        // for variable and type usages
     
     public variables: StSymbol[] | undefined;               // for function blocks, functions, methods, global variable lists, enums, structs
     public methods: StSymbol[] | undefined;                 // for function blocks, interfaces
     public properties: StSymbol[] | undefined;              // for function blocks, interfaces
+
+    public qualifier: StSymbol | undefined;                 // for variable access or method or function calls
 
     public children: StSymbol[] | undefined;                // for hover provider
 
@@ -97,6 +99,7 @@ export enum StSymbolKind {
     MethodOrFunctionCall,
     TypeUsage,
     Struct,
+    Gvl,
     Enum,
     EnumMember
 }

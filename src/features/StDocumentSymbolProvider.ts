@@ -24,7 +24,8 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
             x.kind === StSymbolKind.Struct ||
             x.kind === StSymbolKind.Enum ||
             x.kind === StSymbolKind.Function ||
-            x.kind === StSymbolKind.Interface
+            x.kind === StSymbolKind.Interface ||
+            x.kind === StSymbolKind.Gvl
         );
         
         for (const compilationUnit of topLevelUnits) {
@@ -72,6 +73,9 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
                 symbolKind = SymbolKind.Property; break;
             
             case StSymbolKind.Variable:
+                symbolKind = SymbolKind.Variable; break;
+            
+            case StSymbolKind.Gvl:
                 symbolKind = SymbolKind.Variable; break;
             
             default:

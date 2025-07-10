@@ -1,16 +1,16 @@
-import { StDocumentSymbolProvider } from './features/StDocumentSymbolProvider.js';
+import { commands, ExtensionContext, languages, window, workspace } from 'vscode';
 import { documentSelector } from './core.js';
+import { StCStyleDecorationProvider } from './features/StCStyleDecorationProvider.js';
 import { StDefinitionProvider } from './features/StDefinitionProvider.js';
-import { commands, ExtensionContext, languages, SemanticTokensLegend, window, workspace } from 'vscode';
-import { SemanticModelBuilder } from './model/SemanticModelBuilder.js';
-import { StReferencesCodeLensProvider as StReferenceCodeLensProvider } from './features/StReferenceCodeLensProvider.js';
 import { StDiagnosticsProvider } from './features/StDiagnosticsProvider.js';
+import { StDocumentSymbolProvider } from './features/StDocumentSymbolProvider.js';
+import { StHoverProvider } from './features/StHoverProvider.js';
+import { StReferencesCodeLensProvider as StReferenceCodeLensProvider } from './features/StReferenceCodeLensProvider.js';
 import { StReferenceProvider } from './features/StReferenceProvider.js';
+import { StRenameProvider } from './features/StRenameProvider.js';
 import { StTypeDefinitionProvider } from './features/StTypeDefinitionProvider.js';
 import { StTypeHierarchyProvider } from './features/StTypeHierarchyProvider.js';
-import { StHoverProvider } from './features/StHoverProvider.js';
-import { StCStyleDecorationProvider } from './features/StCStyleDecorationProvider.js';
-import { StRenameProvider } from './features/StRenameProvider.js';
+import { SemanticModelBuilder } from './model/StModelBuilder.js';
 
 export async function activate(context: ExtensionContext) {
 

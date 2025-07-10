@@ -8,7 +8,7 @@ import {
     TypeHierarchyProvider
 } from "vscode";
 import { StModel, StSymbol, StSymbolKind } from "../core.js";
-import { findSymbolAtPosition } from "../utils.js";
+import { isInRange } from "../utils.js";
 
 export class StTypeHierarchyProvider implements TypeHierarchyProvider {
     
@@ -29,29 +29,23 @@ export class StTypeHierarchyProvider implements TypeHierarchyProvider {
         if (!sourceFile)
             return [];
 
-        let foundSymbol: StSymbol | undefined;
-        
-        for (const symbol of sourceFile.symbolMap.values()) {
-            foundSymbol = findSymbolAtPosition(symbol, position);
+        // Find the symbol
+        const foundSymbol = Array.from(sourceFile.symbolMap.values())
+            .find(symbol => isInRange(symbol.selectionRange, position));
 
-            if (foundSymbol)
-                break;
+        if (!foundSymbol)
+            return [];
+
+        if (
+            foundSymbol.kind === StSymbolKind.FunctionBlock ||
+            foundSymbol.kind === StSymbolKind.Interface
+        ) {
+            return [this.toTypeHierarchyItem(foundSymbol)];
         }
 
-        if (foundSymbol) {
-            if (
-                foundSymbol.kind === StSymbolKind.FunctionBlock ||
-                foundSymbol.kind === StSymbolKind.Interface
-            ) {
-                return [this.toTypeHierarchyItem(foundSymbol)];
-            }
-
-            else if (foundSymbol.kind === StSymbolKind.TypeUsage && foundSymbol.declaration) {
-                return [this.toTypeHierarchyItem(foundSymbol.declaration)];
-            }
+        else if (foundSymbol.kind === StSymbolKind.TypeUsage && foundSymbol.declaration) {
+            return [this.toTypeHierarchyItem(foundSymbol.declaration)];
         }
-
-        return [];
     }
 
     provideTypeHierarchySupertypes(

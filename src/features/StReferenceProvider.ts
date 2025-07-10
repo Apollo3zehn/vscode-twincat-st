@@ -1,6 +1,6 @@
 import { CancellationToken, Location, Position, ProviderResult, ReferenceContext, ReferenceProvider, TextDocument } from "vscode";
 import { StModel } from "../core.js";
-import { findSymbolAtPosition, isInRange } from "../utils.js";
+import { isInRange } from "../utils.js";
 
 export class StReferenceProvider implements ReferenceProvider {
 
@@ -24,13 +24,9 @@ export class StReferenceProvider implements ReferenceProvider {
 
         // Find the symbol at the given position
         const foundSymbol = Array.from(sourceFile.symbolMap.values())
-            .map(symbol => findSymbolAtPosition(symbol, position))
-            .find(s => s !== undefined);
+            .find(symbol => isInRange(symbol.selectionRange, position));
        
         if (!foundSymbol)
-            return;
-
-        if (!isInRange(foundSymbol.selectionRange, position))
             return;
 
         const declaringSymbol = foundSymbol.declaration ?? foundSymbol;

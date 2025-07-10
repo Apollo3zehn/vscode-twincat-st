@@ -1,3 +1,7 @@
+VAR_GLOBAL GVL_MemberQualifier
+    A: MemberQualifier_A;
+END_VAR
+
 FUNCTION_BLOCK MemberQualifier_A
     METHOD Method
         //
@@ -5,7 +9,7 @@ FUNCTION_BLOCK MemberQualifier_A
 END_FUNCTION_BLOCK
 
 FUNCTION_BLOCK MemberQualifier_B
-    VAR
+    VAR_OUTPUT
         A: MemberQualifier_A;
     END_VAR
 
@@ -16,28 +20,39 @@ END_FUNCTION_BLOCK
 
 FUNCTION_BLOCK MemberQualifier
 
-    VAR
+    VAR_OUTPUT
         original: MemberQualifier_B;
+
         ref_B: REFERENCE TO MemberQualifier_B REF= original;
+        
         ptr_B: POINTER TO MemberQualifier_B := ADR(original);
     END_VAR
 
     METHOD Method
-        //
+        Method();
+        THIS^.ref_B.Method();
+
+        ref_B.Method();
+        ref_B.A.Method();
+
+        ptr_B^.Method();
+        ptr_B^.A.Method();
+
+        GVL_MemberQualifier.A.Method();
     END_METHOD
 
-    // Method calls
+    Method();
+    THIS^.ref_B.Method();
+
     ref_B.Method();
     ref_B.A.Method();
 
     ptr_B^.Method();
     ptr_B^.A.Method();
 
-    THIS^.Method();
+    GVL_MemberQualifier.A.Method();
 
-    // Assignments
-    ref_B REF= original;
-    ptr_B := ADR(original);
-
-    // TODO nested assignments
+    // TODO: Enum
+    // Semantic token for GVL?
+    // TODO: Functions
 END_FUNCTION_BLOCK

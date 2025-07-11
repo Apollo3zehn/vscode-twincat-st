@@ -21,14 +21,7 @@
       "patterns": [
         {
           "name": "comment.line.double-slash.st",
-          "begin": "//",
-          "beginCaptures": { "0": { "name": "punctuation.definition.comment.st" } },
-          "end": "$"
-        },
-        {
-          "name": "comment.block.st",
-          "begin": "/\\*",
-          "end": "\\*/"
+          "match": "//.*$"
         },
         {
           "name": "comment.block.st",
@@ -377,7 +370,7 @@
       ]
     },
     "calls": {
-      "match": "(?:(.*)\\.)*(.*)\\((.*)\\);",
+      "match": "\b(?:(.*)\\.)*(.*)\\((.*)\\);",
       "captures": {
         "1": { "patterns": [{ "include": "#identifiers" }] },
         "2": { "name": "entity.name.function.member.st" },

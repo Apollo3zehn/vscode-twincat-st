@@ -2,7 +2,7 @@ import { CharStream, CommonTokenStream, ParserRuleContext } from "antlr4ng";
 import { TextDocument, Uri, workspace } from "vscode";
 import { logger, StModel, StSourceFile, StSymbol, StSymbolKind } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
-import { ExtendsClauseContext, FunctionContext, ImplementsClauseContext, MemberContext, MemberQualifierContext, MethodContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
+import { ExprContext, ExtendsClauseContext, FunctionContext, ImplementsClauseContext, MemberContext, MemberQualifierContext, MethodContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
 import { StVisitor } from "./StVisitor.js";
 
 export class SemanticModelBuilder {
@@ -171,7 +171,7 @@ export class SemanticModelBuilder {
 
     private findTypeDeclaration(symbol: StSymbol): StSymbol | undefined {
 
-        for (const typeDeclaration of this._model.typeDeclarationsMap.values()) {
+        for (const typeDeclaration of this._model.typesMap.values()) {
 
             if (
                 (
@@ -227,11 +227,18 @@ export class SemanticModelBuilder {
         // Find variable declaring symbol
         const declaration = symbol.name === "THIS"
             
+            // THIS
             ? symbol.parent?.context instanceof MethodContext
                 ? symbol.parent?.parent
                 : symbol.parent
             
-            : this.resolveVariableDeclaration(scope, symbol.name);
+            : symbol.context.parent?.parent instanceof ExprContext && symbol.context.parent.parent.LPAREN()
+                
+                // Method or function call
+                ? this.resolveMethodOrFunctionDeclaration(scope, symbol.name)
+
+                // Variable usage
+                : this.resolveVariableDeclaration(scope, symbol.name);
 
         if (declaration)
             this.ConnectDeclaringSymbols(symbol, declaration);
@@ -257,12 +264,12 @@ export class SemanticModelBuilder {
         }
 
         // Global scope
-        for (const symbol of this._model.typeDeclarationsMap.values()) {
+        for (const symbol of this._model.typesMap.values()) {
             if (symbol.name === name)
                 return symbol;
         }
 
-        for (const symbol of this._model.globalScopeMap.values()) {
+        for (const symbol of this._model.variablesMap.values()) {
             if (symbol.name === name)
                 return symbol;
         }
@@ -309,16 +316,16 @@ export class SemanticModelBuilder {
         name: string
     ): StSymbol | undefined {
 
-        // Current scope
+        // Current scope (method)
         const methodDeclaration = scope?.methods?.find(x => x.name === name);
 
         if (methodDeclaration)
             return methodDeclaration;
 
-        // Global scope
-        for (const symbol of this._model.globalScopeMap.values()) {
-            if (symbol.name === name)
-                return symbol;
+        // Global scope (function)
+        for (const functionDeclaration of this._model.functionsMap.values()) {
+            if (functionDeclaration.name === name)
+                return functionDeclaration;
         }
 
         return undefined;

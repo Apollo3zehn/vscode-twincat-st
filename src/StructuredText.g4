@@ -153,8 +153,8 @@ expr
     | BOOL
     | TIME_LITERAL
     | STRING_LITERAL
-    | memberQualifier                         // a, THIS^.a.b, a[0].b.c, etc.
-    | memberQualifier '(' argumentList? ')'   // function call on member or ID
+    | memberQualifier                               // a, THIS^.a.b, a[0].b.c, etc.
+    | memberQualifier LPAREN argumentList? RPAREN   // function call on member or ID
     ;
 
 // =======================
@@ -250,6 +250,8 @@ END_TYPE            : 'END_TYPE' ;
 CARET               : '^' ;
 REFERENCE_TO        : 'REFERENCE TO' ;
 POINTER_TO          : 'POINTER TO' ;
+LPAREN              : '(';
+RPAREN              : ')';
 
 // =======================
 // Literals and identifiers

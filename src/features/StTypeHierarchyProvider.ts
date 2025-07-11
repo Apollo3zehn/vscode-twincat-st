@@ -108,7 +108,7 @@ export class StTypeHierarchyProvider implements TypeHierarchyProvider {
 
     private findSymbolByItem(item: TypeHierarchyItem): StSymbol | undefined {
 
-        for (const symbol of this._model.typeDeclarationsMap.values()) {
+        for (const symbol of this._model.typesMap.values()) {
             if (
                 symbol.name === item.name &&
                 symbol.documentUri.toString() === item.uri.toString()

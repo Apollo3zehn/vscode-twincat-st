@@ -9,8 +9,9 @@ export const documentSelector = [
 
 export class StModel {
     public readonly sourceFileMap = new Map<string, StSourceFile>()
-    public readonly globalScopeMap = new Map<ParserRuleContext, StSymbol>()
-    public readonly typeDeclarationsMap = new Map<ParserRuleContext, StSymbol>()
+    public readonly variablesMap = new Map<ParserRuleContext, StSymbol>()
+    public readonly functionsMap = new Map<ParserRuleContext, StSymbol>()
+    public readonly typesMap = new Map<ParserRuleContext, StSymbol>()
 }
 
 export class StSourceFile {

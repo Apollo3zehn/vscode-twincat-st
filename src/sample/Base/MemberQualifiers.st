@@ -4,7 +4,7 @@ TYPE E_MemberQualifier :
 );
 END_TYPE
 
-FUNCTION F_MemberQualifier
+FUNCTION F_MemberQualifier : INT
     //
 END_FUNCTION
 
@@ -16,11 +16,11 @@ END_VAR
 
 FUNCTION_BLOCK MemberQualifier_A
 
-    VAR_OUTPUT
+    VAR_INPUT
         Variable: INT;
     END_VAR
 
-    METHOD Method
+    METHOD Method : INT
         //
     END_METHOD
 END_FUNCTION_BLOCK
@@ -71,7 +71,7 @@ FUNCTION_BLOCK MemberQualifier
         F_MemberQualifier();
     END_METHOD
 
-    // Variables
+    // Assigments + Expressions (variable usage and method/function usage)
     variable := _variable;
     variable := THIS^._variable;
 
@@ -86,7 +86,12 @@ FUNCTION_BLOCK MemberQualifier
     variable := GVL_MemberQualifier.A.Variable;
     variable := E_MemberQualifier.Variable;
 
-    // Method & function calls
+    variable := ref.A.Method();
+    variable := F_MemberQualifier();
+
+    ref.A.Variable := 1;
+
+    // Call statements
     Method();
     THIS^.Method();
 
@@ -103,7 +108,4 @@ FUNCTION_BLOCK MemberQualifier
     // TODO: REF, PTR
     // Array Index
     // Hover: Prettify
-    // Enum member semantic symbol
-    // Method call with assignment (expression)
-    // Assignment with qualifiers on the left side
 END_FUNCTION_BLOCK

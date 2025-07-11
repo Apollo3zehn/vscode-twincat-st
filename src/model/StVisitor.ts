@@ -155,7 +155,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
-        this._model.typeDeclarationsMap.set(ctx, symbol);
+        this._model.typesMap.set(ctx, symbol);
     }
 
     private createInterface(ctx: InterfaceContext) {
@@ -167,7 +167,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
-        this._model.typeDeclarationsMap.set(ctx, symbol);
+        this._model.typesMap.set(ctx, symbol);
     }
 
     private createFunctionBlock(ctx: FunctionBlockContext) {
@@ -179,7 +179,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
-        this._model.typeDeclarationsMap.set(ctx, symbol);
+        this._model.typesMap.set(ctx, symbol);
     }
 
     private createStruct(ctx: StructDeclContext) {
@@ -192,7 +192,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(typeDeclCtx.accessModifier() ?? undefined);
 
         this._parent = symbol;
-        this._model.typeDeclarationsMap.set(ctx, symbol);
+        this._model.typesMap.set(ctx, symbol);
     }
 
     private createEnum(ctx: EnumDeclContext) {
@@ -204,7 +204,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.typeInfo = new StTypeInfo();
         symbol.accessModifier = this.GetAccessModifier(typeDeclCtx.accessModifier() ?? undefined);
 
-        this._model.typeDeclarationsMap.set(ctx, symbol);
+        this._model.typesMap.set(ctx, symbol);
         this._parent = symbol;
         this._declaration = symbol;
     }
@@ -216,7 +216,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
-        this._model.globalScopeMap.set(ctx, symbol);
+        this._model.functionsMap.set(ctx, symbol);
         this._parent = symbol;
         this._declaration = symbol;
     }
@@ -228,7 +228,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
-        this._model.globalScopeMap.set(ctx, symbol);
+        this._model.variablesMap.set(ctx, symbol);
         this._parent = symbol;
         this._declaration = symbol;
 

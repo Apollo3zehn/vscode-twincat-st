@@ -2,7 +2,7 @@ import { CharStream, CommonTokenStream, ParserRuleContext } from "antlr4ng";
 import { TextDocument, Uri, workspace } from "vscode";
 import { logger, StModel, StSourceFile, StSymbol, StSymbolKind } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
-import { ExtendsClauseContext, FunctionContext, ImplementsClauseContext, MethodContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
+import { ExtendsClauseContext, FunctionContext, ImplementsClauseContext, MemberContext, MemberQualifierContext, MethodContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
 import { StVisitor } from "./StVisitor.js";
 
 export class SemanticModelBuilder {
@@ -110,11 +110,11 @@ export class SemanticModelBuilder {
                 switch (symbol.kind) {
 
                     case StSymbolKind.VariableUsage:
-                        this.findAndAssignVariableDeclaringSymbol(ctx, symbol, sourceFile);
+                        this.findAndAssignVariableDeclaringSymbol(symbol);
                         break;
                     
                     case StSymbolKind.MethodOrFunctionCall:
-                        this.findMethodOrFunctionDeclaringSymbol(ctx, symbol, sourceFile);
+                        this.findMethodOrFunctionDeclaringSymbol(symbol);
                         break;
                 }
             }
@@ -198,9 +198,7 @@ export class SemanticModelBuilder {
     //#region Variable usages
 
     private findAndAssignVariableDeclaringSymbol(
-        ctx: ParserRuleContext,
-        symbol: StSymbol,
-        sourceFile: StSourceFile
+        symbol: StSymbol
     ) {
         /* Input examples:
          * a.b.c();
@@ -208,7 +206,7 @@ export class SemanticModelBuilder {
          */
 
         // Helper to resolve a symbol by name in a given scope chain
-        function resolveInScope(scope: StSymbol | undefined, name: string): StSymbol | null {
+        function resolveInScope(scope: StSymbol | undefined, name: string): StSymbol | undefined {
 
             while (scope) {
 
@@ -223,11 +221,11 @@ export class SemanticModelBuilder {
                 scope = scope.parent;
             }
 
-            return null;
+            return undefined;
         }
 
         // Helper to resolve in global scope map
-        const resolveInGlobalScope = (name: string): StSymbol | null => {
+        const resolveInGlobalScope = (name: string): StSymbol | undefined => {
 
             for (const symbol of this._model.typeDeclarationsMap.values()) {
                 if (symbol.name === name)
@@ -239,65 +237,29 @@ export class SemanticModelBuilder {
                     return symbol;
             }
 
-            return null;
+            return undefined;
         };
 
-        // Collect all qualifiers from left to right
-        const qualifiers: StSymbol[] = [symbol];
+        const qualifier = symbol.qualifier;
 
-        let currentQualifier = symbol.qualifier;
-
-        while (currentQualifier) {
-            qualifiers.unshift(currentQualifier);
-            currentQualifier = currentQualifier.qualifier;
+        if (qualifier) {
+            symbol.declaration = qualifier.variables?.find(x => x.name === qualifier.name);
         }
 
-        // Traverse qualifiers left to right, resolving each
-        let scope: StSymbol | undefined;
-
-        // Default scope
-        if (symbol.parent?.context instanceof MethodContext)
-            scope = symbol.parent?.parent;
-
-        else
-            scope = symbol.parent;
-
-        for (let i = 0; i < qualifiers.length; i++) {
-
-            const qualifier = qualifiers[i];
-
-            // The left-most symbol can be defined anywhere
-            if (i == 0) {
-
-                if (qualifier.name === "THIS") {
-                    qualifier.declaration = scope;
-                    continue;
-                }
-
-                // Try to resolve in current scope
-                if (!qualifier.declaration)
-                    qualifier.declaration = resolveInScope(symbol.parent, qualifier.name);
-
-                // If not found, try global scope
-                if (!qualifier.declaration) {
-                    
-                    qualifier.declaration = resolveInGlobalScope(qualifier.name);
-                    scope = qualifier.declaration ?? undefined;
-
-                    continue;
-                }
+        else {
+            if (symbol.name === "THIS") {
+                symbol.declaration = symbol.parent?.context instanceof MethodContext
+                    ? symbol.parent?.parent
+                    : symbol.parent;
             }
 
-            else if (scope?.variables) {
-                qualifier.declaration = scope.variables.find(x => x.name === qualifier.name) ?? null;
-            }
+            // Try to resolve in current scope
+            if (!symbol.declaration)
+                symbol.declaration = resolveInScope(symbol.parent, symbol.name);
 
-            // If type symbol not found, stop further resolution
-            if (!qualifier.declaration?.type?.declaration)
-                return;
-
-            // Next scope: type declaration of the found symbol
-            scope = qualifier.declaration.type.declaration;
+            // If not found, try global scope
+            if (!symbol.declaration)
+                symbol.declaration = resolveInGlobalScope(symbol.name);
         }
     }
 
@@ -306,33 +268,12 @@ export class SemanticModelBuilder {
     //#region Method or function calls
 
     private findMethodOrFunctionDeclaringSymbol(
-        ctx: ParserRuleContext,
-        symbol: StSymbol,
-        sourceFile: StSourceFile
+        symbol: StSymbol
     ) {
         /* Input examples:
          * a.b.c();
          * d();
          */
-
-        // Helper to resolve a symbol by name in a given scope chain
-        function resolveInScope(scope: StSymbol | undefined, name: string): StSymbol | null {
-
-            while (scope) {
-
-                if (scope.variables) {
-
-                    const found = scope.variables.find(x => x.name === name);
-
-                    if (found)
-                        return found;
-                }
-
-                scope = scope.parent;
-            }
-
-            return null;
-        }
 
         // Helper to resolve in global scope map
         const resolveInGlobalScope = (name: string): StSymbol | null => {
@@ -345,62 +286,19 @@ export class SemanticModelBuilder {
             return null;
         };
 
-        // Collect all qualifiers from left to right
-        const qualifiers: StSymbol[] = [];
-
-        let currentQualifier = symbol.qualifier;
-
-        while (currentQualifier) {
-            qualifiers.unshift(currentQualifier);
-            currentQualifier = currentQualifier.qualifier;
-        }
-
-        // Traverse qualifiers left to right, resolving each
+        // Find scope
         let scope: StSymbol | undefined;
 
-        // Default scope
-        if (symbol.parent?.context instanceof MethodContext)
-            scope = symbol.parent?.parent;
+        if (symbol.qualifier) {
+            scope = symbol.qualifier.declaration?.type?.declaration;
+        }
 
-        else
-            scope = symbol.parent;
+        else {
+            if (symbol.parent?.context instanceof MethodContext)
+                scope = symbol.parent?.parent;
 
-        for (let i = 0; i < qualifiers.length; i++) {
-
-            const qualifier = qualifiers[i];
-
-            // The left-most symbol can be defined anywhere
-            if (i == 0) {
-
-                if (qualifier.name === "THIS") {
-                    qualifier.declaration = scope;
-                    continue;
-                }
-
-                // Try to resolve in current scope
-                if (!qualifier.declaration)
-                    qualifier.declaration = resolveInScope(symbol.parent, qualifier.name);
-
-                // If not found, try global scope
-                if (!qualifier.declaration) {
-                    
-                    qualifier.declaration = resolveInGlobalScope(qualifier.name);
-                    scope = qualifier.declaration ?? undefined;
-
-                    continue;
-                }
-            }
-
-            else if (scope?.variables) {
-                qualifier.declaration = scope.variables.find(x => x.name === qualifier.name) ?? null;
-            }
-
-            // If type symbol not found, stop further resolution
-            if (!qualifier.declaration?.type?.declaration)
-                return;
-
-            // Next scope: type declaration of the found symbol
-            scope = qualifier.declaration.type.declaration;
+            else
+                scope = symbol.parent;
         }
 
         // Now to the actual work (find method or function declaring symbol)      

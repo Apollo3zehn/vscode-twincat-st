@@ -46,7 +46,7 @@ export class StSymbol {
     public variableKind: VariableKind | undefined;          // for variable declarations
     public parent: StSymbol | undefined;                    // for variable declarations
 
-    public declaration: StSymbol | null | undefined;        // for variable and type usages
+    public declaration: StSymbol | undefined;               // for variable and type usages
     
     public variables: StSymbol[] | undefined;               // for function blocks, functions, methods, global variable lists, enums, structs
     public methods: StSymbol[] | undefined;                 // for function blocks, interfaces

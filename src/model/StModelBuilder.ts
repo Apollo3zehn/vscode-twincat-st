@@ -202,8 +202,103 @@ export class SemanticModelBuilder {
         symbol: StSymbol,
         sourceFile: StSourceFile
     ) {
+        /* Input examples:
+         * a.b.c();
+         * d();
+         */
 
-        
+        // Helper to resolve a symbol by name in a given scope chain
+        function resolveInScope(scope: StSymbol | undefined, name: string): StSymbol | null {
+
+            while (scope) {
+
+                if (scope.variables) {
+
+                    const found = scope.variables.find(x => x.name === name);
+
+                    if (found)
+                        return found;
+                }
+
+                scope = scope.parent;
+            }
+
+            return null;
+        }
+
+        // Helper to resolve in global scope map
+        const resolveInGlobalScope = (name: string): StSymbol | null => {
+
+            for (const symbol of this._model.typeDeclarationsMap.values()) {
+                if (symbol.name === name)
+                    return symbol;
+            }
+
+            for (const symbol of this._model.globalScopeMap.values()) {
+                if (symbol.name === name)
+                    return symbol;
+            }
+
+            return null;
+        };
+
+        // Collect all qualifiers from left to right
+        const qualifiers: StSymbol[] = [symbol];
+
+        let currentQualifier = symbol.qualifier;
+
+        while (currentQualifier) {
+            qualifiers.unshift(currentQualifier);
+            currentQualifier = currentQualifier.qualifier;
+        }
+
+        // Traverse qualifiers left to right, resolving each
+        let scope: StSymbol | undefined;
+
+        // Default scope
+        if (symbol.parent?.context instanceof MethodContext)
+            scope = symbol.parent?.parent;
+
+        else
+            scope = symbol.parent;
+
+        for (let i = 0; i < qualifiers.length; i++) {
+
+            const qualifier = qualifiers[i];
+
+            // The left-most symbol can be defined anywhere
+            if (i == 0) {
+
+                if (qualifier.name === "THIS") {
+                    qualifier.declaration = scope;
+                    continue;
+                }
+
+                // Try to resolve in current scope
+                if (!qualifier.declaration)
+                    qualifier.declaration = resolveInScope(symbol.parent, qualifier.name);
+
+                // If not found, try global scope
+                if (!qualifier.declaration) {
+                    
+                    qualifier.declaration = resolveInGlobalScope(qualifier.name);
+                    scope = qualifier.declaration ?? undefined;
+
+                    continue;
+                }
+            }
+
+            else if (scope?.variables) {
+                qualifier.declaration = scope.variables.find(x => x.name === qualifier.name) ?? null;
+            }
+
+            // If type symbol not found, stop further resolution
+            if (!qualifier.declaration?.type?.declaration)
+                return;
+
+            // Next scope: type declaration of the found symbol
+            scope = qualifier.declaration.type.declaration;
+        }
     }
 
     //#endregion
@@ -243,7 +338,8 @@ export class SemanticModelBuilder {
         const resolveInGlobalScope = (name: string): StSymbol | null => {
 
             for (const symbol of this._model.globalScopeMap.values()) {
-                if (symbol.name === name) return symbol;
+                if (symbol.name === name)
+                    return symbol;
             }
 
             return null;

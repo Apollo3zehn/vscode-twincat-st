@@ -29,7 +29,7 @@ export class StSemanticTokenProvider implements DocumentSemanticTokensProvider {
 
         for (const symbol of sourceFile.symbolMap.values()) {
 
-            // Only interested in variable usages with a qualifier chain
+            // Colorize GVL and Enum names as function block (token type 0)
             if (
                 symbol.kind === StSymbolKind.VariableUsage &&
                 (
@@ -37,12 +37,25 @@ export class StSemanticTokenProvider implements DocumentSemanticTokensProvider {
                     symbol.declaration?.kind === StSymbolKind.Enum
                 )
             ) {
-                // Colorize the GVL name as a function block
                 builder.push(
                     symbol.range.start.line,
                     symbol.range.start.character,
                     symbol.name.length,
-                    0, // custom token type
+                    0, // class token type
+                    0
+                );
+            }
+
+            // Colorize Enum members as enumMember (token type 1)
+            if (
+                symbol.kind === StSymbolKind.VariableUsage &&
+                symbol.declaration?.kind === StSymbolKind.EnumMember
+            ) {
+                builder.push(
+                    symbol.range.start.line,
+                    symbol.range.start.character,
+                    symbol.name.length,
+                    1, // enumMember token type
                     0
                 );
             }

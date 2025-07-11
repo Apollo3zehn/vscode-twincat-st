@@ -105,8 +105,8 @@ export async function activate(context: ExtensionContext) {
 
     // TODO: Move to separate file
     const legend = new SemanticTokensLegend(
-        ["class"],  // tokenTypes
-        []          // tokenModifiers
+        ["class", "enumMember"],    // tokenTypes
+        []                          // tokenModifiers
     );
 
     context.subscriptions.push(

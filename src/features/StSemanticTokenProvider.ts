@@ -32,7 +32,10 @@ export class StSemanticTokenProvider implements DocumentSemanticTokensProvider {
             // Only interested in variable usages with a qualifier chain
             if (
                 symbol.kind === StSymbolKind.VariableUsage &&
-                symbol.declaration?.kind === StSymbolKind.Gvl
+                (
+                    symbol.declaration?.kind === StSymbolKind.Gvl ||
+                    symbol.declaration?.kind === StSymbolKind.Enum
+                )
             ) {
                 // Colorize the GVL name as a function block
                 builder.push(

@@ -45,7 +45,7 @@ export class SemanticModelBuilder {
                 if (symbol.isBuiltinType)
                     continue;
                         
-                symbol.declaration = this.findTypeDeclaringSymbol(symbol);
+                symbol.declaration = this.findTypeDeclaration(symbol);
 
                 if (symbol.declaration) {
 
@@ -99,22 +99,19 @@ export class SemanticModelBuilder {
         // ... then resolve variables and method/function calls
         for (const sourceFile of this._model.sourceFileMap.values()) {
             
-            for (const [ctx, symbol] of sourceFile.symbolMap) {
+            for (const symbol of sourceFile.symbolMap.values()) {
                 
-                /* This means when value === null, i.e. not found in previous
-                 * round, we will still "continue" and not try again 
-                 */
-                if (symbol.declaration !== undefined)
+                if (symbol.declaration)
                     continue;
 
                 switch (symbol.kind) {
 
                     case StSymbolKind.VariableUsage:
-                        this.findAndAssignVariableDeclaringSymbol(symbol);
+                        this.findVariableDeclaration(symbol);
                         break;
                     
                     case StSymbolKind.MethodOrFunctionCall:
-                        this.findMethodOrFunctionDeclaringSymbol(symbol);
+                        this.findMethodOrFunctionDeclaration(symbol);
                         break;
                 }
             }
@@ -172,7 +169,7 @@ export class SemanticModelBuilder {
 
     //#region Type
 
-    private findTypeDeclaringSymbol(symbol: StSymbol): StSymbol | undefined {
+    private findTypeDeclaration(symbol: StSymbol): StSymbol | undefined {
 
         for (const typeDeclaration of this._model.typeDeclarationsMap.values()) {
 
@@ -197,7 +194,7 @@ export class SemanticModelBuilder {
 
     //#region Variable usages
 
-    private findAndAssignVariableDeclaringSymbol(
+    private findVariableDeclaration(
         symbol: StSymbol
     ) {
         /* Input examples:
@@ -205,86 +202,85 @@ export class SemanticModelBuilder {
          * d();
          */
 
-        // Helper to resolve a symbol by name in a given scope chain
-        function resolveInScope(scope: StSymbol | undefined, name: string): StSymbol | undefined {
+        // Find scope
+        let scope: StSymbol | undefined;
 
-            while (scope) {
+        if (symbol.qualifier) {
 
-                if (scope.variables) {
+            const declaration = symbol.qualifier.declaration;
+            const declarationKind = declaration?.kind;
 
-                    const found = scope.variables.find(x => x.name === name);
+            const isType =
+                declarationKind === StSymbolKind.Enum ||
+                declarationKind === StSymbolKind.Gvl ||
+                symbol.qualifier.name === "THIS"
 
-                    if (found)
-                        return found;
-                }
-
-                scope = scope.parent;
-            }
-
-            return undefined;
-        }
-
-        // Helper to resolve in global scope map
-        const resolveInGlobalScope = (name: string): StSymbol | undefined => {
-
-            for (const symbol of this._model.typeDeclarationsMap.values()) {
-                if (symbol.name === name)
-                    return symbol;
-            }
-
-            for (const symbol of this._model.globalScopeMap.values()) {
-                if (symbol.name === name)
-                    return symbol;
-            }
-
-            return undefined;
-        };
-
-        const qualifier = symbol.qualifier;
-
-        if (qualifier) {
-            symbol.declaration = qualifier.variables?.find(x => x.name === qualifier.name);
+            scope = isType
+                ? declaration
+                : declaration?.type?.declaration;
         }
 
         else {
-            if (symbol.name === "THIS") {
-                symbol.declaration = symbol.parent?.context instanceof MethodContext
-                    ? symbol.parent?.parent
-                    : symbol.parent;
+            scope = symbol.parent;
+        }
+
+        // Find variable declaring symbol
+        const declaration = symbol.name === "THIS"
+            
+            ? symbol.parent?.context instanceof MethodContext
+                ? symbol.parent?.parent
+                : symbol.parent
+            
+            : this.resolveVariableDeclaration(scope, symbol.name);
+
+        if (declaration)
+            this.ConnectDeclaringSymbols(symbol, declaration);
+    }
+
+    private resolveVariableDeclaration(
+        scope: StSymbol | undefined,
+        name: string
+    ): StSymbol | undefined {
+
+        // Current scope or ancestor scopes
+        while (scope) {
+
+            if (scope.variables) {
+
+                const varableDeclaration = scope.variables.find(x => x.name === name);
+
+                if (varableDeclaration)
+                    return varableDeclaration;
             }
 
-            // Try to resolve in current scope
-            if (!symbol.declaration)
-                symbol.declaration = resolveInScope(symbol.parent, symbol.name);
-
-            // If not found, try global scope
-            if (!symbol.declaration)
-                symbol.declaration = resolveInGlobalScope(symbol.name);
+            scope = scope.parent;
         }
+
+        // Global scope
+        for (const symbol of this._model.typeDeclarationsMap.values()) {
+            if (symbol.name === name)
+                return symbol;
+        }
+
+        for (const symbol of this._model.globalScopeMap.values()) {
+            if (symbol.name === name)
+                return symbol;
+        }
+
+        return undefined;
     }
 
     //#endregion
 
     //#region Method or function calls
 
-    private findMethodOrFunctionDeclaringSymbol(
+    private findMethodOrFunctionDeclaration(
         symbol: StSymbol
     ) {
         /* Input examples:
          * a.b.c();
          * d();
          */
-
-        // Helper to resolve in global scope map
-        const resolveInGlobalScope = (name: string): StSymbol | null => {
-
-            for (const symbol of this._model.globalScopeMap.values()) {
-                if (symbol.name === name)
-                    return symbol;
-            }
-
-            return null;
-        };
 
         // Find scope
         let scope: StSymbol | undefined;
@@ -301,18 +297,32 @@ export class SemanticModelBuilder {
                 scope = symbol.parent;
         }
 
-        // Now to the actual work (find method or function declaring symbol)      
-        if (scope?.methods) {
+        // Find method or function declaring symbol
+        let declaration = this.resolveMethodOrFunctionDeclaration(scope, symbol.name);
 
-            let declaration = scope.methods.find(x => x.name === symbol.name) ?? null;
-
-            if (!declaration)
-                declaration = resolveInGlobalScope(symbol.name) ?? null;
-
-            if (declaration)
-                this.ConnectDeclaringSymbols(symbol, declaration);
-        }
+        if (declaration)
+            this.ConnectDeclaringSymbols(symbol, declaration);
     }
+
+    private resolveMethodOrFunctionDeclaration(
+        scope: StSymbol | undefined,
+        name: string
+    ): StSymbol | undefined {
+
+        // Current scope
+        const methodDeclaration = scope?.methods?.find(x => x.name === name);
+
+        if (methodDeclaration)
+            return methodDeclaration;
+
+        // Global scope
+        for (const symbol of this._model.globalScopeMap.values()) {
+            if (symbol.name === name)
+                return symbol;
+        }
+
+        return undefined;
+    };
 
     //#endregion
 

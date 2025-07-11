@@ -264,6 +264,8 @@ export class StVisitor extends StructuredTextVisitor<void> {
         );
 
         symbol.accessModifier = StAccessModifier.Public;
+
+        this._parent?.add("variables", symbol);
     }
 
     private createProperty(ctx: PropertyContext) {

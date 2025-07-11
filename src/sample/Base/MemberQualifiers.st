@@ -26,8 +26,10 @@ FUNCTION_BLOCK MemberQualifier_A
 END_FUNCTION_BLOCK
 
 FUNCTION_BLOCK MemberQualifier_B
+
     VAR_OUTPUT
         A: MemberQualifier_A;
+        
         Variable: INT;
     END_VAR
 
@@ -43,9 +45,9 @@ FUNCTION_BLOCK MemberQualifier
 
         original: MemberQualifier_B;
 
-        ref_B: REFERENCE TO MemberQualifier_B REF= original;
+        ref: REFERENCE TO MemberQualifier_B REF= original;
         
-        ptr_B: POINTER TO MemberQualifier_B := ADR(original);
+        ptr: POINTER TO MemberQualifier_B := ADR(original);
     END_VAR
 
     METHOD Method
@@ -70,17 +72,15 @@ FUNCTION_BLOCK MemberQualifier
     END_METHOD
 
     // Variables
-    variable := variable;
-
     variable := _variable;
     variable := THIS^._variable;
 
-    variable := THIS^.ref_b.Variable;
-    variable := ref_b.Variable;
-    variable := ref_b.A.Variable;
+    variable := THIS^.ref.Variable;
+    variable := ref.Variable;
+    variable := ref.A.Variable;
 
-    variable := ptr_B^.Variable;
-    variable := ptr_B^.A.Variable;
+    variable := ptr^.Variable;
+    variable := ptr^.A.Variable;
 
     variable := GVL_MemberQualifier.Variable;
     variable := GVL_MemberQualifier.A.Variable;
@@ -90,12 +90,12 @@ FUNCTION_BLOCK MemberQualifier
     Method();
     THIS^.Method();
 
-    THIS^.ref_B.Method();
-    ref_B.Method();
-    ref_B.A.Method();
+    THIS^.ref.Method();
+    ref.Method();
+    ref.A.Method();
 
-    ptr_B^.Method();
-    ptr_B^.A.Method();
+    ptr^.Method();
+    ptr^.A.Method();
 
     GVL_MemberQualifier.A.Method();
     F_MemberQualifier();
@@ -103,6 +103,7 @@ FUNCTION_BLOCK MemberQualifier
     // TODO: REF, PTR
     // Array Index
     // Hover: Prettify
+    // Enum member semantic symbol
     // Method call with assignment (expression)
     // Assignment with qualifiers on the left side
 END_FUNCTION_BLOCK

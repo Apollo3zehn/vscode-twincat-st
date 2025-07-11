@@ -137,15 +137,11 @@ continueStatement   : CONTINUE ';' ;
 // =======================
 // Expressions
 // =======================
-memberQualifier     : primary
-                    | memberQualifier '.' ID
-                    | memberQualifier CARET
+memberQualifier     : memberQualifier CARET? '.' primary
+                    | primary
                     ;
 
-primary
-    : THIS
-    | ID (arrayIndex)?
-    ;
+primary             : ID CARET? (arrayIndex)?;
 
 expr
     : expr op=('*'|'/'|MOD) expr
@@ -157,11 +153,8 @@ expr
     | BOOL
     | TIME_LITERAL
     | STRING_LITERAL
-    | ID '(' argumentList? ')'
-    | ID (arrayIndex)?
-    | memberQualifier '.' ID '(' argumentList? ')'
-    | memberQualifier '.' ID (arrayIndex)?
-    | THIS CARET
+    | memberQualifier                         // a, THIS^.a.b, a[0].b.c, etc.
+    | memberQualifier '(' argumentList? ')'   // function call on member or ID
     ;
 
 // =======================
@@ -254,7 +247,6 @@ INTERNAL            : 'INTERNAL' ;
 MOD                 : 'MOD' ;
 TYPE                : 'TYPE' ;
 END_TYPE            : 'END_TYPE' ;
-THIS                : 'THIS' ;
 CARET               : '^' ;
 REFERENCE_TO        : 'REFERENCE TO' ;
 POINTER_TO          : 'POINTER TO' ;

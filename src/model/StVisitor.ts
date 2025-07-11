@@ -106,47 +106,25 @@ export class StVisitor extends StructuredTextVisitor<void> {
     };
 
     public override visitAssignment = (ctx: AssignmentContext): void => {
-        this.processAssignment(ctx);
+        this.visitChildren(ctx);
     };
 
     public override visitMemberQualifier = (ctx: MemberQualifierContext): void => {
-        
-        const idToken = ctx.ID()?.symbol
-
-        const symbol = idToken
-            ? this.createVariableUsage(ctx, idToken)
-            : undefined; // This happens when there is a child context of type "primary" which is visited next
-
+        this._qualifier = undefined;
         this.visitChildren(ctx);
-
-        if (symbol) {
-            symbol.qualifier = this._qualifier;
-            this._qualifier = symbol;
-        }
     }
 
     public override visitPrimary = (ctx: PrimaryContext): void => {
         
-        const idToken =
-            ctx.ID()?.symbol ??
-            ctx.THIS()?.symbol
+        const idToken = ctx.ID().symbol
+        const symbol = this.createVariableUsage(ctx, idToken);
         
-        if (!idToken)
-            return;
-
-        this._qualifier = this.createVariableUsage(ctx, idToken);
+        symbol.qualifier = this._qualifier;
+        this._qualifier = symbol;
     }
 
     public override visitExpr = (ctx: ExprContext): void => {
-
-        const variableUsageToken = ctx.ID()?.symbol;
-
-        if (variableUsageToken)
-            this.createVariableUsage(ctx, variableUsageToken);
-
-        for (const expression of ctx.expr()) {
-            this.visitExpr(expression);
-        }
+        this.visitChildren(ctx);
     };
 
     public override visitCallStatement? = (ctx: CallStatementContext): void => {
@@ -238,7 +216,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
-        this._model.typeDeclarationsMap.set(ctx, symbol);
+        this._model.globalScopeMap.set(ctx, symbol);
         this._parent = symbol;
         this._declaration = symbol;
     }
@@ -398,7 +376,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
     }
 
     private createArgument(ctx: ArgumentContext) {
-        const expressionId = ctx.expr().ID();
+        const expressionId = ctx.expr().memberQualifier()?.primary().ID();
         const idToken = expressionId?.symbol;
 
         if (idToken)
@@ -477,26 +455,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
             this._variableKind = VariableKind.Local;
             this._accessModifier = StAccessModifier.Private;
         }
-    }
-
-    private processAssignment(ctx: AssignmentContext) {
-
-        const memberQualifierContext = ctx.memberQualifier();
-
-        if (!memberQualifierContext)
-            return;
-
-        /* Assignment to a variable ... */
-        let idToken = memberQualifierContext.ID()?.symbol
-
-        /* Or assignment to this */
-        if (!idToken && memberQualifierContext.primary()?.THIS() && memberQualifierContext.CARET())
-            idToken = memberQualifierContext.ID()?.symbol;
-
-        if (idToken)
-            this.createVariableUsage(ctx, idToken);
-
-        this.visitExpr(ctx.expr());
     }
 
     //#endregion

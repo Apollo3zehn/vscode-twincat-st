@@ -1,22 +1,25 @@
 TYPE MyEnum1 :
 (
+    White   := 0
+);
+END_TYPE
+
+TYPE MyEnum2 :
+(
     White   := 0,
 
     Yellow  := 1
 ) DWORD := Yellow;
 END_TYPE
 
-TYPE INTERNAL MyEnum2 :
+TYPE INTERNAL MyEnum3 :
 (
     White := 0,
-
-    Yellow,
-    
-    Blue
+    Yellow
 ) DWORD;
 END_TYPE
 
-TYPE MyEnum3 :
+TYPE MyEnum4 :
 (
     White := 0
 ) := White;

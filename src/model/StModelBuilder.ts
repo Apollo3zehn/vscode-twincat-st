@@ -2,7 +2,7 @@ import { CharStream, CommonTokenStream, ParserRuleContext } from "antlr4ng";
 import { TextDocument, Uri, workspace } from "vscode";
 import { logger, StModel, StSourceFile, StSymbol, StSymbolKind } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
-import { ExtendsClauseContext, ImplementsClauseContext, MethodContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
+import { ExtendsClauseContext, FunctionContext, ImplementsClauseContext, MethodContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
 import { StVisitor } from "./StVisitor.js";
 
 export class SemanticModelBuilder {
@@ -208,6 +208,8 @@ export class SemanticModelBuilder {
 
     //#endregion
 
+    //#region Method or function calls
+
     private findMethodOrFunctionDeclaringSymbol(
         ctx: ParserRuleContext,
         symbol: StSymbol,
@@ -238,13 +240,13 @@ export class SemanticModelBuilder {
         }
 
         // Helper to resolve in global scope map
-        const resolveInGlobalScope = (name: string): StSymbol | undefined => {
+        const resolveInGlobalScope = (name: string): StSymbol | null => {
 
             for (const symbol of this._model.globalScopeMap.values()) {
                 if (symbol.name === name) return symbol;
             }
 
-            return undefined;
+            return null;
         };
 
         // Collect all qualifiers from left to right
@@ -285,7 +287,10 @@ export class SemanticModelBuilder {
 
                 // If not found, try global scope
                 if (!qualifier.declaration) {
-                    qualifier.declaration = scope = resolveInGlobalScope(qualifier.name);
+                    
+                    qualifier.declaration = resolveInGlobalScope(qualifier.name);
+                    scope = qualifier.declaration ?? undefined;
+
                     continue;
                 }
             }
@@ -304,14 +309,20 @@ export class SemanticModelBuilder {
 
         // Now to the actual work (find method or function declaring symbol)      
         if (scope?.methods) {
-            const declaration = scope.methods.find(x => x.name === symbol.name) ?? null;
+
+            let declaration = scope.methods.find(x => x.name === symbol.name) ?? null;
+
+            if (!declaration)
+                declaration = resolveInGlobalScope(symbol.name) ?? null;
 
             if (declaration)
                 this.ConnectDeclaringSymbols(symbol, declaration);
         }
     }
 
-    // //#region Utils
+    //#endregion
+
+    //#region Utils
 
     private ConnectDeclaringSymbols(symbol: StSymbol, declaringSymbol: StSymbol) {
 

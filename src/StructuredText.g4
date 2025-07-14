@@ -30,6 +30,7 @@ varGlobalSection    : attribute? VAR_GLOBAL     accessModifier? modifier*   ID  
 typeDecl
     : attribute* TYPE accessModifier? ID ':' enumDecl END_TYPE
     | attribute* TYPE accessModifier? ID ':' structDecl END_TYPE
+    | attribute* TYPE accessModifier? ID ':' type ';' END_TYPE
     ;
 
 enumDecl

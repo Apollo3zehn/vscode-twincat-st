@@ -1,5 +1,5 @@
 import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, TextDocument } from "vscode";
-import { StAccessModifier, StModel, StSymbolKind } from "../core.js";
+import { logger, StAccessModifier, StModel, StSymbolKind } from "../core.js";
 import { PrimaryContext } from "../generated/StructuredTextParser.js";
 import { getContextRange, getTokenRange } from "../utils.js";
 
@@ -80,7 +80,7 @@ export class StDiagnosticsProvider {
                 for (const derefOrIndex of derefOrIndexList) {
 
                     if (!currentType)
-                        return;
+                        break;
 
                     // C0064: Dereference requires a pointer
                     if (derefOrIndex.CARET()) {
@@ -99,7 +99,7 @@ export class StDiagnosticsProvider {
                             break;
                         }
 
-                        currentType = currentType.baseType;
+                        currentType = currentType.underlyingTypeUsage;
                     }
                     
                     // C0047: Cannot apply indexing with [] to an expression of type '{type}'
@@ -119,9 +119,24 @@ export class StDiagnosticsProvider {
                             break;
                         }
 
-                        currentType = currentType.baseType;
+                        currentType = currentType.underlyingTypeUsage;
                     }
                 }
+            }
+
+            // C0046: Identifier '{id}' not defined
+            if (
+                symbol.kind === StSymbolKind.VariableUsage &&
+                !symbol.declaration
+            ) {
+                const diagnostic = new Diagnostic(
+                    symbol.selectionRange ?? symbol.range,
+                    `Identifier '${symbol.id}' not defined`,
+                    DiagnosticSeverity.Error
+                );
+
+                diagnostic.code = "C0046";
+                diagnostics.push(diagnostic);
             }
         }
 

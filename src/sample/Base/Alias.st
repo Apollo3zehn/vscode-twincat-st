@@ -1,0 +1,2 @@
+TYPE MyAlias : UDINT;
+END_TYPE

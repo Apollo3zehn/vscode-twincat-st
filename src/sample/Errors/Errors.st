@@ -9,6 +9,9 @@ FUNCTION_BLOCK FB_Errors
         _type: UnknownType;
     END_VAR
 
+    // C0046: Identifier '{id}' not defined
+    _c0046 := 1;
+
     // C0047: Cannot apply indexing with [] to an expression of type '{type}'
     _tmp := _tmp[0];
     _tmp := _c0064^[0];
@@ -17,6 +20,5 @@ FUNCTION_BLOCK FB_Errors
     _tmp := _tmp^;
     _tmp := _c0064^^;
 
-    // variable usage: no variable declaration
     // assignment: incompatible types
 END_FUNCTION_BLOCK

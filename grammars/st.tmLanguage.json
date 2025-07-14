@@ -12,8 +12,8 @@
     { "include": "#methods" },
     { "include": "#properties" },
     { "include": "#interfaces" },
-    { "include": "#structsAndEnumsForHover" },
-    { "include": "#structsAndEnums" },
+    { "include": "#customTypesForHover" },
+    { "include": "#customTypes" },
     { "include": "#declarations" },
     { "include": "#varsections" }
   ],
@@ -55,7 +55,7 @@
       "patterns": [
         {
           "name": "storage.type.class.st",
-          "match": "\\b(PROGRAM|END_PROGRAM|FUNCTION_BLOCK|END_FUNCTION_BLOCK|FUNCTION|END_FUNCTION|PROPERTY|END_PROPERTY|METHOD|END_METHOD|INTERFACE|END_INTERFACE|ENUM|STRUCT|END_STRUCT|TYPE|END_TYPE|VAR|VAR_INPUT|VAR_OUTPUT|VAR_IN_OUT|VAR_TEMP|VAR_EXTERNAL|VAR_GLOBAL|VAR_INST|VAR_STAT|END_VAR|GET|END_GET|SET|END_SET|IMPLEMENTS|EXTENDS|MOD|ABSTRACT|FINAL|CONSTANT|PUBLIC|PRIVATE|PROTECTED|INTERNAL)\\b"
+          "match": "\\b(PROGRAM|END_PROGRAM|FUNCTION_BLOCK|END_FUNCTION_BLOCK|FUNCTION|END_FUNCTION|PROPERTY|END_PROPERTY|METHOD|END_METHOD|INTERFACE|END_INTERFACE|ENUM|ALIAS|STRUCT|END_STRUCT|TYPE|END_TYPE|VAR|VAR_INPUT|VAR_OUTPUT|VAR_IN_OUT|VAR_TEMP|VAR_EXTERNAL|VAR_GLOBAL|VAR_INST|VAR_STAT|END_VAR|GET|END_GET|SET|END_SET|IMPLEMENTS|EXTENDS|MOD|ABSTRACT|FINAL|CONSTANT|PUBLIC|PRIVATE|PROTECTED|INTERNAL)\\b"
         },
         {
           "name": "keyword.control.st",
@@ -246,7 +246,18 @@
         }
       ]
     },
-    "structsAndEnums": {
+    "customTypesForHover": {
+      "patterns": [
+        {
+          "match": "^\\s*(ALIAS|STRUCT|ENUM)\\s(.*)",
+          "captures": {
+            "1": { "name": "keyword.other.st" },
+            "2": { "patterns": [{ "include": "#keywords"}, { "include": "#types" }] }
+          }
+        }
+      ]
+    },
+    "customTypes": {
       "patterns": [
         {
           "begin": "^\\s*(TYPE)\\s(.*)",
@@ -259,20 +270,10 @@
             "0": { "name": "keyword.other.st" }
           },
           "patterns": [
+            { "include": "#comments" },
             { "include": "#enums" },
             { "include": "#structs" }
           ]
-        }
-      ]
-    },
-    "structsAndEnumsForHover": {
-      "patterns": [
-        {
-          "match": "^\\s*(STRUCT|ENUM)\\s(.*)",
-          "captures": {
-            "1": { "name": "keyword.other.st" },
-            "2": { "patterns": [{ "include": "#keywords"}, { "include": "#types" }] }
-          }
         }
       ]
     },
@@ -415,7 +416,7 @@
     "declarations": {
       "patterns": [
         {
-          "match": "(.*?):\\s*(.*?(?=;|:=|REF=|$))\\s*(?:(:=|REF=)\\s*(.*))?",
+          "match": "(\\b.*?):\\s*(.*?(?=;|:=|REF=|$))\\s*(?:(:=|REF=)\\s*(.*))?",
           "captures": {
             "1": { 
               "patterns": [
@@ -455,7 +456,7 @@
         { "name": "keyword.operator.member.st", "match": "\\." },
         { "name": "keyword.operator.arithmetic.st", "match": "\\+|\\-|\\*|\\/|MOD" },
         { "name": "keyword.operator.comparison.st", "match": "<=|>=|<>|<|>|=" },
-        { "name": "keyword.other.st", "match": "\\b(AND|OR|XOR|NOT|SHL|SHR|ROL|ROR)\\b" }
+        { "name": "keyword.other.st", "match": "\\b(AND|OR|XOR|NOT|SHL|SHR|ROL|ROR|ADR)\\b" }
       ]
     },
     "expression": {

@@ -176,6 +176,7 @@ export class SemanticModelBuilder {
             if (
                 (
                     typeDeclaration.kind === StSymbolKind.FunctionBlock ||
+                    typeDeclaration.kind === StSymbolKind.Alias ||
                     typeDeclaration.kind === StSymbolKind.Struct ||
                     typeDeclaration.kind === StSymbolKind.Enum ||
                     typeDeclaration.kind === StSymbolKind.Interface

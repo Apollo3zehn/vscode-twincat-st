@@ -26,6 +26,10 @@ FUNCTION INTERNAL F_AccessModifier : BOOL
     //
 END_FUNCTION
 
+TYPE INTERNAL A_AccessModifier : INT;
+    //
+END_TYPE
+
 TYPE INTERNAL E_AccessModifier :
 (
     dummy

@@ -48,7 +48,7 @@ export class StSymbol {
 
     public declaration: StSymbol | undefined;               // for variable and type usages (custom types)
 
-    public baseType: StSymbol | undefined;                  // for type usage (arrays, references, pointers)
+    public underlyingTypeUsage: StSymbol | undefined;       // for type usage (arrays, references, pointers, enums, aliases)
     public builtinType: StBuiltinType | undefined;          // for type usage (builtin types)
     
     public variables: StSymbol[] | undefined;               // for function blocks, functions, methods, global variable lists, enums, structs
@@ -123,8 +123,9 @@ export enum StSymbolKind {
     VariableUsage,
     MethodOrFunctionCall,
     TypeUsage,
-    Struct,
     Gvl,
+    Alias,
+    Struct,
     Enum,
     EnumMember
 }

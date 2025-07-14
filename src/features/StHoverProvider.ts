@@ -1,5 +1,5 @@
 import { Hover, HoverProvider, MarkdownString, Position, ProviderResult, TextDocument } from "vscode";
-import { StAccessModifier, StModel, StSymbol, StSymbolKind } from "../core.js";
+import { StAccessModifier, StBuiltinType, StModel, StSymbol, StSymbolKind } from "../core.js";
 import { EnumDeclContext, EnumMemberContext, FunctionBlockContext, PropertyContext, StructDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { isInRange } from "../utils.js";
 
@@ -165,11 +165,14 @@ export class StHoverProvider implements HoverProvider {
             case StSymbolKind.Gvl:
                 return `VAR_GLOBAL ${accessModifier}${symbol.id}`;
             
+            case StSymbolKind.Alias:
+                return `ALIAS ${accessModifier}${symbol.id} : ${this.getTypeId(symbol)}`;
+            
             case StSymbolKind.Struct:
                 return `STRUCT ${accessModifier}${symbol.id}`;
             
             case StSymbolKind.Enum:
-                return `ENUM ${accessModifier}${symbol.id} : ${symbol.type?.id ?? "INT"}`;
+                return `ENUM ${accessModifier}${symbol.id} : ${this.getTypeId(symbol)}`;
             
             case StSymbolKind.EnumMember:
 
@@ -182,5 +185,14 @@ export class StHoverProvider implements HoverProvider {
         }
 
         return symbol.id ?? "";
+    }
+
+    private getTypeId(symbol: StSymbol): string {
+        
+        if (symbol.builtinType)
+            return StBuiltinType[symbol.builtinType];
+
+        else
+            return symbol.underlyingTypeUsage?.id ?? "??"
     }
 }

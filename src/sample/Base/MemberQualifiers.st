@@ -51,7 +51,7 @@ FUNCTION_BLOCK MemberQualifier
             variable: INT;
         END_VAR
 
-        // Assigments + Expressions
+        // Assignments + Expressions
         variable := variable;
 
         variable := _variable;
@@ -66,7 +66,7 @@ FUNCTION_BLOCK MemberQualifier
         F_MemberQualifier();
     END_METHOD
 
-    // Assigments + Expressions (variable usage and method/function usage)
+    // Assignments + Expressions (variable usage and method/function usage)
     _variable := _variable;
     _variable := THIS^._variable;
 

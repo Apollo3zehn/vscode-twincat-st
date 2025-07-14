@@ -1,7 +1,7 @@
 import { ParserRuleContext, Token } from "antlr4ng";
 import { Uri } from "vscode";
 import { StAccessModifier, StBuiltinType, StModel, StSourceFile, StSymbol, StSymbolKind, StTypeInfo, VariableKind } from "../core.js";
-import { AccessModifierContext, ArgumentContext, AssignmentContext, CallStatementContext, EnumDeclContext, EnumMemberContext, ExprContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberContext, MemberQualifierContext, MethodContext, PrimaryContext, ProgramContext, PropertyContext, StructDeclContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { AccessModifierContext, ArgumentContext, AssignmentContext, CallStatementContext, EnumMemberContext, ExprContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberContext, MemberQualifierContext, MethodContext, PrimaryContext, ProgramContext, PropertyContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 import { getContextRange, getOriginalText, getTokenRange } from "../utils.js";
 
@@ -12,7 +12,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
     private _documentUri: Uri;
     private _parent: StSymbol | undefined;
     private _declaration: StSymbol | undefined;
-    private _baseType: StSymbol | undefined;
+    private _underlyingTypeUsage: StSymbol | undefined;
     private _qualifier: StSymbol | undefined;
     private _variableKind: VariableKind = VariableKind.None;
 
@@ -32,18 +32,13 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
     public override visitTypeDecl = (ctx: TypeDeclContext): void => {
 
-        const structDeclCtx = ctx.structDecl();
-        const enumDeclCtx = ctx.enumDecl();
+        this._underlyingTypeUsage = undefined;
 
-        if (structDeclCtx) {
-            this.createStruct(structDeclCtx);
-            this.visitChildren(structDeclCtx);
-        }
+        const symbol = this.createType(ctx);
+        this.visitChildren(ctx);
 
-        else if (enumDeclCtx) {
-            this.createEnum(enumDeclCtx);
-            this.visitChildren(enumDeclCtx);
-        }
+        if (symbol)
+            symbol.underlyingTypeUsage = this._underlyingTypeUsage;
     };
 
     public override visitEnumMember = (ctx: EnumMemberContext): void => {
@@ -143,8 +138,8 @@ export class StVisitor extends StructuredTextVisitor<void> {
     public override visitType? = (ctx: TypeContext): void | undefined => {
         this.visitChildren(ctx);
 
-        const symbol = this.createType(ctx);
-        this._baseType = symbol;
+        const symbol = this.createTypeUsage(ctx);
+        this._underlyingTypeUsage = symbol;
     }
 
     //#endregion
@@ -186,31 +181,35 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this._model.typesMap.set(ctx, symbol);
     }
 
-    private createStruct(ctx: StructDeclContext) {
+    private createType(ctx: TypeDeclContext): StSymbol | undefined {
+        const structDeclCtx = ctx.structDecl();
+        const enumDeclCtx = ctx.enumDecl();
+        const typeCtx = ctx.type();
 
-        const typeDeclCtx = ctx.parent as TypeDeclContext;
-        const idToken = typeDeclCtx.ID().symbol;
-        const symbol = this.create(typeDeclCtx, idToken, StSymbolKind.Struct);
+        let symbolKind: StSymbolKind;
 
-        symbol.typeHierarchyInfo = new StTypeInfo();
-        symbol.accessModifier = this.GetAccessModifier(typeDeclCtx.accessModifier() ?? undefined);
+        if (typeCtx)
+            symbolKind = StSymbolKind.Alias;
+
+        else if (enumDeclCtx)
+            symbolKind = StSymbolKind.Enum;
+
+        else if (structDeclCtx)
+            symbolKind = StSymbolKind.Struct;
+
+        else
+            return undefined;
+
+        const idToken = ctx.ID().symbol;
+        const symbol = this.create(ctx, idToken, symbolKind);
+
+        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
         this._model.typesMap.set(ctx, symbol);
-    }
-
-    private createEnum(ctx: EnumDeclContext) {
-
-        const typeDeclCtx = ctx.parent as TypeDeclContext;
-        const idToken = typeDeclCtx.ID().symbol;
-        const symbol = this.create(typeDeclCtx, idToken, StSymbolKind.Enum);
-
-        symbol.typeHierarchyInfo = new StTypeInfo();
-        symbol.accessModifier = this.GetAccessModifier(typeDeclCtx.accessModifier() ?? undefined);
-
-        this._model.typesMap.set(ctx, symbol);
-        this._parent = symbol;
         this._declaration = symbol;
+
+        return symbol;
     }
 
     private createFunction(ctx: FunctionContext) {
@@ -343,7 +342,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         );
     }
 
-    private createType(ctx: TypeContext): StSymbol {
+    private createTypeUsage(ctx: TypeContext): StSymbol {
            
         const symbol = this.create(
             ctx,
@@ -368,7 +367,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         // If this is not a base type, it must get a base type assigned
         else {
-            symbol.baseType = this._baseType;
+            symbol.underlyingTypeUsage = this._underlyingTypeUsage;
         }
 
         if (this._declaration)

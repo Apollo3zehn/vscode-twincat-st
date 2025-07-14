@@ -9,8 +9,11 @@ FUNCTION_BLOCK FB_Errors
         _type: UnknownType;
     END_VAR
 
+    // C0047: Cannot apply indexing with [] to an expression of type '{type}'
+    _tmp := _tmp[0];
+    _tmp := _c0064^[0];
+
     // C0064: Dereference requires a pointer
     _tmp := _tmp^;
     _tmp := _c0064^^;
-
 END_FUNCTION_BLOCK

@@ -1,6 +1,7 @@
 import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, TextDocument } from "vscode";
 import { StAccessModifier, StModel, StSymbolKind } from "../core.js";
 import { PrimaryContext } from "../generated/StructuredTextParser.js";
+import { getContextRange, getTokenRange } from "../utils.js";
 
 export class StDiagnosticsProvider {
     private _diagnosticCollection: DiagnosticCollection;
@@ -23,7 +24,7 @@ export class StDiagnosticsProvider {
 
         for (const symbol of sourceFile.symbolMap.values()) {
 
-            // --- Unused variable/method/function diagnostics ---
+            // Unused variable/method/function diagnostics
             if (
                 (
                     symbol.kind === StSymbolKind.VariableDeclaration ||
@@ -46,7 +47,7 @@ export class StDiagnosticsProvider {
                 diagnostics.push(diagnostic);
             }
 
-            // --- Unknown type: '{type}' (C0077) ---
+            // C0077: Unknown type: '{type}'
             if (
                 symbol.kind === StSymbolKind.TypeUsage &&
                 !(
@@ -67,22 +68,60 @@ export class StDiagnosticsProvider {
                 diagnostics.push(diagnostic);
             }
 
-            // --- Dereference requires a pointer (C0064) ---
+            // Variable usage
             if (
                 symbol.kind === StSymbolKind.VariableUsage &&
-                symbol.id !== "THIS" &&
-                !symbol.declaration?.type?.isPointer &&
                 symbol.context instanceof PrimaryContext &&
-                symbol.context.derefOrIndex(0)
+                symbol.context.derefOrIndex()
             ) {
-                const diagnostic = new Diagnostic(
-                    symbol.selectionRange ?? symbol.range,
-                    `Dereference requires a pointer`,
-                    DiagnosticSeverity.Error
-                );
+                let currentType = symbol.declaration?.type;
+                const derefOrIndexList = symbol.context.derefOrIndex();
 
-                diagnostic.code = "C0064";
-                diagnostics.push(diagnostic);
+                for (const derefOrIndex of derefOrIndexList) {
+
+                    if (!currentType)
+                        return;
+
+                    // C0064: Dereference requires a pointer
+                    if (derefOrIndex.CARET()) {
+
+                        if (!currentType.isPointer) {
+
+                            const diagnostic = new Diagnostic(
+                                getTokenRange(derefOrIndex.CARET()?.symbol) ?? symbol.selectionRange ?? symbol.range,
+                                `Dereference requires a pointer`,
+                                DiagnosticSeverity.Error
+                            );
+
+                            diagnostic.code = "C0064";
+                            diagnostics.push(diagnostic);
+
+                            break;
+                        }
+
+                        currentType = currentType.baseType;
+                    }
+                    
+                    // C0047: Cannot apply indexing with [] to an expression of type '{type}'
+                    else if (derefOrIndex.arrayIndex()) {
+
+                        if (!currentType.isArray) {
+
+                            const diagnostic = new Diagnostic(
+                                getContextRange(derefOrIndex.arrayIndex()) ?? symbol.selectionRange ?? symbol.range,
+                                `Cannot apply indexing with [] to an expression of type '{${currentType.id}}'`,
+                                DiagnosticSeverity.Error
+                            );
+
+                            diagnostic.code = "C0047";
+                            diagnostics.push(diagnostic);
+
+                            break;
+                        }
+
+                        currentType = currentType.baseType;
+                    }
+                }
             }
         }
 

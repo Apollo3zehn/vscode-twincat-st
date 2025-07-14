@@ -93,6 +93,4 @@ FUNCTION_BLOCK MemberQualifier
 
     GVL_MemberQualifier.A.Method();
     F_MemberQualifier();
-
-    // Hover: Prettify
 END_FUNCTION_BLOCK

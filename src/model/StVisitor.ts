@@ -1,8 +1,9 @@
 import { ParserRuleContext, Token } from "antlr4ng";
-import { Range, Uri } from "vscode";
+import { Uri } from "vscode";
 import { StAccessModifier, StBuiltinType, StModel, StSourceFile, StSymbol, StSymbolKind, StTypeInfo, VariableKind } from "../core.js";
 import { AccessModifierContext, ArgumentContext, AssignmentContext, CallStatementContext, EnumDeclContext, EnumMemberContext, ExprContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberContext, MemberQualifierContext, MethodContext, PrimaryContext, ProgramContext, PropertyContext, StructDeclContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
+import { getContextRange, getTokenRange } from "../utils.js";
 
 export class StVisitor extends StructuredTextVisitor<void> {
 
@@ -394,10 +395,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
     ): StSymbol {
         
         // Create symbol
-        const range = this.getRangeFromContext(ctx);
+        const range = getContextRange(ctx)!;
 
         const selectionRange = idToken
-            ? this.getRangeFromToken(idToken)
+            ? getTokenRange(idToken)
             : range;
         
         const id = idToken
@@ -465,27 +466,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
     //#endregion
 
     //#region Utils
-
-    private getRangeFromToken(token: Token): Range {
-        return new Range(
-            token.line - 1,
-            token.column,
-            token.line - 1,
-            token.column + token.stop - token.start + 1
-        );
-    }
-
-    private getRangeFromContext(ctx: ParserRuleContext): Range {
-        const start = ctx.start!;
-        const stop = ctx.stop!;
-
-        return new Range(
-            start.line - 1,
-            start.column,
-            stop.line - 1,
-            stop.column + stop.stop - stop.start + 1
-        );
-    }
 
     private GetAccessModifier(ctx: AccessModifierContext | undefined): StAccessModifier | undefined {
 

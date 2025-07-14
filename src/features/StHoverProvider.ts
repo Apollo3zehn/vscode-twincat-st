@@ -1,6 +1,6 @@
 import { Hover, HoverProvider, MarkdownString, Position, ProviderResult, TextDocument } from "vscode";
 import { StAccessModifier, StModel, StSymbol, StSymbolKind } from "../core.js";
-import { EnumMemberContext } from "../generated/StructuredTextParser.js";
+import { EnumDeclContext, EnumMemberContext, FunctionBlockContext, PropertyContext, StructDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { isInRange } from "../utils.js";
 
 export class StHoverProvider implements HoverProvider {
@@ -77,17 +77,50 @@ export class StHoverProvider implements HoverProvider {
     private getSymbolSignature(symbol: StSymbol): string {
 
         const accessModifier = symbol.accessModifier
-            ? ` ${StAccessModifier[symbol.accessModifier].toUpperCase()}`
+            ? `${StAccessModifier[symbol.accessModifier].toUpperCase()} `
             : "";
 
         switch (symbol.kind) {
 
             case StSymbolKind.VariableDeclaration:
-                return `${symbol.parent!.id}.${symbol.id}: ${symbol.type?.id ?? "?"}`;
+                
+                const context = symbol.context;
+                
+                let prefix = "";
+                let qualifier = "";
+
+                if (context.parent instanceof StructDeclContext)
+                    qualifier = `${symbol.parent?.id ?? "??"}.`;
+                
+                else if (context.parent instanceof EnumDeclContext) {
+                    prefix = "ENUM ";
+                    qualifier = `${symbol.parent?.id ?? "??"}.`;
+                }
+                    
+                else if (context.parent instanceof VarGlobalSectionContext) {
+                    prefix = "VAR_GLOBAL ";
+                    qualifier = `${symbol.parent?.id ?? "??"}.`;
+                }
+                    
+                else if (context.parent instanceof VarDeclSectionContext) {
+                    prefix = context.parent.varSectionType().getText() + " ";
+
+                    if (prefix.startsWith("VAR_INST"))
+                        qualifier = `${symbol.parent?.parent?.id ?? "??"}.`;
+
+                    else if (symbol.parent?.kind === StSymbolKind.FunctionBlock)
+                        qualifier = `${symbol.parent?.id ?? "??"}.`;
+                }
+
+                return `${prefix}${accessModifier}${qualifier}${symbol.id}: ${symbol.type?.id ?? "?"}`;
             
-            case StSymbolKind.VariableUsage:                
-                const declaration = symbol.declaration;
-                return `${declaration?.parent?.id ?? "?"}.${symbol.id}: ${declaration?.type?.id ?? "?"}`;
+            case StSymbolKind.VariableUsage:
+
+                if (symbol.declaration)
+                    return this.getSymbolSignature(symbol.declaration);
+
+                else
+                    return symbol.id ?? "";
             
             case StSymbolKind.TypeUsage:
 
@@ -101,42 +134,42 @@ export class StHoverProvider implements HoverProvider {
                 return `${symbol.id} : ${symbol.declaration?.type?.id ?? "?"}`;
             
             case StSymbolKind.Method:
-                return `METHOD${accessModifier} ${symbol.id} : ${symbol.type?.id ?? "?"}`;
+                return `METHOD ${accessModifier}${symbol.id} : ${symbol.type?.id ?? "?"}`;
             
             case StSymbolKind.Function:
-                return `FUNCTION${accessModifier} ${symbol.id} : ${symbol.type?.id ?? "?"}`;
+                return `FUNCTION ${accessModifier}${symbol.id} : ${symbol.type?.id ?? "?"}`;
             
             case StSymbolKind.Property:
-                return `PROPERTY${accessModifier} ${symbol.id} : ${symbol.type?.id ?? "?"}`;
+                return `PROPERTY ${accessModifier}${symbol.id} : ${symbol.type?.id ?? "?"}`;
             
             case StSymbolKind.FunctionBlock:
-                return `FUNCTION_BLOCK${accessModifier} ${symbol.id}`;
+                return `FUNCTION_BLOCK ${accessModifier}${symbol.id}`;
             
             case StSymbolKind.Interface:
-                return `INTERFACE${accessModifier} ${symbol.id}`;
+                return `INTERFACE ${accessModifier}${symbol.id}`;
             
             case StSymbolKind.Program:
-                return `PROGRAM${accessModifier} ${symbol.id}`;
+                return `PROGRAM ${accessModifier}${symbol.id}`;
             
             case StSymbolKind.Gvl:
-                return `VAR_GLOBAL ${accessModifier} ${symbol.id}`;
+                return `VAR_GLOBAL ${accessModifier}${symbol.id}`;
             
             case StSymbolKind.Struct:
-                return `TYPE${accessModifier} ${symbol.id}`;
+                return `STRUCT ${accessModifier}${symbol.id}`;
             
             case StSymbolKind.Enum:
-                return `TYPE${accessModifier} ${symbol.id} : ${symbol.type?.id ?? "INT"}`;
+                return `ENUM ${accessModifier}${symbol.id} : ${symbol.type?.id ?? "INT"}`;
             
             case StSymbolKind.EnumMember:
+
                 const enumMemberCtx = symbol.context as EnumMemberContext;
                 const expr = enumMemberCtx.expr();
 
                 return expr
                     ? `${symbol.parent!.id}.${enumMemberCtx.ID()} := ${expr.getText()}`
                     : `${symbol.parent!.id}.${enumMemberCtx.ID()}`;
-            
-            default:
-                return symbol.id ?? "";
         }
+
+        return symbol.id ?? "";
     }
 }

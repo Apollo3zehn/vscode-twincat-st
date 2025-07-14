@@ -51,7 +51,7 @@ FUNCTION_BLOCK MemberQualifier
             variable: INT;
         END_VAR
 
-        // Variables (reduced test count)
+        // Assigments + Expressions
         variable := variable;
 
         variable := _variable;
@@ -59,7 +59,7 @@ FUNCTION_BLOCK MemberQualifier
 
         variable := E_MemberQualifier.Variable;
 
-        // Method & function calls (reduced test count)
+        // Call statements
         Method();
         THIS^.Method();
 
@@ -67,19 +67,19 @@ FUNCTION_BLOCK MemberQualifier
     END_METHOD
 
     // Assigments + Expressions (variable usage and method/function usage)
-    variable := _variable;
-    variable := THIS^._variable;
+    _variable := _variable;
+    _variable := THIS^._variable;
 
-    variable := THIS^._b.Variable;
-    variable := _b.Variable;
-    variable := _b.A.Variable;
+    _variable := THIS^._b.Variable;
+    _variable := _b.Variable;
+    _variable := _b.A.Variable;
 
-    variable := GVL_MemberQualifier.Variable;
-    variable := GVL_MemberQualifier.A.Variable;
-    variable := E_MemberQualifier.Variable;
+    _variable := GVL_MemberQualifier.Variable;
+    _variable := GVL_MemberQualifier.A.Variable;
+    _variable := E_MemberQualifier.Variable;
 
-    variable := _b.A.Method();
-    variable := F_MemberQualifier();
+    _variable := _b.A.Method();
+    _variable := F_MemberQualifier();
 
     _b.A.Variable := 1;
 

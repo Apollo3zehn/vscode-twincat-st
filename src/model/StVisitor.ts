@@ -274,6 +274,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
     }
 
     private createProperty(ctx: PropertyContext) {
+        
         const idToken = ctx.ID().symbol;
 
         const symbol = this.create(

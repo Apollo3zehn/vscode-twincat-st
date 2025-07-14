@@ -260,6 +260,14 @@ export class SemanticModelBuilder {
                     return varableDeclaration;
             }
 
+            if (scope.properties) {
+
+                const propertyDeclaration = scope.properties.find(x => x.id === name);
+
+                if (propertyDeclaration)
+                    return propertyDeclaration;
+            }
+
             scope = scope.parent;
         }
 

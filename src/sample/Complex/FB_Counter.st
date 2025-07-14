@@ -2,7 +2,9 @@ FUNCTION_BLOCK FB_Counter EXTENDS FB_CounterBase IMPLEMENTS I_Counter, I_Reset
 
     VAR_INPUT
         enable: BOOL := FALSE;
+
         count:  REFERENCE TO BOOL;
+        
         unused: INT;
     END_VAR
 

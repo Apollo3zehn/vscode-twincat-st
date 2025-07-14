@@ -109,7 +109,7 @@ export class StDiagnosticsProvider {
 
                             const diagnostic = new Diagnostic(
                                 getContextRange(derefOrIndex.arrayIndex()) ?? symbol.selectionRange ?? symbol.range,
-                                `Cannot apply indexing with [] to an expression of type '{${currentType.id}}'`,
+                                `Cannot apply indexing with [] to an expression of type '${currentType.id}'`,
                                 DiagnosticSeverity.Error
                             );
 

@@ -15,6 +15,7 @@ END_TYPE
 TYPE INTERNAL MyEnum3 :
 (
     White := 0,
+    
     Yellow
 ) DWORD;
 END_TYPE

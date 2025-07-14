@@ -16,4 +16,7 @@ FUNCTION_BLOCK FB_Errors
     // C0064: Dereference requires a pointer
     _tmp := _tmp^;
     _tmp := _c0064^^;
+
+    // variable usage: no variable declaration
+    // assignment: incompatible types
 END_FUNCTION_BLOCK

@@ -1,6 +1,6 @@
 import { ParserRuleContext, Token } from "antlr4ng";
 import { Range, Uri } from "vscode";
-import { StAccessModifier, StModel, StSourceFile, StSymbol, StSymbolKind, StTypeInfo, VariableKind } from "../core.js";
+import { StAccessModifier, StBuiltinType, StModel, StSourceFile, StSymbol, StSymbolKind, StTypeInfo, VariableKind } from "../core.js";
 import { AccessModifierContext, ArgumentContext, AssignmentContext, CallStatementContext, EnumDeclContext, EnumMemberContext, ExprContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberContext, MemberQualifierContext, MethodContext, PrimaryContext, ProgramContext, PropertyContext, StructDeclContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 
@@ -11,6 +11,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
     private _documentUri: Uri;
     private _parent: StSymbol | undefined;
     private _declaration: StSymbol | undefined;
+    private _baseType: StSymbol | undefined;
     private _qualifier: StSymbol | undefined;
     private _variableKind: VariableKind = VariableKind.None;
     private _accessModifier: StAccessModifier = StAccessModifier.Public;
@@ -140,7 +141,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
     }
 
     public override visitType? = (ctx: TypeContext): void | undefined => {
-        this.createType(ctx)
+        this.visitChildren(ctx);
+
+        const symbol = this.createType(ctx);
+        this._baseType = symbol;
     }
 
     //#endregion
@@ -163,7 +167,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, StSymbolKind.Interface);
 
-        symbol.typeInfo = new StTypeInfo();
+        symbol.typeHierarchyInfo = new StTypeInfo();
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
@@ -175,7 +179,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, StSymbolKind.FunctionBlock);
 
-        symbol.typeInfo = new StTypeInfo();
+        symbol.typeHierarchyInfo = new StTypeInfo();
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
@@ -188,7 +192,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const idToken = typeDeclCtx.ID().symbol;
         const symbol = this.create(typeDeclCtx, idToken, StSymbolKind.Struct);
 
-        symbol.typeInfo = new StTypeInfo();
+        symbol.typeHierarchyInfo = new StTypeInfo();
         symbol.accessModifier = this.GetAccessModifier(typeDeclCtx.accessModifier() ?? undefined);
 
         this._parent = symbol;
@@ -201,7 +205,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const idToken = typeDeclCtx.ID().symbol;
         const symbol = this.create(typeDeclCtx, idToken, StSymbolKind.Enum);
 
-        symbol.typeInfo = new StTypeInfo();
+        symbol.typeHierarchyInfo = new StTypeInfo();
         symbol.accessModifier = this.GetAccessModifier(typeDeclCtx.accessModifier() ?? undefined);
 
         this._model.typesMap.set(ctx, symbol);
@@ -312,7 +316,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const symbol = this.create(
             ctx,
             idToken,
-            StSymbolKind.Variable
+            StSymbolKind.VariableDeclaration
         );
         
         symbol.variableKind = this._variableKind;
@@ -341,40 +345,38 @@ export class StVisitor extends StructuredTextVisitor<void> {
         );
     }
 
-    private createType(ctx: TypeContext) {
-
-        const builtinTypeNode = ctx.builtinType();
-        let idToken: Token;
-
-        if (builtinTypeNode) {
-            const text = builtinTypeNode.getText();
-            const startToken = builtinTypeNode.start;
-
-            idToken = {
-                ...startToken,
-                text,
-            } as Token;
-        }
-        
-        else if (ctx.ID()) {
-            idToken = ctx.ID()!.symbol;
-        }
-
-        else {
-            return;
-        }
-            
+    private createType(ctx: TypeContext): StSymbol {
+           
         const symbol = this.create(
             ctx,
-            idToken,
+            undefined,
             StSymbolKind.TypeUsage
         );
 
-        if (builtinTypeNode)
-            symbol.isBuiltinType = true;
+        const baseType = ctx.baseType();
+
+        if (baseType) {
+
+            const builtinType = baseType?.builtinType();
+
+            if (builtinType) {
+
+                const typeText = builtinType.getText().toUpperCase();
+
+                if (typeText in StBuiltinType)
+                    symbol.builtinType = typeText as StBuiltinType;
+            }
+        }
+
+        // If this is not a base type, it must get a base type assigned
+        else {
+            symbol.baseType = this._baseType;
+        }
 
         if (this._declaration)
             this._declaration.type = symbol;
+
+        return symbol;
     }
 
     private createArgument(ctx: ArgumentContext) {
@@ -387,23 +389,24 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
     private create(
         ctx: ParserRuleContext,
-        nameToken: Token,
+        idToken: Token | undefined,
         symbolKind: StSymbolKind
     ): StSymbol {
         
         // Create symbol
         const range = this.getRangeFromContext(ctx);
 
-        const selectionRange = nameToken
-            ? this.getRangeFromToken(nameToken)
-            : undefined;
+        const selectionRange = idToken
+            ? this.getRangeFromToken(idToken)
+            : range;
         
-        const name = nameToken.text!;
+        const id = idToken
+            ? idToken.text!
+            : ctx.getText();
 
         const symbol = new StSymbol(
             this._documentUri,
-            nameToken,
-            name,
+            id,
             symbolKind,
             ctx,
             range,

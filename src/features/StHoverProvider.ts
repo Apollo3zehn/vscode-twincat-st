@@ -82,12 +82,12 @@ export class StHoverProvider implements HoverProvider {
 
         switch (symbol.kind) {
 
-            case StSymbolKind.Variable:
-                return `${symbol.parent!.name}.${symbol.name}: ${symbol.type?.name ?? "?"}`;
+            case StSymbolKind.VariableDeclaration:
+                return `${symbol.parent!.id}.${symbol.id}: ${symbol.type?.id ?? "?"}`;
             
             case StSymbolKind.VariableUsage:                
                 const declaration = symbol.declaration;
-                return `${declaration?.parent?.name ?? "?"}.${symbol.name}: ${declaration?.type?.name ?? "?"}`;
+                return `${declaration?.parent?.id ?? "?"}.${symbol.id}: ${declaration?.type?.id ?? "?"}`;
             
             case StSymbolKind.TypeUsage:
 
@@ -95,48 +95,48 @@ export class StHoverProvider implements HoverProvider {
                     return this.getSymbolSignature(symbol.declaration);
 
                 else
-                    return symbol.name ?? "";
+                    return symbol.id ?? "";
             
             case StSymbolKind.MethodOrFunctionCall:
-                return `${symbol.name} : ${symbol.declaration?.type?.name ?? "?"}`;
+                return `${symbol.id} : ${symbol.declaration?.type?.id ?? "?"}`;
             
             case StSymbolKind.Method:
-                return `METHOD${accessModifier} ${symbol.name} : ${symbol.type?.name ?? "?"}`;
+                return `METHOD${accessModifier} ${symbol.id} : ${symbol.type?.id ?? "?"}`;
             
             case StSymbolKind.Function:
-                return `FUNCTION${accessModifier} ${symbol.name} : ${symbol.type?.name ?? "?"}`;
+                return `FUNCTION${accessModifier} ${symbol.id} : ${symbol.type?.id ?? "?"}`;
             
             case StSymbolKind.Property:
-                return `PROPERTY${accessModifier} ${symbol.name} : ${symbol.type?.name ?? "?"}`;
+                return `PROPERTY${accessModifier} ${symbol.id} : ${symbol.type?.id ?? "?"}`;
             
             case StSymbolKind.FunctionBlock:
-                return `FUNCTION_BLOCK${accessModifier} ${symbol.name}`;
+                return `FUNCTION_BLOCK${accessModifier} ${symbol.id}`;
             
             case StSymbolKind.Interface:
-                return `INTERFACE${accessModifier} ${symbol.name}`;
+                return `INTERFACE${accessModifier} ${symbol.id}`;
             
             case StSymbolKind.Program:
-                return `PROGRAM${accessModifier} ${symbol.name}`;
+                return `PROGRAM${accessModifier} ${symbol.id}`;
             
             case StSymbolKind.Gvl:
-                return `VAR_GLOBAL ${accessModifier} ${symbol.name}`;
+                return `VAR_GLOBAL ${accessModifier} ${symbol.id}`;
             
             case StSymbolKind.Struct:
-                return `TYPE${accessModifier} ${symbol.name}`;
+                return `TYPE${accessModifier} ${symbol.id}`;
             
             case StSymbolKind.Enum:
-                return `TYPE${accessModifier} ${symbol.name} : ${symbol.type?.name ?? "INT"}`;
+                return `TYPE${accessModifier} ${symbol.id} : ${symbol.type?.id ?? "INT"}`;
             
             case StSymbolKind.EnumMember:
                 const enumMemberCtx = symbol.context as EnumMemberContext;
                 const expr = enumMemberCtx.expr();
 
                 return expr
-                    ? `${symbol.parent!.name}.${enumMemberCtx.ID()} := ${expr.getText()}`
-                    : `${symbol.parent!.name}.${enumMemberCtx.ID()}`;
+                    ? `${symbol.parent!.id}.${enumMemberCtx.ID()} := ${expr.getText()}`
+                    : `${symbol.parent!.id}.${enumMemberCtx.ID()}`;
             
             default:
-                return symbol.name ?? "";
+                return symbol.id ?? "";
         }
     }
 }

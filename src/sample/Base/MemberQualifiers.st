@@ -42,12 +42,7 @@ FUNCTION_BLOCK MemberQualifier
 
     VAR
         _variable: INT;
-
-        original: MemberQualifier_B;
-
-        ref: REFERENCE TO MemberQualifier_B REF= original;
-        
-        ptr: POINTER TO MemberQualifier_B := ADR(original);
+        _b: MemberQualifier_B;
     END_VAR
 
     METHOD Method
@@ -75,37 +70,29 @@ FUNCTION_BLOCK MemberQualifier
     variable := _variable;
     variable := THIS^._variable;
 
-    variable := THIS^.ref.Variable;
-    variable := ref.Variable;
-    variable := ref.A.Variable;
-
-    variable := ptr^.Variable;
-    variable := ptr^.A.Variable;
+    variable := THIS^._b.Variable;
+    variable := _b.Variable;
+    variable := _b.A.Variable;
 
     variable := GVL_MemberQualifier.Variable;
     variable := GVL_MemberQualifier.A.Variable;
     variable := E_MemberQualifier.Variable;
 
-    variable := ref.A.Method();
+    variable := _b.A.Method();
     variable := F_MemberQualifier();
 
-    ref.A.Variable := 1;
+    _b.A.Variable := 1;
 
     // Call statements
     Method();
     THIS^.Method();
 
-    THIS^.ref.Method();
-    ref.Method();
-    ref.A.Method();
-
-    ptr^.Method();
-    ptr^.A.Method();
+    THIS^._b.Method();
+    _b.Method();
+    _b.A.Method();
 
     GVL_MemberQualifier.A.Method();
     F_MemberQualifier();
 
-    // TODO: REF, PTR
-    // Array Index
     // Hover: Prettify
 END_FUNCTION_BLOCK

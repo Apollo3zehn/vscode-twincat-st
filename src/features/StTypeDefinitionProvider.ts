@@ -31,7 +31,7 @@ export class StTypeDefinitionProvider implements TypeDefinitionProvider {
 
         let typeDeclaringSymbol: StSymbol | null | undefined;
 
-        if (foundSymbol.kind === StSymbolKind.Variable) {
+        if (foundSymbol.kind === StSymbolKind.VariableDeclaration) {
             typeDeclaringSymbol = foundSymbol.type?.declaration;
         }
 

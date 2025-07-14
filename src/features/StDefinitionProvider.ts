@@ -30,7 +30,7 @@ export class StDefinitionProvider implements DefinitionProvider {
     
             switch (foundSymbol.kind) {
                 case StSymbolKind.TypeUsage:
-                case StSymbolKind.Variable:
+                case StSymbolKind.VariableDeclaration:
                 case StSymbolKind.VariableUsage:
                 case StSymbolKind.MethodOrFunctionCall:
 

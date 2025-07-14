@@ -64,11 +64,8 @@ member              : method | property | varDeclSection ;
 // =======================
 varDeclSection      : varSectionType modifier* varDecl+ END_VAR ;
 varSectionType      : VAR | VAR_INPUT | VAR_OUTPUT | VAR_IN_OUT | VAR_TEMP | VAR_EXTERNAL | VAR_INST | VAR_STAT ;
-varDecl             : attribute? ID ':' REFERENCE_TO type ('REF=' expr)? ';'
-                    | attribute? ID ':' POINTER_TO type (':=' expr)? ';'
-                    | attribute? ID ':' arraySpec? type (':=' exprOrArrayInit)? ';'
-                    ;
-arraySpec           : ARRAY '[' NUMBER '..' NUMBER ']' OF ;
+varDecl             : attribute? ID ':' type (('REF=' | ':=') exprOrArrayInit)? ';' ;
+
 exprOrArrayInit     : expr | arrayInit ;
 arrayInit           : '[' expr (',' expr)* ']' ;
 
@@ -76,8 +73,15 @@ arrayInit           : '[' expr (',' expr)* ']' ;
 // Types
 // =======================
 type
-    : builtinType
-    | ID
+    : baseType
+    | ARRAY '[' NUMBER '..' NUMBER ']' OF type
+    | POINTER_TO type
+    | REFERENCE_TO type
+    ;
+
+baseType
+    : ID
+    | builtinType
     ;
 
 builtinType
@@ -137,11 +141,16 @@ continueStatement   : CONTINUE ';' ;
 // =======================
 // Expressions
 // =======================
-memberQualifier     : memberQualifier CARET? '.' primary
+memberQualifier     : memberQualifier '.' primary
                     | primary
                     ;
 
-primary             : ID CARET? (arrayIndex)?;
+primary             : ID derefOrIndex* ;
+
+derefOrIndex
+    : CARET
+    | arrayIndex
+    ;
 
 expr
     : expr op=('*'|'/'|MOD) expr

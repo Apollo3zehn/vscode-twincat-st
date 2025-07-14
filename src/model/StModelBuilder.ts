@@ -42,7 +42,7 @@ export class SemanticModelBuilder {
                 if (symbol.kind != StSymbolKind.TypeUsage)
                     continue;
 
-                if (symbol.isBuiltinType)
+                if (symbol.builtinType)
                     continue;
                         
                 symbol.declaration = this.findTypeDeclaration(symbol);
@@ -52,7 +52,7 @@ export class SemanticModelBuilder {
                     // Inheritance
                     if (ctx.parent instanceof ExtendsClauseContext && symbol.parent) {
 
-                        const parentTypeInfo = symbol.parent.typeInfo;
+                        const parentTypeInfo = symbol.parent.typeHierarchyInfo;
 
                         if (parentTypeInfo) {
 
@@ -62,7 +62,7 @@ export class SemanticModelBuilder {
                             parentTypeInfo.baseTypes.push(symbol.declaration);
 
                             // Add back reference
-                            const declaringSymbolTypeInfo = symbol.declaration.typeInfo!;
+                            const declaringSymbolTypeInfo = symbol.declaration.typeHierarchyInfo!;
 
                             if (!declaringSymbolTypeInfo.subTypes)
                                 declaringSymbolTypeInfo.subTypes = []
@@ -74,7 +74,7 @@ export class SemanticModelBuilder {
                     // Interfaces
                     if (ctx.parent instanceof ImplementsClauseContext && symbol.parent) {
 
-                        const parentTypeInfo = symbol.parent.typeInfo;
+                        const parentTypeInfo = symbol.parent.typeHierarchyInfo;
 
                         if (parentTypeInfo) {
 
@@ -84,7 +84,7 @@ export class SemanticModelBuilder {
                             parentTypeInfo.interfaces.push(symbol.declaration);
 
                             // Add back reference
-                            const declaringSymbolTypeInfo = symbol.declaration.typeInfo!;
+                            const declaringSymbolTypeInfo = symbol.declaration.typeHierarchyInfo!;
 
                             if (!declaringSymbolTypeInfo.subTypes)
                                 declaringSymbolTypeInfo.subTypes = []
@@ -180,7 +180,7 @@ export class SemanticModelBuilder {
                     typeDeclaration.kind === StSymbolKind.Enum ||
                     typeDeclaration.kind === StSymbolKind.Interface
                 ) &&
-                typeDeclaration.name === symbol.name
+                typeDeclaration.id === symbol.id
             ) {
                 if (!typeDeclaration.references)
                     typeDeclaration.references = [];
@@ -213,7 +213,7 @@ export class SemanticModelBuilder {
             const isType =
                 declarationKind === StSymbolKind.Enum ||
                 declarationKind === StSymbolKind.Gvl ||
-                symbol.qualifier.name === "THIS"
+                symbol.qualifier.id === "THIS"
 
             scope = isType
                 ? declaration
@@ -225,7 +225,7 @@ export class SemanticModelBuilder {
         }
 
         // Find variable declaring symbol
-        const declaration = symbol.name === "THIS"
+        const declaration = symbol.id === "THIS"
             
             // THIS
             ? symbol.parent?.context instanceof MethodContext
@@ -235,10 +235,10 @@ export class SemanticModelBuilder {
             : symbol.context.parent?.parent instanceof ExprContext && symbol.context.parent.parent.LPAREN()
                 
                 // Method or function call
-                ? this.resolveMethodOrFunctionDeclaration(scope, symbol.name)
+                ? this.resolveMethodOrFunctionDeclaration(scope, symbol.id)
 
                 // Variable usage
-                : this.resolveVariableDeclaration(scope, symbol.name);
+                : this.resolveVariableDeclaration(scope, symbol.id);
 
         if (declaration)
             this.ConnectDeclaringSymbols(symbol, declaration);
@@ -254,7 +254,7 @@ export class SemanticModelBuilder {
 
             if (scope.variables) {
 
-                const varableDeclaration = scope.variables.find(x => x.name === name);
+                const varableDeclaration = scope.variables.find(x => x.id === name);
 
                 if (varableDeclaration)
                     return varableDeclaration;
@@ -265,12 +265,12 @@ export class SemanticModelBuilder {
 
         // Global scope
         for (const symbol of this._model.typesMap.values()) {
-            if (symbol.name === name)
+            if (symbol.id === name)
                 return symbol;
         }
 
         for (const symbol of this._model.variablesMap.values()) {
-            if (symbol.name === name)
+            if (symbol.id === name)
                 return symbol;
         }
 
@@ -305,7 +305,7 @@ export class SemanticModelBuilder {
         }
 
         // Find method or function declaring symbol
-        let declaration = this.resolveMethodOrFunctionDeclaration(scope, symbol.name);
+        let declaration = this.resolveMethodOrFunctionDeclaration(scope, symbol.id);
 
         if (declaration)
             this.ConnectDeclaringSymbols(symbol, declaration);
@@ -317,14 +317,14 @@ export class SemanticModelBuilder {
     ): StSymbol | undefined {
 
         // Current scope (method)
-        const methodDeclaration = scope?.methods?.find(x => x.name === name);
+        const methodDeclaration = scope?.methods?.find(x => x.id === name);
 
         if (methodDeclaration)
             return methodDeclaration;
 
         // Global scope (function)
         for (const functionDeclaration of this._model.functionsMap.values()) {
-            if (functionDeclaration.name === name)
+            if (functionDeclaration.id === name)
                 return functionDeclaration;
         }
 

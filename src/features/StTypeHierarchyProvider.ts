@@ -60,14 +60,14 @@ export class StTypeHierarchyProvider implements TypeHierarchyProvider {
 
         const superTypes: TypeHierarchyItem[] = [];
         
-        if (symbol.typeInfo?.baseTypes) {
-            for (const baseTypeSymbol of symbol.typeInfo?.baseTypes) {
+        if (symbol.typeHierarchyInfo?.baseTypes) {
+            for (const baseTypeSymbol of symbol.typeHierarchyInfo?.baseTypes) {
                 superTypes.push(this.toTypeHierarchyItem(baseTypeSymbol));
             }
         }
 
-        if (symbol.typeInfo?.interfaces) {
-            for (const interfaceSymbol of symbol.typeInfo?.interfaces) {
+        if (symbol.typeHierarchyInfo?.interfaces) {
+            for (const interfaceSymbol of symbol.typeHierarchyInfo?.interfaces) {
                 superTypes.push(this.toTypeHierarchyItem(interfaceSymbol));
             }
         }
@@ -87,8 +87,8 @@ export class StTypeHierarchyProvider implements TypeHierarchyProvider {
 
         const subTypes: TypeHierarchyItem[] = [];
         
-        if (symbol.typeInfo?.subTypes) {
-            for (const subTypeSymbol of symbol.typeInfo?.subTypes) {
+        if (symbol.typeHierarchyInfo?.subTypes) {
+            for (const subTypeSymbol of symbol.typeHierarchyInfo?.subTypes) {
                 subTypes.push(this.toTypeHierarchyItem(subTypeSymbol));
             }
         }
@@ -98,7 +98,7 @@ export class StTypeHierarchyProvider implements TypeHierarchyProvider {
 
     private toTypeHierarchyItem(symbol: StSymbol): TypeHierarchyItem {
         return {
-            name: symbol.name!,
+            name: symbol.id!,
             kind: SymbolKind.Class,
             uri: symbol.documentUri,
             range: symbol.range,
@@ -110,7 +110,7 @@ export class StTypeHierarchyProvider implements TypeHierarchyProvider {
 
         for (const symbol of this._model.typesMap.values()) {
             if (
-                symbol.name === item.name &&
+                symbol.id === item.name &&
                 symbol.documentUri.toString() === item.uri.toString()
             ) {
                 return symbol;

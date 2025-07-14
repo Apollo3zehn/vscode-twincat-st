@@ -1,5 +1,6 @@
 import { CommonTokenStream, ParserRuleContext, Token } from "antlr4ng";
 import { Range, Uri, window } from "vscode";
+import { TypeContext } from "./generated/StructuredTextParser.js";
 
 export const logger = window.createOutputChannel("TwinCAT Structured Text");
 
@@ -28,8 +29,7 @@ export class StSymbol {
 
     constructor(
         public readonly documentUri: Uri,
-        public readonly id: Token | undefined,
-        public readonly name: string,
+        public readonly id: string,
         public readonly kind: StSymbolKind,
         public readonly context: ParserRuleContext,
         public readonly range: Range,
@@ -40,14 +40,16 @@ export class StSymbol {
     public accessModifier: StAccessModifier | undefined;    // for many things
     public references: StSymbol[] | undefined;              // for many things
 
-    public isBuiltinType: boolean | undefined;              // for type declarations
-    public typeInfo: StTypeInfo | undefined;                // for type declarations
+    public typeHierarchyInfo: StTypeInfo | undefined;       // for type declarations
 
-    public type: StSymbol | undefined;                      // for variable declarations 
+    public type: StSymbol | undefined;                      // for variable declarations
     public variableKind: VariableKind | undefined;          // for variable declarations
     public parent: StSymbol | undefined;                    // for variable declarations
 
-    public declaration: StSymbol | undefined;               // for variable and type usages
+    public declaration: StSymbol | undefined;               // for variable and type usages (custom types)
+
+    public baseType: StSymbol | undefined;                  // for type usage (arrays, references, pointers)
+    public builtinType: StBuiltinType | undefined;          // for type usage (builtin types)
     
     public variables: StSymbol[] | undefined;               // for function blocks, functions, methods, global variable lists, enums, structs
     public methods: StSymbol[] | undefined;                 // for function blocks, interfaces
@@ -74,6 +76,28 @@ export class StSymbol {
 
         this[key]!.push(symbol);
     }
+
+    // For variable declarations
+    get isArray(): boolean {
+        if (this.kind !== StSymbolKind.TypeUsage)
+            throw new Error("StSymbolKind is not TypeUsage");
+
+        return !!(this.context as TypeContext).ARRAY();
+    }
+    
+    get isPointer(): boolean {
+        if (this.kind !== StSymbolKind.TypeUsage)
+            throw new Error("StSymbolKind is not TypeUsage");
+
+        return !!(this.context as TypeContext).POINTER_TO();
+    }
+
+    get isReference(): boolean {
+        if (this.kind !== StSymbolKind.TypeUsage)
+            throw new Error("StSymbolKind is not TypeUsage");
+
+        return !!(this.context as TypeContext).REFERENCE_TO();
+    }
 }
 
 export class StTypeInfo {
@@ -89,7 +113,7 @@ export class StTypeInfo {
 
 export enum StSymbolKind {
     Unknown,
-    Variable,
+    VariableDeclaration,
     Program,
     Function,
     Method,
@@ -119,4 +143,26 @@ export enum StAccessModifier {
     Internal,
     Protected,
     Private
+}
+
+export enum StBuiltinType {
+    INT = "INT",
+    REAL = "REAL",
+    BOOL = "BOOL",
+    STRING = "STRING",
+    DINT = "DINT",
+    BYTE = "BYTE",
+    WORD = "WORD",
+    DWORD = "DWORD",
+    SINT = "SINT",
+    USINT = "USINT",
+    UINT = "UINT",
+    UDINT = "UDINT",
+    LINT = "LINT",
+    ULINT = "ULINT",
+    LREAL = "LREAL",
+    TIME = "TIME",
+    DATE = "DATE",
+    TIME_OF_DAY = "TIME_OF_DAY",
+    DATE_AND_TIME = "DATE_AND_TIME"
 }

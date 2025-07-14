@@ -40,7 +40,7 @@ export class StSemanticTokenProvider implements DocumentSemanticTokensProvider {
                 builder.push(
                     symbol.range.start.line,
                     symbol.range.start.character,
-                    symbol.name.length,
+                    symbol.id.length,
                     0, // class token type
                     0
                 );
@@ -54,7 +54,7 @@ export class StSemanticTokenProvider implements DocumentSemanticTokensProvider {
                 builder.push(
                     symbol.range.start.line,
                     symbol.range.start.character,
-                    symbol.name.length,
+                    symbol.id.length,
                     1, // enumMember token type
                     0
                 );

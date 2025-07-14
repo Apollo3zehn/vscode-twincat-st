@@ -72,7 +72,7 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
             case StSymbolKind.Property:
                 symbolKind = SymbolKind.Property; break;
             
-            case StSymbolKind.Variable:
+            case StSymbolKind.VariableDeclaration:
                 symbolKind = SymbolKind.Variable; break;
             
             case StSymbolKind.Gvl:
@@ -83,7 +83,7 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
         }
 
         const symbol = new DocumentSymbol(
-            stSymbol.name ?? "undefined",
+            stSymbol.id ?? "undefined",
             "",
             symbolKind,
             stSymbol.range,

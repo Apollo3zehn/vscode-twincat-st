@@ -1,5 +1,5 @@
 import { CodeLens, CodeLensProvider, Location, TextDocument } from 'vscode';
-import { StAccessModifier, StModel, StSymbolKind } from '../core.js';
+import { StAccessModifier, StModel, StSymbolKind, VariableKind } from '../core.js';
 
 export class StReferencesCodeLensProvider implements CodeLensProvider {
     
@@ -25,7 +25,7 @@ export class StReferencesCodeLensProvider implements CodeLensProvider {
                 symbol.kind === StSymbolKind.Struct ||
                 symbol.kind === StSymbolKind.Interface ||
                 symbol.kind === StSymbolKind.Function ||
-                symbol.kind === StSymbolKind.VariableDeclaration ||
+                symbol.kind === StSymbolKind.VariableDeclaration && symbol.variableKind !== VariableKind.Local ||
                 symbol.kind === StSymbolKind.Property ||
                 symbol.kind === StSymbolKind.Method ||
                 symbol.kind === StSymbolKind.Enum ||

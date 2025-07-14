@@ -1,4 +1,4 @@
-import { ParserRuleContext, Token } from "antlr4ng";
+import { ParserRuleContext, Token, Interval } from "antlr4ng";
 import { Position, Range } from "vscode";
 
 export function isInRange(range: Range | undefined, position: Position): boolean {
@@ -64,4 +64,15 @@ export function getContextRange(ctx: ParserRuleContext | null | undefined): Rang
         stop.line - 1,
         stop.column + stop.stop - stop.start + 1
     );
+}
+
+export function getOriginalText(ctx: ParserRuleContext): string | undefined {
+
+    const start = ctx.start?.start;
+    const stop = ctx.stop?.stop ?? ctx.start?.stop;
+
+    if (ctx.start?.inputStream && start && stop)
+        return ctx.start.inputStream.getTextFromInterval(Interval.of(start, stop));
+
+    return undefined;
 }

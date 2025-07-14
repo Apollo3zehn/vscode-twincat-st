@@ -91,11 +91,6 @@ export class StHoverProvider implements HoverProvider {
 
                 if (context.parent instanceof StructDeclContext)
                     qualifier = `${symbol.parent?.id ?? "??"}.`;
-                
-                else if (context.parent instanceof EnumDeclContext) {
-                    prefix = "ENUM ";
-                    qualifier = `${symbol.parent?.id ?? "??"}.`;
-                }
                     
                 else if (context.parent instanceof VarGlobalSectionContext) {
                     prefix = "VAR_GLOBAL ";
@@ -103,6 +98,7 @@ export class StHoverProvider implements HoverProvider {
                 }
                     
                 else if (context.parent instanceof VarDeclSectionContext) {
+                    
                     prefix = context.parent.varSectionType().getText() + " ";
 
                     if (prefix.startsWith("VAR_INST"))
@@ -131,13 +127,28 @@ export class StHoverProvider implements HoverProvider {
                     return symbol.id ?? "";
             
             case StSymbolKind.MethodOrFunctionCall:
-                return `${symbol.id} : ${symbol.declaration?.type?.id ?? "?"}`;
+                
+                if (symbol.declaration)
+                    return this.getSymbolSignature(symbol.declaration);
+
+                else
+                    return symbol.id ?? "";
             
             case StSymbolKind.Method:
-                return `METHOD ${accessModifier}${symbol.id} : ${symbol.type?.id ?? "?"}`;
+
+                let suffix1 = symbol.type?.id
+                    ? ` : ${symbol.type?.id}`
+                    : "";
+                
+                return `METHOD ${accessModifier}${symbol.id}${suffix1}`;
             
             case StSymbolKind.Function:
-                return `FUNCTION ${accessModifier}${symbol.id} : ${symbol.type?.id ?? "?"}`;
+
+                let suffix2 = symbol.type?.id
+                    ? ` : ${symbol.type?.id}`
+                    : "";
+                
+                return `FUNCTION ${accessModifier}${symbol.id}${suffix2}`;
             
             case StSymbolKind.Property:
                 return `PROPERTY ${accessModifier}${symbol.id} : ${symbol.type?.id ?? "?"}`;
@@ -166,8 +177,8 @@ export class StHoverProvider implements HoverProvider {
                 const expr = enumMemberCtx.expr();
 
                 return expr
-                    ? `${symbol.parent!.id}.${enumMemberCtx.ID()} := ${expr.getText()}`
-                    : `${symbol.parent!.id}.${enumMemberCtx.ID()}`;
+                    ? `${symbol.parent!.id}.${enumMemberCtx.ID()}: ${symbol.parent!.id} := ${expr.getText()}`
+                    : `${symbol.parent!.id}.${enumMemberCtx.ID()}: ${symbol.parent!.id}`;
         }
 
         return symbol.id ?? "";

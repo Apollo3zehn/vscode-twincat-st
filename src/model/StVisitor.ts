@@ -3,7 +3,7 @@ import { Uri } from "vscode";
 import { StAccessModifier, StBuiltinType, StModel, StSourceFile, StSymbol, StSymbolKind, StTypeInfo, VariableKind } from "../core.js";
 import { AccessModifierContext, ArgumentContext, AssignmentContext, CallStatementContext, EnumDeclContext, EnumMemberContext, ExprContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberContext, MemberQualifierContext, MethodContext, PrimaryContext, ProgramContext, PropertyContext, StructDeclContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
-import { getContextRange, getTokenRange } from "../utils.js";
+import { getContextRange, getOriginalText, getTokenRange } from "../utils.js";
 
 export class StVisitor extends StructuredTextVisitor<void> {
 
@@ -15,7 +15,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
     private _baseType: StSymbol | undefined;
     private _qualifier: StSymbol | undefined;
     private _variableKind: VariableKind = VariableKind.None;
-    private _accessModifier: StAccessModifier = StAccessModifier.Public;
 
     constructor(model: StModel, sourceFile: StSourceFile, documentUri: Uri) {
         super();
@@ -236,8 +235,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this._model.variablesMap.set(ctx, symbol);
         this._parent = symbol;
         this._declaration = symbol;
-
-        this._accessModifier = StAccessModifier.Public;
         this._variableKind = VariableKind.Global;
     }
 
@@ -322,7 +319,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
         );
         
         symbol.variableKind = this._variableKind;
-        symbol.accessModifier = this._accessModifier
 
         this._parent?.add("variables", symbol);
         this._declaration = symbol;
@@ -404,7 +400,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         
         const id = idToken
             ? idToken.text!
-            : ctx.getText();
+            : getOriginalText(ctx) ?? "??";
 
         const symbol = new StSymbol(
             this._documentUri,
@@ -434,8 +430,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
     private processVarDeclSection(ctx: VarDeclSectionContext) {
 
-        this._accessModifier = StAccessModifier.Public;
-
         const sectionTypeCtx = ctx.varSectionType();
             
         if (sectionTypeCtx.VAR_INPUT())
@@ -447,21 +441,17 @@ export class StVisitor extends StructuredTextVisitor<void> {
         else if (sectionTypeCtx.VAR_IN_OUT())
             this._variableKind = VariableKind.InOut;
             
-        else if (sectionTypeCtx.VAR_TEMP())
-            this._variableKind = VariableKind.Local;
-            
         else if (sectionTypeCtx.VAR_EXTERNAL())
             this._variableKind = VariableKind.Global;
+
+        else if (sectionTypeCtx.VAR_TEMP())
+            this._variableKind = VariableKind.Local;    
             
-        else if (sectionTypeCtx.VAR_INST()) {
+        else if (sectionTypeCtx.VAR_INST())
             this._variableKind = VariableKind.Local;
-            this._accessModifier = StAccessModifier.Private;
-        }
             
-        else if (sectionTypeCtx.VAR()) {
+        else if (sectionTypeCtx.VAR())
             this._variableKind = VariableKind.Local;
-            this._accessModifier = StAccessModifier.Private;
-        }
     }
 
     //#endregion

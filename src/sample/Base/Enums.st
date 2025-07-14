@@ -1,6 +1,6 @@
 TYPE MyEnum1 :
 (
-    White   := 0
+    White := 0
 );
 END_TYPE
 

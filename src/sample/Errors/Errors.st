@@ -18,9 +18,12 @@ FUNCTION_BLOCK FB_Errors
         _c0261_3: REFERENCE TO REFERENCE TO INT;
     END_VAR
 
-    // C0035: Program name, function or function block instance expected instead of 'name'
+    // C0035: Program name, function or function block instance expected instead of '{name}'
     _c0035();
     _c0035 := _c0035();
+
+    // C0036: Cannot call object of type 'VAR_GLOBAL'
+    C0036();
 
     // C0046: Identifier '{id}' not defined
     _c0046 := 1;
@@ -40,7 +43,6 @@ FUNCTION_BLOCK FB_Errors
 
     // assignment: incompatible types
     // FB_GdpFixture();  C0080: Function block 'FB_GdpFixture' must be instantiated to be accessed
-    // C0036: Cannot call object of type 'VAR_GLOBAL'
 END_FUNCTION_BLOCK
 
 // SA0027: Object name '{name}' already used in this application
@@ -55,3 +57,8 @@ END_FUNCTION_BLOCK
 FUNCTION SA0027
     // 
 END_FUNCTION
+
+// C0036: Cannot call object of type 'VAR_GLOBAL'
+VAR_GLOBAL C0036
+    //
+END_VAR

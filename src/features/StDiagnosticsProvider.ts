@@ -1,6 +1,6 @@
-import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, SymbolKind, TextDocument } from "vscode";
+import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, TextDocument } from "vscode";
 import { StAccessModifier, StModel, StSymbolKind } from "../core.js";
-import { PrimaryContext } from "../generated/StructuredTextParser.js";
+import { ExprContext, PrimaryContext } from "../generated/StructuredTextParser.js";
 import { concatIterators, getContextRange, getTokenRange } from "../utils.js";
 
 export class StDiagnosticsProvider {
@@ -202,7 +202,6 @@ export class StDiagnosticsProvider {
                 }
             }
 
-            // C0046: Identifier '{id}' not defined
             if (
                 symbol.kind === StSymbolKind.VariableUsage ||
                 symbol.kind === StSymbolKind.CallStatement
@@ -210,6 +209,13 @@ export class StDiagnosticsProvider {
 
                 if (symbol.declaration) {
 
+                    const isCall =
+                        symbol.kind === StSymbolKind.CallStatement ||
+                        symbol.context.parent?.parent instanceof ExprContext && symbol.context.parent.parent.LPAREN();
+
+                    if (!isCall)
+                        continue;
+                    
                     let typeKind: StSymbolKind | undefined;
 
                     switch (symbol.declaration.kind) {
@@ -217,32 +223,48 @@ export class StDiagnosticsProvider {
                         case StSymbolKind.Program:
                         case StSymbolKind.Function:
                         case StSymbolKind.Method:
-                            typeKind = symbol.declaration.kind;
-                            break;
+                            continue;
 
                         case StSymbolKind.VariableDeclaration:
-                            typeKind = symbol.declaration.typeUsage?.declaration?.kind
+                            
+                            typeKind = symbol.declaration.typeUsage?.declaration?.kind;    
+                            
+                            if (typeKind === StSymbolKind.FunctionBlock)
+                                continue;
+
                             break;
                     }
 
-                    if (symbol.kind === StSymbolKind.CallStatement && !(
-                        typeKind === StSymbolKind.Program ||
-                        typeKind === StSymbolKind.FunctionBlock ||
-                        typeKind === StSymbolKind.Function ||
-                        typeKind === StSymbolKind.Method
-                    )) {
-                        const diagnostic = new Diagnostic(
-                            symbol.selectionRange ?? symbol.range,
-                            `Program name, function or function block instance expected instead of '${symbol.id}'`,
-                            DiagnosticSeverity.Error
-                        );
+                    switch (typeKind) {
 
-                        diagnostic.code = "C0035";
-                        diagnostics.push(diagnostic);
+                        case StSymbolKind.Gvl:
+
+                            // C0036: Cannot call object of type 'VAR_GLOBAL'
+                            const diagnostic_1 = new Diagnostic(
+                                symbol.selectionRange ?? symbol.range,
+                                "Cannot call object of type 'VAR_GLOBAL'",
+                                DiagnosticSeverity.Error
+                            );
+
+                            diagnostic_1.code = "C0036";
+                            diagnostics.push(diagnostic_1);
+
+                        default:
+
+                            // C0035: Program name, function or function block instance expected instead of '{name}'
+                            const diagnostic_2 = new Diagnostic(
+                                symbol.selectionRange ?? symbol.range,
+                                `Program name, function or function block instance expected instead of '${symbol.id}'`,
+                                DiagnosticSeverity.Error
+                            );
+
+                            diagnostic_2.code = "C0035";
+                            diagnostics.push(diagnostic_2);
                     }
                 }
 
                 else {
+                    // C0046: Identifier '{id}' not defined
                     const diagnostic = new Diagnostic(
                         symbol.selectionRange ?? symbol.range,
                         `Identifier '${symbol.id}' not defined`,

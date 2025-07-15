@@ -12,6 +12,7 @@ import { StSemanticTokenProvider } from './features/StSemanticTokenProvider.js';
 import { StTypeDefinitionProvider } from './features/StTypeDefinitionProvider.js';
 import { StTypeHierarchyProvider } from './features/StTypeHierarchyProvider.js';
 import { SemanticModelBuilder } from './model/StModelBuilder.js';
+import { StDocumentHighlightProvider } from './features/StDocumentHighlightProvider.js';
 
 export async function activate(context: ExtensionContext) {
 
@@ -74,6 +75,10 @@ export async function activate(context: ExtensionContext) {
 
     context.subscriptions.push(languages.registerReferenceProvider(
         documentSelector, new StReferenceProvider(model))
+    );
+
+    context.subscriptions.push(languages.registerDocumentHighlightProvider(
+        documentSelector, new StDocumentHighlightProvider(model))
     );
 
     context.subscriptions.push(

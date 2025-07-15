@@ -86,7 +86,7 @@ baseType
     ;
 
 builtinType
-    : 'INT' | 'REAL' | 'BOOL' | 'STRING' | 'DINT' | 'BYTE' | 'WORD' | 'DWORD'
+    : 'INT' | 'REAL' | 'BOOL' | 'STRING' | 'DINT' | 'BYTE' | 'WORD' | 'DWORD' | 'LWORD'
     | 'SINT' | 'USINT' | 'UINT' | 'UDINT' | 'LINT' | 'ULINT' | 'LREAL'
     | 'TIME' | 'DATE' | 'TIME_OF_DAY' | 'DATE_AND_TIME'
     ;

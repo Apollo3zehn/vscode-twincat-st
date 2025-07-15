@@ -356,7 +356,7 @@
       "patterns": [
         {
           "name": "storage.type.st",
-          "match": "\\b(POINTER TO|REFERENCE TO|INT|REAL|BOOL|STRING|DINT|BYTE|WORD|DWORD|SINT|USINT|UINT|UDINT|LINT|ULINT|LREAL|TIME|DATE|TIME_OF_DAY|DATE_AND_TIME)\\b"
+          "match": "\\b(POINTER TO|REFERENCE TO|INT|REAL|BOOL|STRING|DINT|BYTE|WORD|DWORD|LWORD|SINT|USINT|UINT|UDINT|LINT|ULINT|LREAL|TIME|DATE|TIME_OF_DAY|DATE_AND_TIME)\\b"
         },
         {
           "match": "(ARRAY)\\s*(\\[.*?\\])\\s*(OF)\\s*(.*)",

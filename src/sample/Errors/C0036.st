@@ -8,12 +8,12 @@ FUNCTION_BLOCK FB_C0036
 END_FUNCTION_BLOCK
 
 VAR_GLOBAL GVL_C0036
-    //
+    dummy: INT;
 END_VAR
 
 TYPE E_C0036 :
 (
-    //
+    dummy
 );
 END_TYPE
 

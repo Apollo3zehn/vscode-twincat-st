@@ -1,5 +1,5 @@
 import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, TextDocument } from "vscode";
-import { StAccessModifier, StModel, StSymbolKind } from "../core.js";
+import { StAccessModifier, StBuiltinType, StModel, StNativeTypeKind, StSymbolKind } from "../core.js";
 import { ExprContext, PrimaryContext } from "../generated/StructuredTextParser.js";
 import { concatIterators, getContextRange, getTokenRange } from "../utils.js";
 
@@ -310,6 +310,7 @@ export class StDiagnosticsProvider {
             const assignment = statementContext.assignment();
 
             if (assignment) {
+
                 const lhsMember = assignment.memberQualifier().primary();
                 const rhsMember = assignment.expr().memberQualifier()?.primary();
 
@@ -339,7 +340,96 @@ export class StDiagnosticsProvider {
                         diagnostic.code = "C0140";
                         diagnostics.push(diagnostic);
                     }
+                }
 
+                else {
+                    
+                    if (lhsTypeUsage?.builtinType && rhsTypeUsage?.builtinType) {
+
+                        const lhsNativeType = StModel.nativeTypes.get(lhsTypeUsage?.builtinType);
+                        const rhsNativeType = StModel.nativeTypes.get(rhsTypeUsage?.builtinType);
+
+                        if (!lhsNativeType || !rhsNativeType)
+                            continue;
+
+                        switch (lhsNativeType.kind) {
+
+                            case StNativeTypeKind.Boolean:
+
+                                if (rhsNativeType.kind === StNativeTypeKind.Boolean)
+                                    continue;
+
+                                break;
+
+                            case StNativeTypeKind.Integer:
+
+                                if (rhsNativeType.kind === StNativeTypeKind.Integer) {
+
+                                    if (rhsNativeType.size <= lhsNativeType.size) {
+
+                                        if (rhsNativeType.signed && !lhsNativeType.signed) {
+
+                                            const warning = new Diagnostic(
+                                                rhsSymbol!.selectionRange ?? rhsSymbol!.range,
+                                                `Implicit conversion from signed type '${StBuiltinType[rhsTypeUsage?.builtinType]}' to unsigned type '${StBuiltinType[lhsTypeUsage?.builtinType]}': Possible change of sign`,
+                                                DiagnosticSeverity.Warning
+                                            );
+
+                                            diagnostics.push(warning);
+                                        }
+
+                                        else if (!rhsNativeType.signed && lhsNativeType.signed) {
+
+                                            const warning = new Diagnostic(
+                                                rhsSymbol!.selectionRange ?? rhsSymbol!.range,
+                                                `Implicit conversion from unsigned type '${StBuiltinType[rhsTypeUsage?.builtinType]}' to signed type '${StBuiltinType[lhsTypeUsage?.builtinType]}': Possible change of sign`,
+                                                DiagnosticSeverity.Warning
+                                            );
+
+                                            diagnostics.push(warning);
+                                        }
+
+                                        continue;
+                                    }
+                                }
+
+                                break;
+
+                            case StNativeTypeKind.Float:
+
+                                if (
+                                    rhsNativeType.kind === StNativeTypeKind.Float ||
+                                    rhsNativeType.kind === StNativeTypeKind.Integer
+                                ) {
+                                    if (
+                                        rhsNativeType.kind === StNativeTypeKind.Integer &&
+                                        rhsNativeType.size >= lhsNativeType.size
+                                    ) {
+                                        const warning = new Diagnostic(
+                                            rhsSymbol!.selectionRange ?? rhsSymbol!.range,
+                                            `Implicit conversion from '${StBuiltinType[rhsTypeUsage?.builtinType]}' to '${StBuiltinType[lhsTypeUsage?.builtinType]}': Possible loss of information`,
+                                            DiagnosticSeverity.Warning
+                                        );
+
+                                        diagnostics.push(warning);
+                                    }
+
+                                    continue;
+                                }
+
+                                break;
+                        }
+
+                        // C0032: Cannot convert type '{type}' to type '{type}'
+                        const diagnostic = new Diagnostic(
+                            rhsSymbol!.selectionRange ?? rhsSymbol!.range,
+                            `Cannot convert type '${StBuiltinType[lhsTypeUsage?.builtinType]}' to type '${StBuiltinType[rhsTypeUsage?.builtinType]}'`,
+                            DiagnosticSeverity.Error
+                        );
+
+                        diagnostic.code = "C0032";
+                        diagnostics.push(diagnostic);
+                    }
                 }
             }
         }

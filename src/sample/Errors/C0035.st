@@ -8,7 +8,6 @@ FUNCTION_BLOCK FB_C0035
     _a();
     _a := _a();
     E_C0035.a();
-    
 END_FUNCTION_BLOCK
 
 TYPE E_C0035 :

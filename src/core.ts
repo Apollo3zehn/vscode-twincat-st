@@ -8,10 +8,6 @@ export const documentSelector = [
     { language: "st", pattern: "**/*.st" }
 ];
 
-export class StModel {
-    public readonly sourceFileMap = new Map<string, StSourceFile>()
-}
-
 export class StSourceFile {
     constructor(
         public readonly uri: Uri,
@@ -101,6 +97,15 @@ export class StSymbol {
     }
 }
 
+export class StNativeTypeDetails {
+    constructor(
+        public readonly kind: StNativeTypeKind,
+        public readonly size: number,
+        public readonly signed: boolean | undefined) {
+        //
+    }
+}
+
 export class StTypeInfo {
 
     constructor(init?: Partial<StTypeInfo>) {
@@ -131,6 +136,12 @@ export enum StSymbolKind {
     EnumMember
 }
 
+export enum StNativeTypeKind {
+    Integer,
+    Float,
+    Boolean
+}
+
 export enum VariableKind {
     None,
     Local,
@@ -156,6 +167,7 @@ export enum StBuiltinType {
     BYTE = "BYTE",
     WORD = "WORD",
     DWORD = "DWORD",
+    LWORD = "LWORD",
     SINT = "SINT",
     USINT = "USINT",
     UINT = "UINT",
@@ -167,4 +179,31 @@ export enum StBuiltinType {
     DATE = "DATE",
     TIME_OF_DAY = "TIME_OF_DAY",
     DATE_AND_TIME = "DATE_AND_TIME"
+}
+
+export class StModel {
+    
+    public readonly sourceFileMap = new Map<string, StSourceFile>();
+
+    public static readonly nativeTypes = new Map<StBuiltinType, StNativeTypeDetails>([
+        [StBuiltinType.BOOL,  new StNativeTypeDetails(StNativeTypeKind.Boolean, 1, undefined)],
+        
+        [StBuiltinType.BYTE,  new StNativeTypeDetails(StNativeTypeKind.Integer, 1, false)],
+        [StBuiltinType.WORD,  new StNativeTypeDetails(StNativeTypeKind.Integer, 2, false)],
+        [StBuiltinType.DWORD, new StNativeTypeDetails(StNativeTypeKind.Integer, 4, false)],
+        [StBuiltinType.LWORD, new StNativeTypeDetails(StNativeTypeKind.Integer, 8, false)],
+    
+        [StBuiltinType.USINT, new StNativeTypeDetails(StNativeTypeKind.Integer, 1, false)],
+        [StBuiltinType.UINT,  new StNativeTypeDetails(StNativeTypeKind.Integer, 2, false)],
+        [StBuiltinType.UDINT, new StNativeTypeDetails(StNativeTypeKind.Integer, 4, false)],
+        [StBuiltinType.ULINT, new StNativeTypeDetails(StNativeTypeKind.Integer, 8, false)],
+
+        [StBuiltinType.SINT,  new StNativeTypeDetails(StNativeTypeKind.Integer, 1, true)],
+        [StBuiltinType.INT,   new StNativeTypeDetails(StNativeTypeKind.Integer, 2, true)],
+        [StBuiltinType.DINT,  new StNativeTypeDetails(StNativeTypeKind.Integer, 4, true)],
+        [StBuiltinType.LINT,  new StNativeTypeDetails(StNativeTypeKind.Integer, 8, true)],
+
+        [StBuiltinType.REAL,  new StNativeTypeDetails(StNativeTypeKind.Float, 4, undefined)],
+        [StBuiltinType.LREAL, new StNativeTypeDetails(StNativeTypeKind.Float, 8, undefined)],
+    ]);
 }

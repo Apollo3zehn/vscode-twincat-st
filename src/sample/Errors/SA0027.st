@@ -1,0 +1,12 @@
+// SA0027: Object name '{name}' already used in this application
+FUNCTION_BLOCK SA0027
+    //
+END_FUNCTION_BLOCK
+
+FUNCTION_BLOCK SA0027
+    // 
+END_FUNCTION_BLOCK
+
+FUNCTION SA0027
+    // 
+END_FUNCTION

@@ -225,20 +225,9 @@ export class StDiagnosticsProvider {
                         case StSymbolKind.Method:
                             continue;
 
-                        case StSymbolKind.VariableDeclaration:
-                            
-                            typeKind = symbol.declaration.typeUsage?.declaration?.kind;    
-                            
-                            if (typeKind === StSymbolKind.FunctionBlock)
-                                continue;
-
-                            break;
-                    }
-
-                    switch (typeKind) {
-
                         case StSymbolKind.Gvl:
-
+                        case StSymbolKind.Enum:
+                            
                             // C0036: Cannot call object of type 'VAR_GLOBAL'
                             const diagnostic_1 = new Diagnostic(
                                 symbol.selectionRange ?? symbol.range,
@@ -249,17 +238,55 @@ export class StDiagnosticsProvider {
                             diagnostic_1.code = "C0036";
                             diagnostics.push(diagnostic_1);
 
-                        default:
+                            break;
+                        
+                        case StSymbolKind.Struct:
+
+                            // C0036: Cannot call object of type 'TYPE'
+                            const diagnostic_2 = new Diagnostic(
+                                symbol.selectionRange ?? symbol.range,
+                                "Cannot call object of type 'TYPE'",
+                                DiagnosticSeverity.Error
+                            );
+
+                            diagnostic_2.code = "C0036";
+                            diagnostics.push(diagnostic_2);
+
+                            break;
+                        
+                        case StSymbolKind.VariableDeclaration:
+                        case StSymbolKind.EnumMember:
+                            
+                            typeKind = symbol.declaration.typeUsage?.declaration?.kind;    
+                            
+                            if (typeKind === StSymbolKind.FunctionBlock)
+                                continue;
 
                             // C0035: Program name, function or function block instance expected instead of '{name}'
-                            const diagnostic_2 = new Diagnostic(
+                            const diagnostic_3 = new Diagnostic(
                                 symbol.selectionRange ?? symbol.range,
                                 `Program name, function or function block instance expected instead of '${symbol.id}'`,
                                 DiagnosticSeverity.Error
                             );
 
-                            diagnostic_2.code = "C0035";
-                            diagnostics.push(diagnostic_2);
+                            diagnostic_3.code = "C0035";
+                            diagnostics.push(diagnostic_3);
+
+                            break;
+                    
+                        case StSymbolKind.FunctionBlock:
+
+                            // C0080: Function block '{name}' must be instantiated to be accessed
+                            const diagnostic_4 = new Diagnostic(
+                                symbol.selectionRange ?? symbol.range,
+                                `Function block '${symbol.id}' must be instantiated to be accessed`,
+                                DiagnosticSeverity.Error
+                            );
+
+                            diagnostic_4.code = "C0080";
+                            diagnostics.push(diagnostic_4);
+
+                            break;
                     }
                 }
 

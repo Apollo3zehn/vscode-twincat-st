@@ -107,11 +107,10 @@ export class SemanticModelBuilder {
                 switch (symbol.kind) {
 
                     case StSymbolKind.VariableUsage:
-                        this.findDeclaration(symbol, false);
-                        break;
-                    
                     case StSymbolKind.CallStatement:
-                        this.findDeclaration(symbol, true);
+
+                        this.findDeclaration(symbol);
+                        
                         break;
                 }
             }
@@ -200,8 +199,7 @@ export class SemanticModelBuilder {
     //#region Variable usages or call statements
 
     private findDeclaration(
-        symbol: StSymbol,
-        isCall: boolean
+        symbol: StSymbol
     ) {
         /* Input examples:
          * 
@@ -241,30 +239,15 @@ export class SemanticModelBuilder {
         // Find declaring symbol
         let declaration: StSymbol | undefined;
 
-        // Call statements
-        if (isCall) {
-            declaration = this.resolveDeclaration(scope, symbol.id, isCall);
-        }
-
-        // Assigments
-        else {
-
-            declaration = symbol.id === "THIS"
+        declaration = symbol.id === "THIS"
             
-                // THIS
-                ? symbol.parent?.context instanceof MethodContext
-                    ? symbol.parent?.parent
-                    : symbol.parent
-                
-                // Everything else
-                : symbol.context.parent?.parent instanceof ExprContext && symbol.context.parent.parent.LPAREN()
-                    
-                    // Method or function call
-                    ? this.resolveDeclaration(scope, symbol.id, true)
-
-                    // Variable usage
-                    : this.resolveDeclaration(scope, symbol.id, false);
-        }
+            // THIS
+            ? symbol.parent?.context instanceof MethodContext
+                ? symbol.parent?.parent
+                : symbol.parent
+            
+            // Everything else
+            : this.resolveDeclaration(scope, symbol.id);
 
         if (declaration)
             this.ConnectDeclaringSymbols(symbol, declaration);
@@ -272,19 +255,11 @@ export class SemanticModelBuilder {
 
     private resolveDeclaration(
         scope: StSymbol | undefined,
-        name: string,
-        isCall: boolean
+        name: string
     ): StSymbol | undefined {
        
-        // Current scope or ancestor scopes (variables & properties)
+        // Current scope or ancestor scopes
         while (scope) {
-
-            if (isCall) {
-                const methodDeclaration = scope?.methods?.find(x => x.id === name);
-
-                if (methodDeclaration)
-                    return methodDeclaration;
-            }
 
             if (scope.variables) {
 
@@ -302,39 +277,40 @@ export class SemanticModelBuilder {
                     return propertyDeclaration;
             }
 
+            if (scope.methods) {
+
+                const methodDeclaration = scope.methods.find(x => x.id === name);
+
+                if (methodDeclaration)
+                    return methodDeclaration;
+            }
+            
             scope = scope.parent;
         }
 
-        // Global scope (function)
-        if (isCall) {
+        // Global scope
+        for (const sourceFile of this._model.sourceFileMap.values()) {
 
-            for (const sourceFile of this._model.sourceFileMap.values()) {
-                
-                const functionDeclaration = sourceFile.functions
-                    .find(x => x.id === name);
+            // Types
+            const typeSymbol = sourceFile.types
+                .find(x => x.id === name);
 
-                if (functionDeclaration)
-                    return functionDeclaration;
-            }
-        }
+            if (typeSymbol)
+                return typeSymbol;
 
-        // Global scope (variables & types)
-        else {
+            // Variables
+            const variableSymbol = sourceFile.variables
+                .find(x => x.id === name);
 
-            for (const sourceFile of this._model.sourceFileMap.values()) {
+            if (variableSymbol)
+                return variableSymbol;
 
-                const typeSymbol = sourceFile.types
-                    .find(x => x.id === name);
+            // Functions
+            const functionDeclaration = sourceFile.functions
+                .find(x => x.id === name);
 
-                if (typeSymbol)
-                    return typeSymbol;
-
-                const variableSymbol = sourceFile.variables
-                    .find(x => x.id === name);
-
-                if (variableSymbol)
-                    return variableSymbol;
-            }
+            if (functionDeclaration)
+                return functionDeclaration;
         }
 
         return undefined;

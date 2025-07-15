@@ -107,11 +107,11 @@ export class SemanticModelBuilder {
                 switch (symbol.kind) {
 
                     case StSymbolKind.VariableUsage:
-                        this.findVariableDeclaration(symbol);
+                        this.findDeclaration(symbol, false);
                         break;
                     
-                    case StSymbolKind.MethodOrFunctionCall:
-                        this.findMethodOrFunctionDeclaration(symbol);
+                    case StSymbolKind.CallStatement:
+                        this.findDeclaration(symbol, true);
                         break;
                 }
             }
@@ -167,7 +167,7 @@ export class SemanticModelBuilder {
         return sourceFile;
     }
 
-    //#region Type
+    //#region Type usage
 
     private findTypeDeclaration(symbol: StSymbol): StSymbol | undefined {
 
@@ -193,14 +193,23 @@ export class SemanticModelBuilder {
         }
     }
 
-    //#region Variable usages
+    //#region Variable usages or call statements
 
-    private findVariableDeclaration(
-        symbol: StSymbol
+    private findDeclaration(
+        symbol: StSymbol,
+        isCall: boolean
     ) {
         /* Input examples:
-         * a.b.c();
-         * d();
+         * 
+         * Call statements
+         *      a.b.c();
+         *      d();
+         * 
+         * Assignments
+         *      x = a.b.c;
+         *      x = d;
+         *      x = a.b.c();
+         *      x = d();
          */
 
         // Find scope
@@ -214,7 +223,7 @@ export class SemanticModelBuilder {
             const isType =
                 declarationKind === StSymbolKind.Enum ||
                 declarationKind === StSymbolKind.Gvl ||
-                symbol.qualifier.id === "THIS"
+                symbol.qualifier.id === "THIS";
 
             scope = isType
                 ? declaration
@@ -225,33 +234,53 @@ export class SemanticModelBuilder {
             scope = symbol.parent;
         }
 
-        // Find variable declaring symbol
-        const declaration = symbol.id === "THIS"
-            
-            // THIS
-            ? symbol.parent?.context instanceof MethodContext
-                ? symbol.parent?.parent
-                : symbol.parent
-            
-            : symbol.context.parent?.parent instanceof ExprContext && symbol.context.parent.parent.LPAREN()
-                
-                // Method or function call
-                ? this.resolveMethodOrFunctionDeclaration(scope, symbol.id)
+        // Find declaring symbol
+        let declaration: StSymbol | undefined;
 
-                // Variable usage
-                : this.resolveVariableDeclaration(scope, symbol.id);
+        // Call statements
+        if (isCall) {
+            declaration = this.resolveDeclaration(scope, symbol.id, isCall);
+        }
+
+        // Assigments
+        else {
+
+            declaration = symbol.id === "THIS"
+            
+                // THIS
+                ? symbol.parent?.context instanceof MethodContext
+                    ? symbol.parent?.parent
+                    : symbol.parent
+                
+                // Everything else
+                : symbol.context.parent?.parent instanceof ExprContext && symbol.context.parent.parent.LPAREN()
+                    
+                    // Method or function call
+                    ? this.resolveDeclaration(scope, symbol.id, true)
+
+                    // Variable usage
+                    : this.resolveDeclaration(scope, symbol.id, false);
+        }
 
         if (declaration)
             this.ConnectDeclaringSymbols(symbol, declaration);
     }
 
-    private resolveVariableDeclaration(
+    private resolveDeclaration(
         scope: StSymbol | undefined,
-        name: string
+        name: string,
+        isCall: boolean
     ): StSymbol | undefined {
-
-        // Current scope or ancestor scopes
+       
+        // Current scope or ancestor scopes (variables & properties)
         while (scope) {
+
+            if (isCall) {
+                const methodDeclaration = scope?.methods?.find(x => x.id === name);
+
+                if (methodDeclaration)
+                    return methodDeclaration;
+            }
 
             if (scope.variables) {
 
@@ -272,69 +301,25 @@ export class SemanticModelBuilder {
             scope = scope.parent;
         }
 
-        // Global scope
-        for (const symbol of this._model.typesMap.values()) {
-            if (symbol.id === name)
-                return symbol;
-        }
-
-        for (const symbol of this._model.variablesMap.values()) {
-            if (symbol.id === name)
-                return symbol;
-        }
-
-        return undefined;
-    }
-
-    //#endregion
-
-    //#region Method or function calls
-
-    private findMethodOrFunctionDeclaration(
-        symbol: StSymbol
-    ) {
-        /* Input examples:
-         * a.b.c();
-         * d();
-         */
-
-        // Find scope
-        let scope: StSymbol | undefined;
-
-        if (symbol.qualifier) {
-            scope = symbol.qualifier.declaration?.type?.declaration;
-        }
-
-        else {
-            if (symbol.parent?.context instanceof MethodContext)
-                scope = symbol.parent?.parent;
-
-            else
-                scope = symbol.parent;
-        }
-
-        // Find method or function declaring symbol
-        let declaration = this.resolveMethodOrFunctionDeclaration(scope, symbol.id);
-
-        if (declaration)
-            this.ConnectDeclaringSymbols(symbol, declaration);
-    }
-
-    private resolveMethodOrFunctionDeclaration(
-        scope: StSymbol | undefined,
-        name: string
-    ): StSymbol | undefined {
-
-        // Current scope (method)
-        const methodDeclaration = scope?.methods?.find(x => x.id === name);
-
-        if (methodDeclaration)
-            return methodDeclaration;
-
         // Global scope (function)
-        for (const functionDeclaration of this._model.functionsMap.values()) {
-            if (functionDeclaration.id === name)
-                return functionDeclaration;
+        if (isCall) {
+            for (const functionDeclaration of this._model.functionsMap.values()) {
+                if (functionDeclaration.id === name)
+                    return functionDeclaration;
+            }
+        }
+
+        // Global scope (variables & types)
+        else {
+            for (const symbol of this._model.typesMap.values()) {
+                if (symbol.id === name)
+                    return symbol;
+            }
+
+            for (const symbol of this._model.variablesMap.values()) {
+                if (symbol.id === name)
+                    return symbol;
+            }
         }
 
         return undefined;

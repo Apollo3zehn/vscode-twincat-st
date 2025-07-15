@@ -126,7 +126,7 @@ export class StHoverProvider implements HoverProvider {
                 else
                     return symbol.id ?? "";
             
-            case StSymbolKind.MethodOrFunctionCall:
+            case StSymbolKind.CallStatement:
                 
                 if (symbol.declaration)
                     return this.getSymbolSignature(symbol.declaration);

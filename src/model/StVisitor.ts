@@ -128,7 +128,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const idToken = ctx.ID().symbol;
 
         this.visitChildren(ctx);
-        this.createMethodOrFunctionCall(ctx, idToken);
+        this.createCallStatement(ctx, idToken);
     }
 
     public override visitArgument? = (ctx: ArgumentContext): void => {
@@ -323,11 +323,11 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this._declaration = symbol;
     }
 
-    private createMethodOrFunctionCall(ctx: CallStatementContext, idToken: Token) {
+    private createCallStatement(ctx: CallStatementContext, idToken: Token) {
         let symbol = this.create(
             ctx,
             idToken,
-            StSymbolKind.MethodOrFunctionCall
+            StSymbolKind.CallStatement
         );
 
         if (ctx.memberQualifier())

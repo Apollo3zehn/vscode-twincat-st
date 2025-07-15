@@ -37,7 +37,7 @@ export class StTypeDefinitionProvider implements TypeDefinitionProvider {
 
         else if (
             foundSymbol.kind === StSymbolKind.VariableUsage ||
-            foundSymbol.kind === StSymbolKind.MethodOrFunctionCall
+            foundSymbol.kind === StSymbolKind.CallStatement
         ) {
             typeDeclaringSymbol = foundSymbol.declaration?.type?.declaration;
         }

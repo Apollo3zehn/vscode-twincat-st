@@ -55,7 +55,7 @@ export class StSymbol {
     public methods: StSymbol[] | undefined;                 // for function blocks, interfaces
     public properties: StSymbol[] | undefined;              // for function blocks, interfaces
 
-    public qualifier: StSymbol | undefined;                 // for variable access or method or function calls
+    public qualifier: StSymbol | undefined;                 // for variable access or call statements
 
     public children: StSymbol[] | undefined;                // for hover provider
 
@@ -121,7 +121,7 @@ export enum StSymbolKind {
     FunctionBlock,
     Interface,
     VariableUsage,
-    MethodOrFunctionCall,
+    CallStatement,
     TypeUsage,
     Gvl,
     Alias,

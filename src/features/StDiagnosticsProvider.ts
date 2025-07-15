@@ -126,7 +126,10 @@ export class StDiagnosticsProvider {
 
             // C0046: Identifier '{id}' not defined
             if (
-                symbol.kind === StSymbolKind.VariableUsage &&
+                (
+                    symbol.kind === StSymbolKind.VariableUsage ||
+                    symbol.kind === StSymbolKind.CallStatement
+                ) &&
                 !symbol.declaration
             ) {
                 const diagnostic = new Diagnostic(

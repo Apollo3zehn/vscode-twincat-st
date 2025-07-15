@@ -2,7 +2,7 @@ import { CharStream, CommonTokenStream, ParserRuleContext } from "antlr4ng";
 import { TextDocument, Uri, workspace } from "vscode";
 import { logger, StModel, StSourceFile, StSymbol, StSymbolKind } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
-import { ExprContext, ExtendsClauseContext, FunctionContext, ImplementsClauseContext, MemberContext, MemberQualifierContext, MethodContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
+import { ExprContext, ExtendsClauseContext, ImplementsClauseContext, MethodContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
 import { StVisitor } from "./StVisitor.js";
 
 export class SemanticModelBuilder {
@@ -137,7 +137,7 @@ export class SemanticModelBuilder {
         const parser = new StructuredTextParser(tokenStream);
         const tree = parser.compilationUnit();
         const sourceFile = this.getOrCreateSourceFile(uri, tokenStream);
-        const visitor = new StVisitor(this._model, sourceFile, uri);
+        const visitor = new StVisitor(sourceFile, uri);
 
         tree.accept(visitor);
     }
@@ -158,7 +158,8 @@ export class SemanticModelBuilder {
                 fileUri,
                 fileUriAsString,
                 tokenStream,
-                new Map<ParserRuleContext, StSymbol>()
+                new Map<ParserRuleContext, StSymbol>(),
+                []
             );
             
             this._model.sourceFileMap.set(fileUriAsString, sourceFile);
@@ -171,23 +172,23 @@ export class SemanticModelBuilder {
 
     private findTypeDeclaration(symbol: StSymbol): StSymbol | undefined {
 
-        for (const typeDeclaration of this._model.typesMap.values()) {
+        for (const sourceFile of this._model.sourceFileMap.values()) {
+
+            const typeDeclaration = sourceFile.typesMap.get(symbol.id);
 
             if (
+                typeDeclaration &&
                 (
                     typeDeclaration.kind === StSymbolKind.FunctionBlock ||
                     typeDeclaration.kind === StSymbolKind.Alias ||
                     typeDeclaration.kind === StSymbolKind.Struct ||
                     typeDeclaration.kind === StSymbolKind.Enum ||
                     typeDeclaration.kind === StSymbolKind.Interface
-                ) &&
-                typeDeclaration.id === symbol.id
+                )
             ) {
                 if (!typeDeclaration.references)
                     typeDeclaration.references = [];
-
                 typeDeclaration.references.push(symbol);
-
                 return typeDeclaration;
             }
         }
@@ -303,22 +304,30 @@ export class SemanticModelBuilder {
 
         // Global scope (function)
         if (isCall) {
-            for (const functionDeclaration of this._model.functionsMap.values()) {
-                if (functionDeclaration.id === name)
+
+            for (const sourceFile of this._model.sourceFileMap.values()) {
+                
+                const functionDeclaration = sourceFile.functionsMap.get(name);
+
+                if (functionDeclaration)
                     return functionDeclaration;
             }
         }
 
         // Global scope (variables & types)
         else {
-            for (const symbol of this._model.typesMap.values()) {
-                if (symbol.id === name)
-                    return symbol;
-            }
 
-            for (const symbol of this._model.variablesMap.values()) {
-                if (symbol.id === name)
-                    return symbol;
+            for (const sourceFile of this._model.sourceFileMap.values()) {
+
+                const typeSymbol = sourceFile.typesMap.get(name);
+
+                if (typeSymbol)
+                    return typeSymbol;
+
+                const variableSymbol = sourceFile.variablesMap.get(name);
+
+                if (variableSymbol)
+                    return variableSymbol;
             }
         }
 

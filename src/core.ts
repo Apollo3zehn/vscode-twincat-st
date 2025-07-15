@@ -1,6 +1,6 @@
 import { CommonTokenStream, ParserRuleContext, Token } from "antlr4ng";
 import { Range, Uri, window } from "vscode";
-import { TypeContext } from "./generated/StructuredTextParser.js";
+import { StatementContext, TypeContext } from "./generated/StructuredTextParser.js";
 
 export const logger = window.createOutputChannel("TwinCAT Structured Text");
 
@@ -10,9 +10,6 @@ export const documentSelector = [
 
 export class StModel {
     public readonly sourceFileMap = new Map<string, StSourceFile>()
-    public readonly variablesMap = new Map<ParserRuleContext, StSymbol>()
-    public readonly functionsMap = new Map<ParserRuleContext, StSymbol>()
-    public readonly typesMap = new Map<ParserRuleContext, StSymbol>()
 }
 
 export class StSourceFile {
@@ -20,7 +17,11 @@ export class StSourceFile {
         public readonly uri: Uri,
         public readonly uriAsString: string,
         public readonly tokenStream: CommonTokenStream,
-        public readonly symbolMap: Map<ParserRuleContext, StSymbol>) {
+        public readonly symbolMap: Map<ParserRuleContext, StSymbol>,
+        public readonly statements: StatementContext[],
+        public readonly variablesMap = new Map<string, StSymbol>(),
+        public readonly functionsMap = new Map<string, StSymbol>(),
+        public readonly typesMap = new Map<string, StSymbol>()) {
         //
     }
 }

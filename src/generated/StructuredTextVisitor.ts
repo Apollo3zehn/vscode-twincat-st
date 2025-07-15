@@ -30,6 +30,7 @@ import { BuiltinTypeContext } from "./StructuredTextParser.js";
 import { StatementSectionContext } from "./StructuredTextParser.js";
 import { StatementContext } from "./StructuredTextParser.js";
 import { AssignmentContext } from "./StructuredTextParser.js";
+import { AssignmentOperatorContext } from "./StructuredTextParser.js";
 import { ArrayIndexContext } from "./StructuredTextParser.js";
 import { CallStatementContext } from "./StructuredTextParser.js";
 import { ArgumentListContext } from "./StructuredTextParser.js";
@@ -228,6 +229,12 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      * @return the visitor result
      */
     visitAssignment?: (ctx: AssignmentContext) => Result;
+    /**
+     * Visit a parse tree produced by `StructuredTextParser.assignmentOperator`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitAssignmentOperator?: (ctx: AssignmentOperatorContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.arrayIndex`.
      * @param ctx the parse tree

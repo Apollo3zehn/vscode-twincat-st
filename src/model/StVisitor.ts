@@ -1,13 +1,12 @@
 import { ParserRuleContext, Token } from "antlr4ng";
 import { Uri } from "vscode";
-import { StAccessModifier, StBuiltinType, StModel, StSourceFile, StSymbol, StSymbolKind, StTypeInfo, VariableKind } from "../core.js";
-import { AccessModifierContext, ArgumentContext, AssignmentContext, CallStatementContext, EnumMemberContext, ExprContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberContext, MemberQualifierContext, MethodContext, PrimaryContext, ProgramContext, PropertyContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { StAccessModifier, StBuiltinType, StSourceFile, StSymbol, StSymbolKind, StTypeInfo, VariableKind } from "../core.js";
+import { AccessModifierContext, ArgumentContext, CallStatementContext, EnumMemberContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberContext, MemberQualifierContext, MethodContext, PrimaryContext, ProgramContext, PropertyContext, StatementContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 import { getContextRange, getOriginalText, getTokenRange } from "../utils.js";
 
 export class StVisitor extends StructuredTextVisitor<void> {
 
-    private _model: StModel;
     private _sourceFile: StSourceFile;
     private _documentUri: Uri;
     private _parent: StSymbol | undefined;
@@ -16,9 +15,8 @@ export class StVisitor extends StructuredTextVisitor<void> {
     private _qualifier: StSymbol | undefined;
     private _variableKind: VariableKind = VariableKind.None;
 
-    constructor(model: StModel, sourceFile: StSourceFile, documentUri: Uri) {
+    constructor(sourceFile: StSourceFile, documentUri: Uri) {
         super();
-        this._model = model;
         this._sourceFile = sourceFile;
         this._documentUri = documentUri;
     }
@@ -101,10 +99,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this.visitChildren(ctx);
     };
 
-    public override visitAssignment = (ctx: AssignmentContext): void => {
-        this.visitChildren(ctx);
-    };
-
     public override visitMemberQualifier = (ctx: MemberQualifierContext): void => {
         this._qualifier = undefined;
         this.visitChildren(ctx);
@@ -119,9 +113,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this._qualifier = symbol;
     }
 
-    public override visitExpr = (ctx: ExprContext): void => {
+    public override visitStatement = (ctx: StatementContext): void => {
+        this._sourceFile.statements.push(ctx);
         this.visitChildren(ctx);
-    };
+    }
 
     public override visitCallStatement? = (ctx: CallStatementContext): void => {
 
@@ -154,7 +149,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
-        this._model.typesMap.set(ctx, symbol);
+        this._sourceFile.typesMap.set(symbol.id, symbol);
     }
 
     private createInterface(ctx: InterfaceContext) {
@@ -166,7 +161,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
-        this._model.typesMap.set(ctx, symbol);
+        this._sourceFile.typesMap.set(symbol.id, symbol);
     }
 
     private createFunctionBlock(ctx: FunctionBlockContext) {
@@ -178,7 +173,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
-        this._model.typesMap.set(ctx, symbol);
+        this._sourceFile.typesMap.set(symbol.id, symbol);
     }
 
     private createType(ctx: TypeDeclContext): StSymbol | undefined {
@@ -206,7 +201,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
-        this._model.typesMap.set(ctx, symbol);
+        this._sourceFile.typesMap.set(symbol.id, symbol);
         this._declaration = symbol;
 
         return symbol;
@@ -219,7 +214,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
-        this._model.functionsMap.set(ctx, symbol);
+        this._sourceFile.functionsMap.set(symbol.id, symbol);
         this._parent = symbol;
         this._declaration = symbol;
     }
@@ -231,7 +226,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
-        this._model.variablesMap.set(ctx, symbol);
+        this._sourceFile.variablesMap.set(symbol.id, symbol);
         this._parent = symbol;
         this._declaration = symbol;
         this._variableKind = VariableKind.Global;

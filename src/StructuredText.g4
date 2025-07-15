@@ -112,8 +112,12 @@ statement           : assignment
 // Assignments and calls
 // =======================
 assignment
-    : memberQualifier ':=' expr ';'
-    | memberQualifier 'REF=' expr ';'
+    : memberQualifier assignmentOperator expr ';'
+    ;
+
+assignmentOperator
+    : ':='
+    | 'REF='
     ;
 
 arrayIndex          : '[' expr ']' ;

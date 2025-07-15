@@ -108,7 +108,7 @@ export class StHoverProvider implements HoverProvider {
                         qualifier = `${symbol.parent?.id ?? "??"}.`;
                 }
 
-                return `${prefix}${accessModifier}${qualifier}${symbol.id}: ${symbol.type?.id ?? "?"}`;
+                return `${prefix}${accessModifier}${qualifier}${symbol.id}: ${symbol.typeUsage?.id ?? "?"}`;
             
             case StSymbolKind.VariableUsage:
 
@@ -136,22 +136,22 @@ export class StHoverProvider implements HoverProvider {
             
             case StSymbolKind.Method:
 
-                let suffix1 = symbol.type?.id
-                    ? ` : ${symbol.type?.id}`
+                let suffix1 = symbol.typeUsage?.id
+                    ? ` : ${symbol.typeUsage?.id}`
                     : "";
                 
                 return `METHOD ${accessModifier}${symbol.id}${suffix1}`;
             
             case StSymbolKind.Function:
 
-                let suffix2 = symbol.type?.id
-                    ? ` : ${symbol.type?.id}`
+                let suffix2 = symbol.typeUsage?.id
+                    ? ` : ${symbol.typeUsage?.id}`
                     : "";
                 
                 return `FUNCTION ${accessModifier}${symbol.id}${suffix2}`;
             
             case StSymbolKind.Property:
-                return `PROPERTY ${accessModifier}${symbol.id} : ${symbol.type?.id ?? "?"}`;
+                return `PROPERTY ${accessModifier}${symbol.id} : ${symbol.typeUsage?.id ?? "?"}`;
             
             case StSymbolKind.FunctionBlock:
                 return `FUNCTION_BLOCK ${accessModifier}${symbol.id}`;

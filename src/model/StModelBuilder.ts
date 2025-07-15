@@ -174,7 +174,8 @@ export class SemanticModelBuilder {
 
         for (const sourceFile of this._model.sourceFileMap.values()) {
 
-            const typeDeclaration = sourceFile.typesMap.get(symbol.id);
+            const typeDeclaration = sourceFile.types
+                .find(type => type.id === symbol.id);
 
             if (
                 typeDeclaration &&
@@ -188,7 +189,9 @@ export class SemanticModelBuilder {
             ) {
                 if (!typeDeclaration.references)
                     typeDeclaration.references = [];
+
                 typeDeclaration.references.push(symbol);
+                
                 return typeDeclaration;
             }
         }
@@ -228,7 +231,7 @@ export class SemanticModelBuilder {
 
             scope = isType
                 ? declaration
-                : declaration?.type?.declaration;
+                : declaration?.typeUsage?.declaration;
         }
 
         else {
@@ -307,7 +310,8 @@ export class SemanticModelBuilder {
 
             for (const sourceFile of this._model.sourceFileMap.values()) {
                 
-                const functionDeclaration = sourceFile.functionsMap.get(name);
+                const functionDeclaration = sourceFile.functions
+                    .find(x => x.id === name);
 
                 if (functionDeclaration)
                     return functionDeclaration;
@@ -319,12 +323,14 @@ export class SemanticModelBuilder {
 
             for (const sourceFile of this._model.sourceFileMap.values()) {
 
-                const typeSymbol = sourceFile.typesMap.get(name);
+                const typeSymbol = sourceFile.types
+                    .find(x => x.id === name);
 
                 if (typeSymbol)
                     return typeSymbol;
 
-                const variableSymbol = sourceFile.variablesMap.get(name);
+                const variableSymbol = sourceFile.variables
+                    .find(x => x.id === name);
 
                 if (variableSymbol)
                     return variableSymbol;

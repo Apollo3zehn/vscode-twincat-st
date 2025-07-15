@@ -76,3 +76,9 @@ export function getOriginalText(ctx: ParserRuleContext): string | undefined {
 
     return undefined;
 }
+
+export function* concatIterators<T>(...iterators: Iterable<T>[]) {
+    for (const iterator of iterators) {
+        yield* iterator;
+    }
+}

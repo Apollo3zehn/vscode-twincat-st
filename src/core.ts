@@ -19,9 +19,9 @@ export class StSourceFile {
         public readonly tokenStream: CommonTokenStream,
         public readonly symbolMap: Map<ParserRuleContext, StSymbol>,
         public readonly statements: StatementContext[],
-        public readonly variablesMap = new Map<string, StSymbol>(),
-        public readonly functionsMap = new Map<string, StSymbol>(),
-        public readonly typesMap = new Map<string, StSymbol>()) {
+        public readonly variables: StSymbol[] = [],
+        public readonly functions: StSymbol[] = [],
+        public readonly types: StSymbol[] = []) {
         //
     }
 }
@@ -43,7 +43,7 @@ export class StSymbol {
 
     public typeHierarchyInfo: StTypeInfo | undefined;       // for type declarations
 
-    public type: StSymbol | undefined;                      // for variable declarations
+    public typeUsage: StSymbol | undefined;                 // for variable declarations
     public variableKind: VariableKind | undefined;          // for variable declarations
     public parent: StSymbol | undefined;                    // for variable declarations
 

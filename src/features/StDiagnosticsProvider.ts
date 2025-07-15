@@ -1,7 +1,7 @@
 import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, SymbolKind, TextDocument } from "vscode";
 import { StAccessModifier, StModel, StSymbolKind } from "../core.js";
 import { PrimaryContext } from "../generated/StructuredTextParser.js";
-import { getContextRange, getTokenRange } from "../utils.js";
+import { concatIterators, getContextRange, getTokenRange } from "../utils.js";
 
 export class StDiagnosticsProvider {
     private _diagnosticCollection: DiagnosticCollection;
@@ -22,7 +22,65 @@ export class StDiagnosticsProvider {
             return;
         }
 
+        // TODO: Do not make full evaluation every file change
+        for (const currentSourceFile of this.model.sourceFileMap.values()) {
+            
+            const seen = new Set<string>();
+
+            const iterator = concatIterators(
+                currentSourceFile.types,
+                currentSourceFile.functions,
+            )
+
+            for (const typeOrFunction of iterator) {
+
+                if (seen.has(typeOrFunction.id)) {
+
+                    if (currentSourceFile !== sourceFile)
+                        continue;
+
+                    const diagnostic = new Diagnostic(
+                        typeOrFunction.selectionRange ?? typeOrFunction.range,
+                        `Object name '${typeOrFunction.id}' already used in this application`,
+                        DiagnosticSeverity.Error
+                    );
+
+                    diagnostic.code = "SA0027";
+                    diagnostics.push(diagnostic);
+                }
+                
+                else {
+                    seen.add(typeOrFunction.id);
+                }
+            }
+        }
+
         for (const symbol of sourceFile.symbolMap.values()) {
+
+            // C0142: A local variable named 'name' is already defined in 'scope'
+            if (symbol.variables) {
+
+                const seen = new Set<string>();
+
+                for (const variable of symbol.variables) {
+
+                    if (seen.has(variable.id)) {
+
+                        const diagnostic = new Diagnostic(
+                            variable.selectionRange ?? variable.range,
+                            `A local variable named '${variable.id}' is already defined in '${variable.parent?.id}'`,
+                            DiagnosticSeverity.Error
+                        );
+
+                        diagnostic.code = "C0142";
+                        diagnostics.push(diagnostic);
+                    }
+                    
+                    else {
+                        seen.add(variable.id);
+                    }
+                }
+            }
 
             // Unused variable/method/function diagnostics
             if (
@@ -94,7 +152,7 @@ export class StDiagnosticsProvider {
                 symbol.context instanceof PrimaryContext &&
                 symbol.context.derefOrIndex()
             ) {
-                let currentType = symbol.declaration?.type;
+                let currentType = symbol.declaration?.typeUsage;
                 const derefOrIndexList = symbol.context.derefOrIndex();
 
                 for (const derefOrIndex of derefOrIndexList) {
@@ -146,20 +204,54 @@ export class StDiagnosticsProvider {
 
             // C0046: Identifier '{id}' not defined
             if (
-                (
-                    symbol.kind === StSymbolKind.VariableUsage ||
-                    symbol.kind === StSymbolKind.CallStatement
-                ) &&
-                !symbol.declaration
+                symbol.kind === StSymbolKind.VariableUsage ||
+                symbol.kind === StSymbolKind.CallStatement
             ) {
-                const diagnostic = new Diagnostic(
-                    symbol.selectionRange ?? symbol.range,
-                    `Identifier '${symbol.id}' not defined`,
-                    DiagnosticSeverity.Error
-                );
 
-                diagnostic.code = "C0046";
-                diagnostics.push(diagnostic);
+                if (symbol.declaration) {
+
+                    let typeKind: StSymbolKind | undefined;
+
+                    switch (symbol.declaration.kind) {
+
+                        case StSymbolKind.Program:
+                        case StSymbolKind.Function:
+                        case StSymbolKind.Method:
+                            typeKind = symbol.declaration.kind;
+                            break;
+
+                        case StSymbolKind.VariableDeclaration:
+                            typeKind = symbol.declaration.typeUsage?.declaration?.kind
+                            break;
+                    }
+
+                    if (symbol.kind === StSymbolKind.CallStatement && !(
+                        typeKind === StSymbolKind.Program ||
+                        typeKind === StSymbolKind.FunctionBlock ||
+                        typeKind === StSymbolKind.Function ||
+                        typeKind === StSymbolKind.Method
+                    )) {
+                        const diagnostic = new Diagnostic(
+                            symbol.selectionRange ?? symbol.range,
+                            `Program name, function or function block instance expected instead of '${symbol.id}'`,
+                            DiagnosticSeverity.Error
+                        );
+
+                        diagnostic.code = "C0035";
+                        diagnostics.push(diagnostic);
+                    }
+                }
+
+                else {
+                    const diagnostic = new Diagnostic(
+                        symbol.selectionRange ?? symbol.range,
+                        `Identifier '${symbol.id}' not defined`,
+                        DiagnosticSeverity.Error
+                    );
+
+                    diagnostic.code = "C0046";
+                    diagnostics.push(diagnostic);
+                }
             }
         }
 
@@ -179,8 +271,8 @@ export class StDiagnosticsProvider {
                 const lhsSymbol = sourceFile.symbolMap.get(lhsMember);
                 const rhsSymbol = sourceFile.symbolMap.get(rhsMember);
 
-                const lhsTypeUsage = lhsSymbol?.declaration?.type;
-                const rhsTypeUsage = rhsSymbol?.declaration?.type;
+                const lhsTypeUsage = lhsSymbol?.declaration?.typeUsage;
+                const rhsTypeUsage = rhsSymbol?.declaration?.typeUsage;
 
                 const operatorCtx = assignment.assignmentOperator();
                 const operatorText = operatorCtx.getText();

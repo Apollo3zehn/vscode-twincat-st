@@ -149,7 +149,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
-        this._sourceFile.typesMap.set(symbol.id, symbol);
+        this._sourceFile.types.push(symbol);
     }
 
     private createInterface(ctx: InterfaceContext) {
@@ -161,7 +161,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
-        this._sourceFile.typesMap.set(symbol.id, symbol);
+        this._sourceFile.types.push(symbol);
     }
 
     private createFunctionBlock(ctx: FunctionBlockContext) {
@@ -173,7 +173,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
-        this._sourceFile.typesMap.set(symbol.id, symbol);
+        this._sourceFile.types.push(symbol);
     }
 
     private createType(ctx: TypeDeclContext): StSymbol | undefined {
@@ -201,7 +201,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
-        this._sourceFile.typesMap.set(symbol.id, symbol);
+        this._sourceFile.types.push(symbol);
         this._declaration = symbol;
 
         return symbol;
@@ -214,7 +214,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
-        this._sourceFile.functionsMap.set(symbol.id, symbol);
+        this._sourceFile.functions.push(symbol);
         this._parent = symbol;
         this._declaration = symbol;
     }
@@ -226,7 +226,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
 
-        this._sourceFile.variablesMap.set(symbol.id, symbol);
+        this._sourceFile.variables.push(symbol);
         this._parent = symbol;
         this._declaration = symbol;
         this._variableKind = VariableKind.Global;
@@ -366,7 +366,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         }
 
         if (this._declaration)
-            this._declaration.type = symbol;
+            this._declaration.typeUsage = symbol;
 
         return symbol;
     }

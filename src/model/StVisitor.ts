@@ -277,30 +277,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
             StSymbolKind.Property
         );
 
-        let variableKind: VariableKind | undefined;
-
-        const propertyBodyCtx = ctx.propertyBody();
-        const getter = propertyBodyCtx.getter();
-        const setter = propertyBodyCtx.setter();
-
-        if (getter) {
-            if (setter)
-                variableKind = VariableKind.InOut
-
-            else
-                variableKind = VariableKind.Output
-        }
-
-        else {
-            if (setter)
-                variableKind = VariableKind.Input
-
-            else
-                variableKind = undefined
-        }
-
-        symbol.variableKind = variableKind;
-
         if (this._parent)
             this.addLocalObject(this._parent, symbol, "variablesAndProperties");
 

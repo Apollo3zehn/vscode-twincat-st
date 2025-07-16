@@ -4,7 +4,7 @@ FUNCTION_BLOCK FB_C0036
     E_C0036();
 
     // C0036: Cannot call object of type 'TYPE'
-    MyStruct();
+    ST_C0036();
 END_FUNCTION_BLOCK
 
 VAR_GLOBAL GVL_C0036
@@ -17,7 +17,7 @@ TYPE E_C0036 :
 );
 END_TYPE
 
-TYPE MyStruct :
+TYPE ST_C0036 :
 STRUCT
     //
 END_STRUCT

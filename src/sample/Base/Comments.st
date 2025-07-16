@@ -1,5 +1,5 @@
 // This is my struct.
-TYPE ST_MyStruct :
+TYPE ST_Comments :
 STRUCT
     // a
     a: BOOL;

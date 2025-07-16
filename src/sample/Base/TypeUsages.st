@@ -2,7 +2,7 @@ FUNCTION_BLOCK TypeUsage
 
     VAR
         _functionBlock: MyFunctionBlock;
-        _struct: MyStruct;
+        _struct: ST_Structs;
         _enum: MyEnum1;
         _interface: MyInterface;
         _bool: BOOL;

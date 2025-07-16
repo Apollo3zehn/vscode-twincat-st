@@ -1,7 +1,7 @@
 import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, TextDocument } from "vscode";
-import { StAccessModifier, StBuiltinType, StModel, StNativeTypeKind, StSymbolKind } from "../core.js";
-import { ExprContext, PrimaryContext } from "../generated/StructuredTextParser.js";
-import { getContextRange, getTokenRange } from "../utils.js";
+import { StAccessModifier, StBuiltinType, StModel, StNativeTypeKind, StSymbolKind, VariableKind } from "../core.js";
+import { AssignmentContext, ExprContext, PrimaryContext, PropertyContext } from "../generated/StructuredTextParser.js";
+import { getContextRange, getOriginalText, getTokenRange, getTypeIdFromTypeUsage, getTypeUsageFromExpression } from "../utils.js";
 
 export class StDiagnosticsProvider {
     private _diagnosticCollection: DiagnosticCollection;
@@ -23,9 +23,9 @@ export class StDiagnosticsProvider {
         }
 
         // TODO: Do not make full evaluation every file change
+        const seen = new Set<string>();
+
         for (const currentSourceFile of this.model.sourceFileMap.values()) {
-            
-            const seen = new Set<string>();
 
             for (const globalObject of currentSourceFile.globalObjects.values()) {
 
@@ -52,7 +52,25 @@ export class StDiagnosticsProvider {
 
         for (const symbol of sourceFile.symbolMap.values()) {
 
-            // Unused variable/method/function diagnostics
+            if (
+                (
+                    (symbol.kind === StSymbolKind.VariableDeclaration || symbol.kind === StSymbolKind.Property) &&
+                    symbol.parent?.methods?.has(symbol.id)
+                ) ||
+                (
+                    symbol.kind === StSymbolKind.Method &&
+                    symbol.parent?.variablesAndProperties?.has(symbol.id)
+                )
+            ) {
+                const diagnostic = new Diagnostic(
+                    symbol.selectionRange ?? symbol.range,
+                    `Amiguous use of name '${symbol.id}'`,
+                    DiagnosticSeverity.Warning
+                );
+
+                diagnostics.push(diagnostic);
+            }
+            
             if (
                 (
                     symbol.kind === StSymbolKind.VariableDeclaration ||
@@ -65,6 +83,7 @@ export class StDiagnosticsProvider {
                     symbol.references.length === 0
                 )
             ) {
+                // Unused variable/method/function hints
                 const diagnostic = new Diagnostic(
                     symbol.selectionRange ?? symbol.range,
                     `'${symbol.id!}' is never used.`,
@@ -177,6 +196,31 @@ export class StDiagnosticsProvider {
                 symbol.kind === StSymbolKind.CallStatement
             ) {
 
+                if (symbol.declaration?.kind === StSymbolKind.Property) {
+
+                    const isAssignment = symbol.context?.parent?.parent instanceof AssignmentContext;
+
+                    if (!isAssignment) {
+
+                        const propertyCtx = symbol.declaration.context as PropertyContext;
+                        const propertyBodyCtx = propertyCtx.propertyBody();
+                        const getter = propertyBodyCtx.getter();
+
+                        if (!getter) {
+                            
+                            // C0143: The property '{name}' cannot be used in this context because it lacks the get accessor
+                            const diagnostic = new Diagnostic(
+                                symbol.selectionRange ?? symbol.range,
+                                `The property '${symbol.id}' cannot be used in this context because it lacks the get accessor`,
+                                DiagnosticSeverity.Error
+                            );
+
+                            diagnostic.code = "C0143";
+                            diagnostics.push(diagnostic);
+                        }
+                    }
+                }
+
                 if (symbol.declaration) {
 
                     const isCall =
@@ -282,27 +326,41 @@ export class StDiagnosticsProvider {
             if (assignment) {
 
                 const lhsMember = assignment.memberQualifier().primary();
-                const rhsMember = assignment.expr().memberQualifier()?.primary();
-
-                // TODO: evaluate expressions recursively
-                if (!rhsMember)
-                    continue;
-
                 const lhsSymbol = sourceFile.symbolMap.get(lhsMember);
-                const rhsSymbol = sourceFile.symbolMap.get(rhsMember);
-
                 const lhsTypeUsage = lhsSymbol?.declaration?.typeUsage;
-                const rhsTypeUsage = rhsSymbol?.declaration?.typeUsage;
+
+                const expression = assignment.expr();
+                const rhsTypeUsage = getTypeUsageFromExpression(expression, sourceFile);
 
                 const operatorCtx = assignment.assignmentOperator();
                 const operatorText = operatorCtx.getText();
                 const isRefAssignment = operatorText === 'REF=';
 
+                if (lhsSymbol?.declaration?.kind === StSymbolKind.Property) {
+
+                    const propertyCtx = lhsSymbol.declaration.context as PropertyContext;
+                    const propertyBodyCtx = propertyCtx.propertyBody();
+                    const setter = propertyBodyCtx.setter();
+
+                    if (!setter) {
+                        // C0018 '{name}' is no valid assignment target
+                        const diagnostic = new Diagnostic(
+                            getContextRange(lhsMember)!,
+                            `'${lhsSymbol.id}' is no valid assignment target`,
+                            DiagnosticSeverity.Error
+                        );
+
+                        diagnostic.code = "C0018";
+                        diagnostics.push(diagnostic);
+                    }
+                }
+
                 if (isRefAssignment) {
 
                     if (!lhsTypeUsage?.isReference) {
+
                         const diagnostic = new Diagnostic(
-                            lhsSymbol!.selectionRange ?? lhsSymbol!.range,
+                            getContextRange(lhsMember)!,
                             "Reference assign is only allowed to variables of reference type",
                             DiagnosticSeverity.Error
                         );
@@ -340,7 +398,7 @@ export class StDiagnosticsProvider {
                                         if (rhsNativeType.signed && !lhsNativeType.signed) {
 
                                             const warning = new Diagnostic(
-                                                rhsSymbol!.selectionRange ?? rhsSymbol!.range,
+                                                getContextRange(expression)!,
                                                 `Implicit conversion from signed type '${StBuiltinType[rhsTypeUsage?.builtinType]}' to unsigned type '${StBuiltinType[lhsTypeUsage?.builtinType]}': Possible change of sign`,
                                                 DiagnosticSeverity.Warning
                                             );
@@ -351,7 +409,7 @@ export class StDiagnosticsProvider {
                                         else if (!rhsNativeType.signed && lhsNativeType.signed) {
 
                                             const warning = new Diagnostic(
-                                                rhsSymbol!.selectionRange ?? rhsSymbol!.range,
+                                                getContextRange(expression)!,
                                                 `Implicit conversion from unsigned type '${StBuiltinType[rhsTypeUsage?.builtinType]}' to signed type '${StBuiltinType[lhsTypeUsage?.builtinType]}': Possible change of sign`,
                                                 DiagnosticSeverity.Warning
                                             );
@@ -376,7 +434,7 @@ export class StDiagnosticsProvider {
                                         rhsNativeType.size >= lhsNativeType.size
                                     ) {
                                         const warning = new Diagnostic(
-                                            rhsSymbol!.selectionRange ?? rhsSymbol!.range,
+                                            getContextRange(expression)!,
                                             `Implicit conversion from '${StBuiltinType[rhsTypeUsage?.builtinType]}' to '${StBuiltinType[lhsTypeUsage?.builtinType]}': Possible loss of information`,
                                             DiagnosticSeverity.Warning
                                         );
@@ -389,17 +447,25 @@ export class StDiagnosticsProvider {
 
                                 break;
                         }
-
-                        // C0032: Cannot convert type '{type}' to type '{type}'
-                        const diagnostic = new Diagnostic(
-                            rhsSymbol!.selectionRange ?? rhsSymbol!.range,
-                            `Cannot convert type '${StBuiltinType[lhsTypeUsage?.builtinType]}' to type '${StBuiltinType[rhsTypeUsage?.builtinType]}'`,
-                            DiagnosticSeverity.Error
-                        );
-
-                        diagnostic.code = "C0032";
-                        diagnostics.push(diagnostic);
                     }
+
+                    // C0032: Cannot convert type '{type}' to type '{type}'
+                    const lhsTypeId = lhsTypeUsage
+                        ? getTypeIdFromTypeUsage(lhsTypeUsage)
+                        : getOriginalText(lhsMember);
+                    
+                    const rhsTypeId = rhsTypeUsage
+                        ? getTypeIdFromTypeUsage(rhsTypeUsage)
+                        : getOriginalText(expression);
+
+                    const diagnostic = new Diagnostic(
+                        getContextRange(expression)!,
+                        `Cannot convert type '${rhsTypeId}' to type '${lhsTypeId}'`,
+                        DiagnosticSeverity.Error
+                    );
+
+                    diagnostic.code = "C0032";
+                    diagnostics.push(diagnostic);
                 }
             }
         }

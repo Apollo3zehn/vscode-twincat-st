@@ -1,4 +1,4 @@
-TYPE MyStruct :
+TYPE ST_Structs :
 STRUCT
     MyValueA: BOOL;
 

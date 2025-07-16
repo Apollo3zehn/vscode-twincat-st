@@ -1,3 +1,3 @@
-PROGRAM MAIN
+PROGRAM Program
     //
 END_PROGRAM

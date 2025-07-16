@@ -4,6 +4,7 @@ import { AssignmentContext, ExprContext, PrimaryContext, PropertyContext } from 
 import { getContextRange, getOriginalText, getTokenRange, getTypeIdFromTypeUsage, getTypeOfType, getTypeUsageFromExpression } from "../utils.js";
 
 export class StDiagnosticsProvider {
+
     private _diagnosticCollection: DiagnosticCollection;
 
     constructor(
@@ -61,6 +62,7 @@ export class StDiagnosticsProvider {
 
                 if (!
                     (
+                        typeKind === StSymbolKind.Interface ||
                         typeKind === StSymbolKind.FunctionBlock ||
                         typeKind === StSymbolKind.Enum ||
                         typeKind === StSymbolKind.Struct
@@ -222,32 +224,32 @@ export class StDiagnosticsProvider {
                 symbol.kind === StSymbolKind.CallStatement
             ) {
 
-                if (symbol.declaration?.kind === StSymbolKind.Property) {
+                if (symbol.declaration) {
 
-                    const isAssignment = symbol.context?.parent?.parent instanceof AssignmentContext;
+                    if (symbol.declaration.kind === StSymbolKind.Property) {
 
-                    if (!isAssignment) {
+                        const isAssignment = symbol.context?.parent?.parent instanceof AssignmentContext;
 
-                        const propertyCtx = symbol.declaration.context as PropertyContext;
-                        const propertyBodyCtx = propertyCtx.propertyBody();
-                        const getter = propertyBodyCtx.getter();
+                        if (!isAssignment) {
 
-                        if (!getter) {
-                            
-                            // C0143: The property '{name}' cannot be used in this context because it lacks the get accessor
-                            const diagnostic = new Diagnostic(
-                                symbol.selectionRange ?? symbol.range,
-                                `The property '${symbol.id}' cannot be used in this context because it lacks the get accessor`,
-                                DiagnosticSeverity.Error
-                            );
+                            const propertyCtx = symbol.declaration.context as PropertyContext;
+                            const propertyBodyCtx = propertyCtx.propertyBody();
+                            const getter = propertyBodyCtx.getter();
 
-                            diagnostic.code = "C0143";
-                            diagnostics.push(diagnostic);
+                            if (!getter) {
+                                
+                                // C0143: The property '{name}' cannot be used in this context because it lacks the get accessor
+                                const diagnostic = new Diagnostic(
+                                    symbol.selectionRange ?? symbol.range,
+                                    `The property '${symbol.id}' cannot be used in this context because it lacks the get accessor`,
+                                    DiagnosticSeverity.Error
+                                );
+
+                                diagnostic.code = "C0143";
+                                diagnostics.push(diagnostic);
+                            }
                         }
                     }
-                }
-
-                if (symbol.declaration) {
 
                     const isCall =
                         symbol.kind === StSymbolKind.CallStatement ||

@@ -5,9 +5,24 @@ FUNCTION_BLOCK FB_C0035
         _a: INT;
     END_VAR
 
+    PROPERTY A : INT
+        GET
+            //
+        END_GET
+    END_PROPERTY
+
+    METHOD M_A : INT
+        //
+    END_METHOD
+
     _a();
     _a := _a();
     E_C0035.a();
+
+    _a := A();
+    A();
+
+    M_A()();
 END_FUNCTION_BLOCK
 
 TYPE E_C0035 :

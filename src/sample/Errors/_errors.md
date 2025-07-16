@@ -1,5 +1,11 @@
 - assignment: incompatible types
 
-- function call on property: C0185: It is not possible to perform component access '.', index access '[]' or call '()' on result of function call. Assign result to help variable first.
-
 - Assignment to VAR_OUTPUT C0018?
+
+- M_B()[0]; => Warning "The code has no effect. Is this the intent?"
+
+- C0089: Interface of overridden method 'RESET' of interface 'I_PLANTCOMPONENTFIXTURE' doesn't match declaration
+
+- C0538: The number of inputs/outputs of the method 'RESET' does not correspond to the interface 'I_PLANTCOMPONENTFIXTURE'.
+
+- Fix C0035 (fix syntax error, double method call) and C0185 (fix syntax error + Colorization )

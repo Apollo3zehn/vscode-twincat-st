@@ -1,7 +1,7 @@
 import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, TextDocument } from "vscode";
-import { StAccessModifier, StBuiltinType, StModel, StNativeTypeKind, StSymbolKind, VariableKind } from "../core.js";
+import { StAccessModifier, StBuiltinType, StModel, StNativeTypeKind, StSymbolKind } from "../core.js";
 import { AssignmentContext, ExprContext, PrimaryContext, PropertyContext } from "../generated/StructuredTextParser.js";
-import { getContextRange, getOriginalText, getTokenRange, getTypeIdFromTypeUsage, getTypeUsageFromExpression } from "../utils.js";
+import { getContextRange, getOriginalText, getTokenRange, getTypeIdFromTypeUsage, getTypeOfType, getTypeUsageFromExpression } from "../utils.js";
 
 export class StDiagnosticsProvider {
     private _diagnosticCollection: DiagnosticCollection;
@@ -51,6 +51,32 @@ export class StDiagnosticsProvider {
         }
 
         for (const symbol of sourceFile.symbolMap.values()) {
+
+            if (
+                symbol.kind === StSymbolKind.VariableDeclaration &&
+                symbol.typeUsage?.declaration
+            ) {
+                const typeUsage = symbol.typeUsage;
+                const typeKind = typeUsage.declaration!.kind;
+
+                if (!
+                    (
+                        typeKind === StSymbolKind.FunctionBlock ||
+                        typeKind === StSymbolKind.Enum ||
+                        typeKind === StSymbolKind.Struct
+                    )
+                ) {
+                    // C0177: '{name}' is of type {name} and cannot be instantiated
+                    const diagnostic = new Diagnostic(
+                        typeUsage.selectionRange ?? typeUsage.range,
+                        `'${typeUsage.id}' is of type '${getTypeOfType(typeKind)}' and cannot be instantiated`,
+                        DiagnosticSeverity.Error
+                    );
+                    
+                    diagnostic.code = "C0177";
+                    diagnostics.push(diagnostic);
+                }
+            }
 
             if (
                 (

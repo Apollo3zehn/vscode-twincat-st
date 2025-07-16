@@ -103,3 +103,20 @@ export function getTypeUsageFromExpression(
 
     return symbol?.declaration?.typeUsage;
 }
+
+export function getTypeOfType(kind: StSymbolKind): string {
+    switch (kind) {
+        case StSymbolKind.FunctionBlock: return "FUNCTION_BLOCK";
+        case StSymbolKind.Gvl: return "VAR_GLOBAL";
+        case StSymbolKind.Enum: return "ENUM";
+        case StSymbolKind.Struct: return "STRUCT";
+        case StSymbolKind.Program: return "PROGRAM";
+        case StSymbolKind.Alias: return "ALIAS";
+        case StSymbolKind.Function: return "FUNCTION";
+        case StSymbolKind.Method: return "METHOD";
+        case StSymbolKind.Property: return "PROPERTY";
+        case StSymbolKind.VariableDeclaration: return "VARIABLE";
+        case StSymbolKind.EnumMember: return "ENUM_MEMBER";
+        default: return "UNKNOWN";
+    }
+}

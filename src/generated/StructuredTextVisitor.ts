@@ -31,7 +31,6 @@ import { StatementSectionContext } from "./StructuredTextParser.js";
 import { StatementContext } from "./StructuredTextParser.js";
 import { AssignmentContext } from "./StructuredTextParser.js";
 import { AssignmentOperatorContext } from "./StructuredTextParser.js";
-import { ArrayIndexContext } from "./StructuredTextParser.js";
 import { CallStatementContext } from "./StructuredTextParser.js";
 import { ArgumentListContext } from "./StructuredTextParser.js";
 import { ArgumentContext } from "./StructuredTextParser.js";
@@ -46,8 +45,12 @@ import { ReturnStatementContext } from "./StructuredTextParser.js";
 import { ExitStatementContext } from "./StructuredTextParser.js";
 import { ContinueStatementContext } from "./StructuredTextParser.js";
 import { MemberExpressionContext } from "./StructuredTextParser.js";
+import { MemberAccessContext } from "./StructuredTextParser.js";
 import { PostfixOpContext } from "./StructuredTextParser.js";
-import { PrimaryContext } from "./StructuredTextParser.js";
+import { DereferenceContext } from "./StructuredTextParser.js";
+import { ArrayIndexContext } from "./StructuredTextParser.js";
+import { CallContext } from "./StructuredTextParser.js";
+import { LiteralContext } from "./StructuredTextParser.js";
 import { ExprContext } from "./StructuredTextParser.js";
 import { PropertyBodyContext } from "./StructuredTextParser.js";
 import { GetterContext } from "./StructuredTextParser.js";
@@ -236,12 +239,6 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      */
     visitAssignmentOperator?: (ctx: AssignmentOperatorContext) => Result;
     /**
-     * Visit a parse tree produced by `StructuredTextParser.arrayIndex`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitArrayIndex?: (ctx: ArrayIndexContext) => Result;
-    /**
      * Visit a parse tree produced by `StructuredTextParser.callStatement`.
      * @param ctx the parse tree
      * @return the visitor result
@@ -326,17 +323,41 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      */
     visitMemberExpression?: (ctx: MemberExpressionContext) => Result;
     /**
+     * Visit a parse tree produced by `StructuredTextParser.memberAccess`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitMemberAccess?: (ctx: MemberAccessContext) => Result;
+    /**
      * Visit a parse tree produced by `StructuredTextParser.postfixOp`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitPostfixOp?: (ctx: PostfixOpContext) => Result;
     /**
-     * Visit a parse tree produced by `StructuredTextParser.primary`.
+     * Visit a parse tree produced by `StructuredTextParser.dereference`.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    visitPrimary?: (ctx: PrimaryContext) => Result;
+    visitDereference?: (ctx: DereferenceContext) => Result;
+    /**
+     * Visit a parse tree produced by `StructuredTextParser.arrayIndex`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitArrayIndex?: (ctx: ArrayIndexContext) => Result;
+    /**
+     * Visit a parse tree produced by `StructuredTextParser.call`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitCall?: (ctx: CallContext) => Result;
+    /**
+     * Visit a parse tree produced by `StructuredTextParser.literal`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitLiteral?: (ctx: LiteralContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.expr`.
      * @param ctx the parse tree

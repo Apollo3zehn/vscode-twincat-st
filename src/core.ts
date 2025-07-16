@@ -51,8 +51,6 @@ export class StSymbol {
     public variablesAndProperties: Map<string, StSymbol> | undefined;   // for function blocks, functions, methods, global variable lists, enums, structs
     public methods: Map<string, StSymbol> | undefined;                  // for function blocks, interfaces
 
-    public qualifier: StSymbol | undefined;                             // for variable access or call statements
-
     public children: StSymbol[] | undefined;                            // for hover provider
 
     // Variables = normal variables + GVL members + Enum members + Struct members
@@ -118,7 +116,6 @@ export enum StSymbolKind {
     FunctionBlock,
     Interface,
     VariableUsage,
-    CallStatement,
     TypeUsage,
     Gvl,
     Alias,

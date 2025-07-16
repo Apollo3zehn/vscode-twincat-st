@@ -88,22 +88,6 @@ export function getTypeIdFromTypeUsage(typeUsage: StSymbol): string | undefined 
         return typeUsage.declaration?.id;
 }
 
-export function getTypeUsageFromExpression(
-    expression: ExprContext,
-    sourceFile: StSourceFile
-): StSymbol | undefined {
-
-    const rhsMember = expression.memberQualifier()?.primary();
-
-    // TODO: evaluate expressions recursively
-    if (!rhsMember)
-        return undefined;
-
-    const symbol = sourceFile.symbolMap.get(rhsMember);
-
-    return symbol?.declaration?.typeUsage;
-}
-
 export function getTypeOfType(kind: StSymbolKind): string {
     switch (kind) {
         case StSymbolKind.FunctionBlock: return "FUNCTION_BLOCK";

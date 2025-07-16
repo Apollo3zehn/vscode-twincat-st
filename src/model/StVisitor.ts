@@ -1,7 +1,7 @@
 import { ParserRuleContext, Token } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Uri } from "vscode";
 import { StAccessModifier, StBuiltinType, StSourceFile, StSymbol, StSymbolKind, StTypeInfo, VariableKind } from "../core.js";
-import { AccessModifierContext, ArgumentContext, CallStatementContext, EnumMemberContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberContext, MemberQualifierContext, MethodContext, PrimaryContext, ProgramContext, PropertyContext, StatementContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { AccessModifierContext, EnumMemberContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MemberExpressionContext, MethodContext, PostfixOpContext, ProgramContext, PropertyContext, StatementContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 import { getContextRange, getOriginalText, getTokenRange } from "../utils.js";
 
@@ -12,7 +12,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
     private _parent: StSymbol | undefined;
     private _declaration: StSymbol | undefined;
     private _underlyingTypeUsage: StSymbol | undefined;
-    private _qualifier: StSymbol | undefined;
     private _variableKind: VariableKind = VariableKind.None;
 
     constructor(sourceFile: StSourceFile, documentUri: Uri) {
@@ -99,35 +98,17 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this.visitChildren(ctx);
     };
 
-    public override visitMemberQualifier = (ctx: MemberQualifierContext): void => {
-        this._qualifier = undefined;
-        this.visitChildren(ctx);
-    }
+    public override visitMemberAccess = (ctx: MemberAccessContext): void => {
+        
+        const idToken = ctx.ID()?.symbol
 
-    public override visitPrimary = (ctx: PrimaryContext): void => {
-        
-        const idToken = ctx.ID().symbol
-        const symbol = this.createVariableUsage(ctx, idToken);
-        
-        symbol.qualifier = this._qualifier;
-        this._qualifier = symbol;
+        if (idToken)
+            this.createVariableUsage(ctx, idToken);
     }
 
     public override visitStatement = (ctx: StatementContext): void => {
         this._sourceFile.statements.push(ctx);
         this.visitChildren(ctx);
-    }
-
-    public override visitCallStatement? = (ctx: CallStatementContext): void => {
-
-        const idToken = ctx.ID().symbol;
-
-        this.visitChildren(ctx);
-        this.createCallStatement(ctx, idToken);
-    }
-
-    public override visitArgument? = (ctx: ArgumentContext): void => {
-        this.createArgument(ctx);
     }
 
     public override visitType? = (ctx: TypeContext): void | undefined => {
@@ -301,17 +282,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this._declaration = symbol;
     }
 
-    private createCallStatement(ctx: CallStatementContext, idToken: Token) {
-        let symbol = this.create(
-            ctx,
-            idToken,
-            StSymbolKind.CallStatement
-        );
-
-        if (ctx.memberQualifier())
-            symbol.qualifier = this._qualifier;
-    }
-
     private createVariableUsage(ctx: ParserRuleContext, idToken: Token): StSymbol {
         return this.create(
             ctx,
@@ -352,14 +322,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
             this._declaration.typeUsage = symbol;
 
         return symbol;
-    }
-
-    private createArgument(ctx: ArgumentContext) {
-        const expressionId = ctx.expr().memberQualifier()?.primary().ID();
-        const idToken = expressionId?.symbol;
-
-        if (idToken)
-            this.createVariableUsage(ctx, idToken);
     }
 
     private create(

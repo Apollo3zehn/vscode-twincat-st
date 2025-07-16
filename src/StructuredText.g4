@@ -16,13 +16,13 @@ compilationUnit
 // =======================
 // Program organization units
 // =======================
-program             : attribute? PROGRAM        accessModifier?             ID                                                  varDeclSection* statementSection    END_PROGRAM ;
-function            : attribute? FUNCTION       accessModifier?             ID (':' type)?                                      varDeclSection* statementSection    END_FUNCTION ;
-method              : attribute? METHOD         accessModifier? modifier*   ID (':' type)?                                      varDeclSection* statementSection    END_METHOD ;
-property            : attribute? PROPERTY       accessModifier? modifier*   ID ':' type                                         varDeclSection* propertyBody        END_PROPERTY ;
-functionBlock       : attribute? FUNCTION_BLOCK accessModifier? modifier*   ID              extendsClause? implementsClause?    member*         statementSection    END_FUNCTION_BLOCK ;
-interface           : attribute? INTERFACE      accessModifier?             ID              extendsClause?                      member*                             END_INTERFACE ;
-varGlobalSection    : attribute? VAR_GLOBAL     accessModifier? modifier*   ID                                                       varDecl+                            END_VAR ;
+program             : attribute? PROGRAM        accessModifier?             ID              varDeclSection*                             statementSection    END_PROGRAM ;
+function            : attribute? FUNCTION       accessModifier?             ID (':' type)?  varDeclSection*                             statementSection    END_FUNCTION ;
+method              : attribute? METHOD         accessModifier? modifier*   ID (':' type)?  varDeclSection*                             statementSection    END_METHOD ;
+property            : attribute? PROPERTY       accessModifier? modifier*   ID ':' type     varDeclSection*                             propertyBody        END_PROPERTY ;
+functionBlock       : attribute? FUNCTION_BLOCK accessModifier? modifier*   ID              extendsClause? implementsClause? member*    statementSection    END_FUNCTION_BLOCK ;
+interface           : attribute? INTERFACE      accessModifier?             ID              extendsClause? member*                                          END_INTERFACE ;
+varGlobalSection    : attribute? VAR_GLOBAL     accessModifier? modifier*   ID              varDecl+                                                        END_VAR ;
 
 // =======================
 // Type declarations
@@ -52,23 +52,45 @@ structDecl
 // =======================
 // Implements and extends clauses
 // =======================
-implementsClause    : IMPLEMENTS type (',' type)* ;
-extendsClause       : EXTENDS type (',' type)* ;
+implementsClause
+    : IMPLEMENTS type (',' type)*
+    ;
+
+extendsClause
+    : EXTENDS type (',' type)*
+    ;
 
 // =======================
 // Members
 // =======================
-member              : method | property | varDeclSection ;
+member
+    : method
+    | property
+    | varDeclSection
+    ;
 
 // =======================
 // Variable declarations
 // =======================
-varDeclSection      : varSectionType modifier* varDecl+ END_VAR ;
-varSectionType      : VAR | VAR_INPUT | VAR_OUTPUT | VAR_IN_OUT | VAR_TEMP | VAR_EXTERNAL | VAR_INST | VAR_STAT ;
-varDecl             : attribute? ID ':' type (('REF=' | ':=') exprOrArrayInit)? ';' ;
+varDeclSection
+    : varSectionType modifier* varDecl+ END_VAR
+    ;
 
-exprOrArrayInit     : expr | arrayInit ;
-arrayInit           : '[' expr (',' expr)* ']' ;
+varSectionType
+    : VAR | VAR_INPUT | VAR_OUTPUT | VAR_IN_OUT | VAR_TEMP | VAR_EXTERNAL | VAR_INST | VAR_STAT
+    ;
+
+varDecl
+    : attribute? ID ':' type (('REF=' | ':=') exprOrArrayInit)? ';'
+    ;
+
+exprOrArrayInit
+    : expr | arrayInit
+    ;
+
+arrayInit
+    : '[' expr (',' expr)* ']'
+    ;
 
 // =======================
 // Types
@@ -94,19 +116,23 @@ builtinType
 // =======================
 // Statements
 // =======================
-statementSection    : statement* ;
-statement           : assignment
-                    | ifStatement
-                    | caseStatement
-                    | whileStatement
-                    | repeatStatement
-                    | forStatement
-                    | callStatement
-                    | returnStatement
-                    | exitStatement
-                    | continueStatement
-                    | ';'
-                    ;
+statementSection
+    : statement*
+    ;
+
+statement
+    : assignment
+    | ifStatement
+    | caseStatement
+    | whileStatement
+    | repeatStatement
+    | forStatement
+    | callStatement
+    | returnStatement
+    | exitStatement
+    | continueStatement
+    | ';'
+    ;
 
 // =======================
 // Assignments and calls
@@ -120,49 +146,96 @@ assignmentOperator
     | 'REF='
     ;
 
-arrayIndex          : '[' expr ']' ;
-callStatement       : memberExpression LPAREN argumentList? RPAREN ';'
+callStatement
+    : memberExpression ';'
     ;
 
-argumentList        : argument (',' argument)* ;
-argument            : ID (':=' | '=>') expr | expr ;
+argumentList
+    : argument (',' argument)*
+    ;
+
+argument
+    : ID (':=' | '=>') expr
+    | expr
+    ;
 
 // =======================
 // Control flow
 // =======================
-ifStatement         : IF expr THEN statementSection (ELSIF expr THEN statementSection)* (ELSE statementSection)? END_IF ;
-caseStatement       : CASE expr OF caseElement+ (ELSE statementSection)? END_CASE ;
-caseElement         : (caseValue (',' caseValue)*) ':' statementSection ;
-caseValue           : NUMBER | BOOL | STRING_LITERAL | ID ;
-whileStatement      : WHILE expr DO statementSection END_WHILE ;
-repeatStatement     : REPEAT statementSection UNTIL expr END_REPEAT ;
-forStatement        : FOR ID ':=' expr TO expr (BY expr)? DO statementSection END_FOR ;
+ifStatement
+    : IF expr THEN statementSection (ELSIF expr THEN statementSection)* (ELSE statementSection)? END_IF
+    ;
+
+caseStatement
+    : CASE expr OF caseElement+ (ELSE statementSection)? END_CASE
+    ;
+
+caseElement
+    : (caseValue (',' caseValue)*) ':' statementSection
+    ;
+
+caseValue
+    : NUMBER | BOOL | STRING_LITERAL | ID
+    ;
+
+whileStatement
+    : WHILE expr DO statementSection END_WHILE
+    ;
+
+repeatStatement
+    : REPEAT statementSection UNTIL expr END_REPEAT
+    ;
+
+forStatement
+    : FOR ID ':=' expr TO expr (BY expr)? DO statementSection END_FOR
+    ;
 
 // =======================
 // Return, exit, continue
 // =======================
-returnStatement     : RETURN ';' ;
-exitStatement       : EXIT ';' ;
-continueStatement   : CONTINUE ';' ;
+returnStatement
+    : RETURN ';'
+    ;
+
+exitStatement
+    : EXIT ';'
+    ;
+
+continueStatement
+    : CONTINUE ';'
+    ;
 
 // =======================
 // Expressions
 // =======================
 memberExpression
-    : primary postfixOp*
+    : memberAccess ('.' memberAccess)*
+    ;
+
+memberAccess
+    : ID postfixOp*
     ;
 
 postfixOp
-    : CARET
+    : dereference
     | arrayIndex
-    | LPAREN argumentList? RPAREN
-    | '.' ID
+    | call
     ;
 
-primary
-    : ID
-    | '(' expr ')'
-    | NUMBER
+dereference
+    : CARET
+    ;
+
+arrayIndex
+    : '[' expr ']'
+    ;
+
+call
+    : '(' argumentList? ')'
+    ;
+
+literal
+    : NUMBER
     | BOOL
     | TIME_LITERAL
     | STRING_LITERAL
@@ -174,31 +247,59 @@ expr
     | expr op=('='|'<'|'>'|'<='|'>='|'<>') expr
     | expr op=('AND'|'OR'|'XOR') expr
     | memberExpression
+    | literal
+    | '(' expr ')'
     ;
 
 // =======================
 // Property body
 // =======================
-propertyBody        : (getter | setter | getter setter | setter getter) ;
-getter              : GET accessModifier? statementSection END_GET ;
-setter              : SET accessModifier? statementSection END_SET ;
+propertyBody
+    : getter
+    | setter
+    | getter setter
+    | setter getter
+    ;
+
+getter
+    : GET accessModifier? statementSection END_GET
+    ;
+
+setter
+    : SET accessModifier? statementSection END_SET
+    ;
 
 // =======================
 // Attribute support
 // =======================
-attribute           : '{' ID (attributeArgList)? '}' ;
-attributeArgList    : '(' attributeArg (',' attributeArg)* ')' ;
-attributeArg        : ID | NUMBER | STRING_LITERAL ;
+attribute
+    : '{' ID (attributeArgList)? '}'
+    ;
+
+attributeArgList
+    : '(' attributeArg (',' attributeArg)* ')'
+    ;
+
+attributeArg
+    : ID | NUMBER | STRING_LITERAL
+    ;
 
 // =======================
 // Access modifiers and modifiers
 // =======================
-accessModifier      : PUBLIC | PRIVATE | PROTECTED | INTERNAL ;
-modifier            : ABSTRACT | FINAL | CONSTANT ;
+accessModifier
+    : PUBLIC | PRIVATE | PROTECTED | INTERNAL
+    ;
+    
+modifier
+    : ABSTRACT | FINAL | CONSTANT
+    ;
 
 // =======================
-// Keywords
+// Lexer rules (keywords, symbols, literals, etc.)
 // =======================
+
+// Keywords
 PROGRAM             : 'PROGRAM' ;
 END_PROGRAM         : 'END_PROGRAM' ;
 FUNCTION_BLOCK      : 'FUNCTION_BLOCK' ;
@@ -269,41 +370,30 @@ END_TYPE            : 'END_TYPE' ;
 CARET               : '^' ;
 REFERENCE_TO        : 'REFERENCE TO' ;
 POINTER_TO          : 'POINTER TO' ;
-LPAREN              : '(';
-RPAREN              : ')';
 
-// =======================
 // Literals and identifiers
-// =======================
 BOOL                : 'TRUE' | 'FALSE' ;
 NUMBER              : '-'? (
-                        // Typed numbers: INT#1, REAL#1.23, INT#16#FF, etc.
                         [a-zA-Z_][a-zA-Z0-9_]* '#' (
-                            [0-9]+ ('.' [0-9]+)? ([eE][+\-]?[0-9]+)?        // decimal or float or scientific
-                            | '2#' [01_]+                                   // binary
-                            | '8#' [0-7_]+                                  // octal
-                            | '16#' [0-9A-Fa-f_]+                           // hex
+                            [0-9]+ ('.' [0-9]+)? ([eE][+\-]?[0-9]+)?
+                            | '2#' [01_]+
+                            | '8#' [0-7_]+
+                            | '16#' [0-9A-Fa-f_]+
                         )
-                        // Untyped based numbers: 16#0A, 2#1010, etc.
                         | (
-                            [0-9]+ ('.' [0-9]+)? ([eE][+\-]?[0-9]+)?        // decimal or float or scientific
-                            | '2#' [01_]+                                   // binary
-                            | '8#' [0-7_]+                                  // octal
-                            | '16#' [0-9A-Fa-f_]+                           // hex
+                            [0-9]+ ('.' [0-9]+)? ([eE][+\-]?[0-9]+)?
+                            | '2#' [01_]+
+                            | '8#' [0-7_]+
+                            | '16#' [0-9A-Fa-f_]+
                         )
-                        // Plain decimal or float or scientific: 1, -1, 1.23, -1.23, 1e3, -1.23e-2
                         | [0-9]+ ('.' [0-9]+)? ([eE][+\-]?[0-9]+)?
                     )
                     ;
 TIME_LITERAL        : 'T#' [0-9]+ ( 'MS' | 'S' | 'M' | 'H' | 'D' ) ;
 ID                  : [a-zA-Z_][a-zA-Z0-9_]* ;
-
-// String literal support (double and single quoted)
 STRING_LITERAL      : '"' (~["\r\n])* '"' | '\'' (~['\r\n])* '\'' ;
 
-// =======================
-// Whitespace and comments
-// =======================
+// Symbols
 WS                  : [ \t\r\n]+ -> skip ;
 COMMENT             : '//' ~[\r\n]* -> channel(HIDDEN) ;
 COMMENT_BLOCK       : '(*' .*? '*)' -> channel(HIDDEN) ;

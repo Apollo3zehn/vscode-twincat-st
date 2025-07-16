@@ -32,7 +32,6 @@ export class StDefinitionProvider implements DefinitionProvider {
                 case StSymbolKind.TypeUsage:
                 case StSymbolKind.VariableDeclaration:
                 case StSymbolKind.VariableUsage:
-                case StSymbolKind.CallStatement:
 
                     const declaringSymbol = foundSymbol.declaration;
 

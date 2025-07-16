@@ -1,8 +1,8 @@
-import { CharStream, CommonTokenStream, ParserRuleContext } from "antlr4ng";
+import { CharStream, CommonTokenStream } from "antlr4ng";
 import { TextDocument, Uri, workspace } from "vscode";
 import { logger, StModel, StSourceFile, StSymbol, StSymbolKind } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
-import { ExprContext, ExtendsClauseContext, ImplementsClauseContext, MethodContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
+import { ExtendsClauseContext, ImplementsClauseContext, MethodContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
 import { StVisitor } from "./StVisitor.js";
 
 export class SemanticModelBuilder {
@@ -253,7 +253,7 @@ export class SemanticModelBuilder {
             // A test showed that TwinCAT resolves variables/properties first ...
             if (scope.variablesAndProperties) {
 
-                const varOrPropDeclaration = scope.variablesAndProperties.find(x => x.id === id);
+                const varOrPropDeclaration = scope.variablesAndProperties.get(id);
 
                 if (varOrPropDeclaration)
                     return varOrPropDeclaration;
@@ -262,7 +262,7 @@ export class SemanticModelBuilder {
             // ... then methods
             if (scope.methods) {
 
-                const methodDeclaration = scope.methods.find(x => x.id === id);
+                const methodDeclaration = scope.methods.get(id);
 
                 if (methodDeclaration)
                     return methodDeclaration;

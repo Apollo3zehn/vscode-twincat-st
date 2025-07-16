@@ -91,7 +91,8 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
         );
 
         if (stSymbol.variablesAndProperties) {
-            for (const variable of stSymbol.variablesAndProperties) {
+
+            for (const variable of stSymbol.variablesAndProperties.values()) {
 
                 const variableSymbol = this.toSymbol(variable);
 
@@ -101,7 +102,8 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
         }
 
         if (stSymbol.methods) {
-            for (const variable of stSymbol.methods) {
+            
+            for (const variable of stSymbol.methods.values()) {
 
                 const variableSymbol = this.toSymbol(variable);
 

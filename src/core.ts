@@ -34,26 +34,26 @@ export class StSymbol {
         //
     }
 
-    public accessModifier: StAccessModifier | undefined;    // for many things
-    public references: StSymbol[] | undefined;              // for many things
+    public accessModifier: StAccessModifier | undefined;                // for many things
+    public references: StSymbol[] | undefined;                          // for many things
 
-    public typeHierarchyInfo: StTypeInfo | undefined;       // for type declarations
+    public typeHierarchyInfo: StTypeInfo | undefined;                   // for type declarations
 
-    public typeUsage: StSymbol | undefined;                 // for variable declarations
-    public variableKind: VariableKind | undefined;          // for variable declarations
-    public parent: StSymbol | undefined;                    // for variable declarations
+    public typeUsage: StSymbol | undefined;                             // for variable declarations
+    public variableKind: VariableKind | undefined;                      // for variable declarations
+    public parent: StSymbol | undefined;                                // for variable declarations
 
-    public declaration: StSymbol | undefined;               // for variable and type usages (custom types)
+    public declaration: StSymbol | undefined;                           // for variable and type usages (custom types)
 
-    public underlyingTypeUsage: StSymbol | undefined;       // for type usage (arrays, references, pointers, enums, aliases)
-    public builtinType: StBuiltinType | undefined;          // for type usage (builtin types)
+    public underlyingTypeUsage: StSymbol | undefined;                   // for type usage (arrays, references, pointers, enums, aliases)
+    public builtinType: StBuiltinType | undefined;                      // for type usage (builtin types)
     
-    public variablesAndProperties: StSymbol[] | undefined;  // for function blocks, functions, methods, global variable lists, enums, structs
-    public methods: StSymbol[] | undefined;                 // for function blocks, interfaces
+    public variablesAndProperties: Map<string, StSymbol> | undefined;   // for function blocks, functions, methods, global variable lists, enums, structs
+    public methods: Map<string, StSymbol> | undefined;                  // for function blocks, interfaces
 
-    public qualifier: StSymbol | undefined;                 // for variable access or call statements
+    public qualifier: StSymbol | undefined;                             // for variable access or call statements
 
-    public children: StSymbol[] | undefined;                // for hover provider
+    public children: StSymbol[] | undefined;                            // for hover provider
 
     // Variables = normal variables + GVL members + Enum members + Struct members
 
@@ -63,14 +63,6 @@ export class StSymbol {
             this.children = [];
 
         this.children!.push(symbol);
-    }
-
-    public add<K extends 'variablesAndProperties' | 'methods'>(key: K, symbol: StSymbol): void {
-
-        if (!this[key])
-            this[key] = [];
-
-        this[key]!.push(symbol);
     }
 
     // For variable declarations

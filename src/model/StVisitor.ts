@@ -244,7 +244,9 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
-        this._parent?.add("methods", symbol);
+        if (this._parent)
+            this.addLocalObject(this._parent, symbol, "methods");
+
         this._parent = symbol;
         this._declaration = symbol;
     }
@@ -261,7 +263,8 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.accessModifier = StAccessModifier.Public;
 
-        this._parent?.add("variablesAndProperties", symbol);
+        if (this._parent)
+            this.addLocalObject(this._parent, symbol, "variablesAndProperties");
     }
 
     private createProperty(ctx: PropertyContext) {
@@ -298,7 +301,9 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.variableKind = variableKind;
 
-        this._parent?.add("variablesAndProperties", symbol);
+        if (this._parent)
+            this.addLocalObject(this._parent, symbol, "variablesAndProperties");
+
         this._declaration = symbol;
     }
 
@@ -314,7 +319,9 @@ export class StVisitor extends StructuredTextVisitor<void> {
         
         symbol.variableKind = this._variableKind;
 
-        this._parent?.add("variablesAndProperties", symbol);
+        if (this._parent)
+            this.addLocalObject(this._parent, symbol, "variablesAndProperties");
+        
         this._declaration = symbol;
     }
 
@@ -490,6 +497,33 @@ export class StVisitor extends StructuredTextVisitor<void> {
         
         else {
             this._sourceFile.globalObjects.set(symbol.id, symbol);
+        }
+    }
+
+    public addLocalObject<K extends 'variablesAndProperties' | 'methods'>(
+        parent: StSymbol,
+        symbol: StSymbol,
+        key: K
+    ): void {
+
+        if (!parent[key])
+            parent[key] = new Map<string, StSymbol>();
+
+        if (parent[key].has(symbol.id)) {
+
+            // C0142: A local variable named 'name' is already defined in 'scope'
+            const diagnostic = new Diagnostic(
+                symbol.selectionRange ?? symbol.range,
+                `A local variable named '${symbol.id}' is already defined in '${symbol.parent?.id}'`,
+                DiagnosticSeverity.Error
+            );
+
+            diagnostic.code = "C0142";
+            this._sourceFile.diagnostics.push(diagnostic);
+        }
+        
+        else {
+            parent[key].set(symbol.id, symbol);
         }
     }
 

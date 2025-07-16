@@ -52,31 +52,6 @@ export class StDiagnosticsProvider {
 
         for (const symbol of sourceFile.symbolMap.values()) {
 
-            // C0142: A local variable named 'name' is already defined in 'scope'
-            if (symbol.variablesAndProperties) {
-
-                const seen = new Set<string>();
-
-                for (const variable of symbol.variablesAndProperties) {
-
-                    if (seen.has(variable.id)) {
-
-                        const diagnostic = new Diagnostic(
-                            variable.selectionRange ?? variable.range,
-                            `A local variable named '${variable.id}' is already defined in '${variable.parent?.id}'`,
-                            DiagnosticSeverity.Error
-                        );
-
-                        diagnostic.code = "C0142";
-                        diagnostics.push(diagnostic);
-                    }
-                    
-                    else {
-                        seen.add(variable.id);
-                    }
-                }
-            }
-
             // Unused variable/method/function diagnostics
             if (
                 (

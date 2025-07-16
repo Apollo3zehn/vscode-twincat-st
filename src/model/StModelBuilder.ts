@@ -156,9 +156,7 @@ export class SemanticModelBuilder {
             sourceFile = new StSourceFile(
                 fileUri,
                 fileUriAsString,
-                tokenStream,
-                new Map<ParserRuleContext, StSymbol>(),
-                []
+                tokenStream
             );
             
             this._model.sourceFileMap.set(fileUriAsString, sourceFile);
@@ -173,26 +171,17 @@ export class SemanticModelBuilder {
 
         for (const sourceFile of this._model.sourceFileMap.values()) {
 
-            const typeDeclaration = sourceFile.types
-                .find(type => type.id === symbol.id);
+            const globalObject = sourceFile.globalObjects.get(symbol.id);
 
-            if (
-                typeDeclaration &&
-                (
-                    typeDeclaration.kind === StSymbolKind.FunctionBlock ||
-                    typeDeclaration.kind === StSymbolKind.Alias ||
-                    typeDeclaration.kind === StSymbolKind.Struct ||
-                    typeDeclaration.kind === StSymbolKind.Enum ||
-                    typeDeclaration.kind === StSymbolKind.Interface
-                )
-            ) {
-                if (!typeDeclaration.references)
-                    typeDeclaration.references = [];
+            if (!globalObject)
+                continue;
 
-                typeDeclaration.references.push(symbol);
-                
-                return typeDeclaration;
-            }
+            if (!globalObject.references)
+                globalObject.references = [];
+
+            globalObject.references.push(symbol);
+            
+            return globalObject;
         }
     }
 
@@ -255,31 +244,25 @@ export class SemanticModelBuilder {
 
     private resolveDeclaration(
         scope: StSymbol | undefined,
-        name: string
+        id: string
     ): StSymbol | undefined {
        
         // Current scope or ancestor scopes
         while (scope) {
 
-            if (scope.variables) {
+            // A test showed that TwinCAT resolves variables/properties first ...
+            if (scope.variablesAndProperties) {
 
-                const varableDeclaration = scope.variables.find(x => x.id === name);
+                const varOrPropDeclaration = scope.variablesAndProperties.find(x => x.id === id);
 
-                if (varableDeclaration)
-                    return varableDeclaration;
+                if (varOrPropDeclaration)
+                    return varOrPropDeclaration;
             }
 
-            if (scope.properties) {
-
-                const propertyDeclaration = scope.properties.find(x => x.id === name);
-
-                if (propertyDeclaration)
-                    return propertyDeclaration;
-            }
-
+            // ... then methods
             if (scope.methods) {
 
-                const methodDeclaration = scope.methods.find(x => x.id === name);
+                const methodDeclaration = scope.methods.find(x => x.id === id);
 
                 if (methodDeclaration)
                     return methodDeclaration;
@@ -290,27 +273,11 @@ export class SemanticModelBuilder {
 
         // Global scope
         for (const sourceFile of this._model.sourceFileMap.values()) {
+            
+            const globalObject = sourceFile.globalObjects.get(id);
 
-            // Types
-            const typeSymbol = sourceFile.types
-                .find(x => x.id === name);
-
-            if (typeSymbol)
-                return typeSymbol;
-
-            // Variables
-            const variableSymbol = sourceFile.variables
-                .find(x => x.id === name);
-
-            if (variableSymbol)
-                return variableSymbol;
-
-            // Functions
-            const functionDeclaration = sourceFile.functions
-                .find(x => x.id === name);
-
-            if (functionDeclaration)
-                return functionDeclaration;
+            if (globalObject)
+                return globalObject;
         }
 
         return undefined;

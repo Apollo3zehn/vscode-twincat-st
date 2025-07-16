@@ -90,8 +90,8 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
             stSymbol.selectionRange ?? stSymbol.range,
         );
 
-        if (stSymbol.variables) {
-            for (const variable of stSymbol.variables) {
+        if (stSymbol.variablesAndProperties) {
+            for (const variable of stSymbol.variablesAndProperties) {
 
                 const variableSymbol = this.toSymbol(variable);
 
@@ -99,17 +99,6 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
                     symbol.children.push(variableSymbol);
             }
         }
-
-        if (stSymbol.properties) {
-            for (const variable of stSymbol.properties) {
-
-                const variableSymbol = this.toSymbol(variable);
-
-                if (variableSymbol)
-                    symbol.children.push(variableSymbol);
-            }
-        }
-
 
         if (stSymbol.methods) {
             for (const variable of stSymbol.methods) {

@@ -1,5 +1,5 @@
 import { CommonTokenStream, ParserRuleContext, Token } from "antlr4ng";
-import { Range, Uri, window } from "vscode";
+import { Diagnostic, Range, Uri, window } from "vscode";
 import { StatementContext, TypeContext } from "./generated/StructuredTextParser.js";
 
 export const logger = window.createOutputChannel("TwinCAT Structured Text");
@@ -12,14 +12,14 @@ export class StSourceFile {
     constructor(
         public readonly uri: Uri,
         public readonly uriAsString: string,
-        public readonly tokenStream: CommonTokenStream,
-        public readonly symbolMap: Map<ParserRuleContext, StSymbol>,
-        public readonly statements: StatementContext[],
-        public readonly variables: StSymbol[] = [],
-        public readonly functions: StSymbol[] = [],
-        public readonly types: StSymbol[] = []) {
+        public readonly tokenStream: CommonTokenStream) {
         //
     }
+
+    public readonly symbolMap = new Map<ParserRuleContext, StSymbol>();
+    public readonly globalObjects = new Map<string, StSymbol>();
+    public readonly statements: StatementContext[] = [];
+    public readonly diagnostics: Diagnostic[] = [];
 }
 
 export class StSymbol {
@@ -48,9 +48,8 @@ export class StSymbol {
     public underlyingTypeUsage: StSymbol | undefined;       // for type usage (arrays, references, pointers, enums, aliases)
     public builtinType: StBuiltinType | undefined;          // for type usage (builtin types)
     
-    public variables: StSymbol[] | undefined;               // for function blocks, functions, methods, global variable lists, enums, structs
+    public variablesAndProperties: StSymbol[] | undefined;  // for function blocks, functions, methods, global variable lists, enums, structs
     public methods: StSymbol[] | undefined;                 // for function blocks, interfaces
-    public properties: StSymbol[] | undefined;              // for function blocks, interfaces
 
     public qualifier: StSymbol | undefined;                 // for variable access or call statements
 
@@ -66,7 +65,7 @@ export class StSymbol {
         this.children!.push(symbol);
     }
 
-    public add<K extends 'variables' | 'methods' | 'properties'>(key: K, symbol: StSymbol): void {
+    public add<K extends 'variablesAndProperties' | 'methods'>(key: K, symbol: StSymbol): void {
 
         if (!this[key])
             this[key] = [];

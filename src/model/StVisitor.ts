@@ -1,5 +1,5 @@
 import { ParserRuleContext, Token } from "antlr4ng";
-import { Uri } from "vscode";
+import { Diagnostic, DiagnosticSeverity, Uri } from "vscode";
 import { StAccessModifier, StBuiltinType, StSourceFile, StSymbol, StSymbolKind, StTypeInfo, VariableKind } from "../core.js";
 import { AccessModifierContext, ArgumentContext, CallStatementContext, EnumMemberContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberContext, MemberQualifierContext, MethodContext, PrimaryContext, ProgramContext, PropertyContext, StatementContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
@@ -146,10 +146,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, StSymbolKind.Program);
 
-        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
+        symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
-        this._sourceFile.types.push(symbol);
+        this.addGlobalObject(symbol);
     }
 
     private createInterface(ctx: InterfaceContext) {
@@ -158,10 +158,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const symbol = this.create(ctx, idToken, StSymbolKind.Interface);
 
         symbol.typeHierarchyInfo = new StTypeInfo();
-        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
+        symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
-        this._sourceFile.types.push(symbol);
+        this.addGlobalObject(symbol);
     }
 
     private createFunctionBlock(ctx: FunctionBlockContext) {
@@ -170,10 +170,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const symbol = this.create(ctx, idToken, StSymbolKind.FunctionBlock);
 
         symbol.typeHierarchyInfo = new StTypeInfo();
-        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
+        symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
-        this._sourceFile.types.push(symbol);
+        this.addGlobalObject(symbol);
     }
 
     private createType(ctx: TypeDeclContext): StSymbol | undefined {
@@ -198,10 +198,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, symbolKind);
 
-        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
+        symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
-        this._sourceFile.types.push(symbol);
+        this.addGlobalObject(symbol);
         this._declaration = symbol;
 
         return symbol;
@@ -212,9 +212,9 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, StSymbolKind.Function);
 
-        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
+        symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
-        this._sourceFile.functions.push(symbol);
+        this.addGlobalObject(symbol);
         this._parent = symbol;
         this._declaration = symbol;
     }
@@ -224,9 +224,9 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, StSymbolKind.Gvl);
 
-        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
+        symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
-        this._sourceFile.variables.push(symbol);
+        this.addGlobalObject(symbol);
         this._parent = symbol;
         this._declaration = symbol;
         this._variableKind = VariableKind.Global;
@@ -242,7 +242,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
             StSymbolKind.Method
         );
 
-        symbol.accessModifier = this.GetAccessModifier(ctx.accessModifier() ?? undefined);
+        symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent?.add("methods", symbol);
         this._parent = symbol;
@@ -261,7 +261,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.accessModifier = StAccessModifier.Public;
 
-        this._parent?.add("variables", symbol);
+        this._parent?.add("variablesAndProperties", symbol);
     }
 
     private createProperty(ctx: PropertyContext) {
@@ -298,7 +298,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.variableKind = variableKind;
 
-        this._parent?.add("properties", symbol);
+        this._parent?.add("variablesAndProperties", symbol);
         this._declaration = symbol;
     }
 
@@ -314,7 +314,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         
         symbol.variableKind = this._variableKind;
 
-        this._parent?.add("variables", symbol);
+        this._parent?.add("variablesAndProperties", symbol);
         this._declaration = symbol;
     }
 
@@ -452,7 +452,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
     //#region Utils
 
-    private GetAccessModifier(ctx: AccessModifierContext | undefined): StAccessModifier | undefined {
+    private getAccessModifier(ctx: AccessModifierContext | undefined): StAccessModifier | undefined {
 
         if (!ctx)
             return;
@@ -472,6 +472,25 @@ export class StVisitor extends StructuredTextVisitor<void> {
             accessModifier = StAccessModifier.Private;
 
         return accessModifier;
+    }
+
+    private addGlobalObject(symbol: StSymbol) {
+
+        if (this._sourceFile.globalObjects.has(symbol.id)) {
+
+            const diagnostic = new Diagnostic(
+                symbol.selectionRange ?? symbol.range,
+                `Object name '${symbol.id}' already used in this application`,
+                DiagnosticSeverity.Error
+            );
+
+            diagnostic.code = "SA0027";
+            this._sourceFile.diagnostics.push(diagnostic);
+        }
+        
+        else {
+            this._sourceFile.globalObjects.set(symbol.id, symbol);
+        }
     }
 
     //#endregion

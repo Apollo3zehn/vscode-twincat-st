@@ -1,7 +1,7 @@
 import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, TextDocument } from "vscode";
 import { StAccessModifier, StBuiltinType, StModel, StNativeTypeKind, StSymbolKind } from "../core.js";
 import { ExprContext, PrimaryContext } from "../generated/StructuredTextParser.js";
-import { concatIterators, getContextRange, getTokenRange } from "../utils.js";
+import { getContextRange, getTokenRange } from "../utils.js";
 
 export class StDiagnosticsProvider {
     private _diagnosticCollection: DiagnosticCollection;
@@ -27,21 +27,16 @@ export class StDiagnosticsProvider {
             
             const seen = new Set<string>();
 
-            const iterator = concatIterators(
-                currentSourceFile.types,
-                currentSourceFile.functions,
-            )
+            for (const globalObject of currentSourceFile.globalObjects.values()) {
 
-            for (const typeOrFunction of iterator) {
-
-                if (seen.has(typeOrFunction.id)) {
+                if (seen.has(globalObject.id)) {
 
                     if (currentSourceFile !== sourceFile)
                         continue;
 
                     const diagnostic = new Diagnostic(
-                        typeOrFunction.selectionRange ?? typeOrFunction.range,
-                        `Object name '${typeOrFunction.id}' already used in this application`,
+                        globalObject.selectionRange ?? globalObject.range,
+                        `Object name '${globalObject.id}' already used in this application`,
                         DiagnosticSeverity.Error
                     );
 
@@ -50,7 +45,7 @@ export class StDiagnosticsProvider {
                 }
                 
                 else {
-                    seen.add(typeOrFunction.id);
+                    seen.add(globalObject.id);
                 }
             }
         }
@@ -58,11 +53,11 @@ export class StDiagnosticsProvider {
         for (const symbol of sourceFile.symbolMap.values()) {
 
             // C0142: A local variable named 'name' is already defined in 'scope'
-            if (symbol.variables) {
+            if (symbol.variablesAndProperties) {
 
                 const seen = new Set<string>();
 
-                for (const variable of symbol.variables) {
+                for (const variable of symbol.variablesAndProperties) {
 
                     if (seen.has(variable.id)) {
 
@@ -434,7 +429,10 @@ export class StDiagnosticsProvider {
             }
         }
 
-        this._diagnosticCollection.set(document.uri, diagnostics);
+        this._diagnosticCollection.set(
+            document.uri,
+            [...diagnostics, ...sourceFile.diagnostics]
+        );
     }
 
     public dispose() {

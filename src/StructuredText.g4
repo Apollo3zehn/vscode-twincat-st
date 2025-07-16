@@ -112,7 +112,7 @@ statement           : assignment
 // Assignments and calls
 // =======================
 assignment
-    : memberQualifier assignmentOperator expr ';'
+    : memberExpression assignmentOperator expr ';'
     ;
 
 assignmentOperator
@@ -121,7 +121,9 @@ assignmentOperator
     ;
 
 arrayIndex          : '[' expr ']' ;
-callStatement       : (memberQualifier '.')? ID '(' argumentList? ')' ';';
+callStatement       : memberExpression LPAREN argumentList? RPAREN ';'
+    ;
+
 argumentList        : argument (',' argument)* ;
 argument            : ID (':=' | '=>') expr | expr ;
 
@@ -146,15 +148,24 @@ continueStatement   : CONTINUE ';' ;
 // =======================
 // Expressions
 // =======================
-memberQualifier     : memberQualifier '.' primary
-                    | primary
-                    ;
+memberExpression
+    : primary postfixOp*
+    ;
 
-primary             : ID derefOrIndex* ;
-
-derefOrIndex
+postfixOp
     : CARET
     | arrayIndex
+    | LPAREN argumentList? RPAREN
+    | '.' ID
+    ;
+
+primary
+    : ID
+    | '(' expr ')'
+    | NUMBER
+    | BOOL
+    | TIME_LITERAL
+    | STRING_LITERAL
     ;
 
 expr
@@ -162,13 +173,7 @@ expr
     | expr op=('+'|'-') expr
     | expr op=('='|'<'|'>'|'<='|'>='|'<>') expr
     | expr op=('AND'|'OR'|'XOR') expr
-    | '(' expr ')'
-    | NUMBER
-    | BOOL
-    | TIME_LITERAL
-    | STRING_LITERAL
-    | memberQualifier                               // a, THIS^.a.b, a[0].b.c, etc.
-    | memberQualifier LPAREN argumentList? RPAREN   // function call on member or ID
+    | memberExpression
     ;
 
 // =======================

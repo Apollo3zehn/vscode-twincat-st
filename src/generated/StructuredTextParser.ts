@@ -175,9 +175,9 @@ export class StructuredTextParser extends antlr.Parser {
     public static readonly RULE_returnStatement = 39;
     public static readonly RULE_exitStatement = 40;
     public static readonly RULE_continueStatement = 41;
-    public static readonly RULE_memberQualifier = 42;
-    public static readonly RULE_primary = 43;
-    public static readonly RULE_derefOrIndex = 44;
+    public static readonly RULE_memberExpression = 42;
+    public static readonly RULE_postfixOp = 43;
+    public static readonly RULE_primary = 44;
     public static readonly RULE_expr = 45;
     public static readonly RULE_propertyBody = 46;
     public static readonly RULE_getter = 47;
@@ -193,7 +193,7 @@ export class StructuredTextParser extends antlr.Parser {
         "'INT'", "'REAL'", "'BOOL'", "'STRING'", "'DINT'", "'BYTE'", "'WORD'", 
         "'DWORD'", "'LWORD'", "'SINT'", "'USINT'", "'UINT'", "'UDINT'", 
         "'LINT'", "'ULINT'", "'LREAL'", "'TIME'", "'DATE'", "'TIME_OF_DAY'", 
-        "'DATE_AND_TIME'", "'.'", "'=>'", "'*'", "'/'", "'+'", "'-'", "'='", 
+        "'DATE_AND_TIME'", "'=>'", "'.'", "'*'", "'/'", "'+'", "'-'", "'='", 
         "'<'", "'>'", "'<='", "'>='", "'<>'", "'{'", "'}'", "'PROGRAM'", 
         "'END_PROGRAM'", "'FUNCTION_BLOCK'", "'END_FUNCTION_BLOCK'", "'FUNCTION'", 
         "'END_FUNCTION'", "'PROPERTY'", "'END_PROPERTY'", "'IMPLEMENTS'", 
@@ -239,7 +239,7 @@ export class StructuredTextParser extends antlr.Parser {
         "arrayIndex", "callStatement", "argumentList", "argument", "ifStatement", 
         "caseStatement", "caseElement", "caseValue", "whileStatement", "repeatStatement", 
         "forStatement", "returnStatement", "exitStatement", "continueStatement", 
-        "memberQualifier", "primary", "derefOrIndex", "expr", "propertyBody", 
+        "memberExpression", "postfixOp", "primary", "expr", "propertyBody", 
         "getter", "setter", "attribute", "attributeArgList", "attributeArg", 
         "accessModifier", "modifier",
     ];
@@ -1877,7 +1877,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.enterOuterAlt(localContext, 1);
             {
             this.state = 467;
-            this.memberQualifier(0);
+            this.memberExpression();
             this.state = 468;
             this.assignmentOperator();
             this.state = 469;
@@ -1964,35 +1964,23 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 481;
-            this.errorHandler.sync(this);
-            switch (this.interpreter.adaptivePredict(this.tokenStream, 57, this.context) ) {
-            case 1:
-                {
-                this.state = 478;
-                this.memberQualifier(0);
-                this.state = 479;
-                this.match(StructuredTextParser.T__28);
-                }
-                break;
-            }
-            this.state = 483;
-            this.match(StructuredTextParser.ID);
-            this.state = 484;
+            this.state = 478;
+            this.memberExpression();
+            this.state = 479;
             this.match(StructuredTextParser.LPAREN);
-            this.state = 486;
+            this.state = 481;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             if (((((_la - 113)) & ~0x1F) === 0 && ((1 << (_la - 113)) & 125) !== 0)) {
                 {
-                this.state = 485;
+                this.state = 480;
                 this.argumentList();
                 }
             }
 
-            this.state = 488;
+            this.state = 483;
             this.match(StructuredTextParser.RPAREN);
-            this.state = 489;
+            this.state = 484;
             this.match(StructuredTextParser.T__1);
             }
         }
@@ -2016,21 +2004,21 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 491;
+            this.state = 486;
             this.argument();
-            this.state = 496;
+            this.state = 491;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             while (_la === 3) {
                 {
                 {
-                this.state = 492;
+                this.state = 487;
                 this.match(StructuredTextParser.T__2);
-                this.state = 493;
+                this.state = 488;
                 this.argument();
                 }
                 }
-                this.state = 498;
+                this.state = 493;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
             }
@@ -2054,31 +2042,31 @@ export class StructuredTextParser extends antlr.Parser {
         this.enterRule(localContext, 62, StructuredTextParser.RULE_argument);
         let _la: number;
         try {
-            this.state = 503;
+            this.state = 498;
             this.errorHandler.sync(this);
-            switch (this.interpreter.adaptivePredict(this.tokenStream, 60, this.context) ) {
+            switch (this.interpreter.adaptivePredict(this.tokenStream, 59, this.context) ) {
             case 1:
                 this.enterOuterAlt(localContext, 1);
                 {
-                this.state = 499;
+                this.state = 494;
                 this.match(StructuredTextParser.ID);
-                this.state = 500;
+                this.state = 495;
                 _la = this.tokenStream.LA(1);
-                if(!(_la === 4 || _la === 30)) {
+                if(!(_la === 4 || _la === 29)) {
                 this.errorHandler.recoverInline(this);
                 }
                 else {
                     this.errorHandler.reportMatch(this);
                     this.consume();
                 }
-                this.state = 501;
+                this.state = 496;
                 this.expr(0);
                 }
                 break;
             case 2:
                 this.enterOuterAlt(localContext, 2);
                 {
-                this.state = 502;
+                this.state = 497;
                 this.expr(0);
                 }
                 break;
@@ -2104,47 +2092,47 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 505;
+            this.state = 500;
             this.match(StructuredTextParser.IF);
-            this.state = 506;
+            this.state = 501;
             this.expr(0);
-            this.state = 507;
+            this.state = 502;
             this.match(StructuredTextParser.THEN);
-            this.state = 508;
+            this.state = 503;
             this.statementSection();
-            this.state = 516;
+            this.state = 511;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             while (_la === 69) {
                 {
                 {
-                this.state = 509;
+                this.state = 504;
                 this.match(StructuredTextParser.ELSIF);
-                this.state = 510;
+                this.state = 505;
                 this.expr(0);
-                this.state = 511;
+                this.state = 506;
                 this.match(StructuredTextParser.THEN);
-                this.state = 512;
+                this.state = 507;
                 this.statementSection();
                 }
                 }
-                this.state = 518;
+                this.state = 513;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
             }
-            this.state = 521;
+            this.state = 516;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             if (_la === 70) {
                 {
-                this.state = 519;
+                this.state = 514;
                 this.match(StructuredTextParser.ELSE);
-                this.state = 520;
+                this.state = 515;
                 this.statementSection();
                 }
             }
 
-            this.state = 523;
+            this.state = 518;
             this.match(StructuredTextParser.END_IF);
             }
         }
@@ -2168,39 +2156,39 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 525;
+            this.state = 520;
             this.match(StructuredTextParser.CASE);
-            this.state = 526;
+            this.state = 521;
             this.expr(0);
-            this.state = 527;
+            this.state = 522;
             this.match(StructuredTextParser.OF);
-            this.state = 529;
+            this.state = 524;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             do {
                 {
                 {
-                this.state = 528;
+                this.state = 523;
                 this.caseElement();
                 }
                 }
-                this.state = 531;
+                this.state = 526;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
             } while (((((_la - 115)) & ~0x1F) === 0 && ((1 << (_la - 115)) & 27) !== 0));
-            this.state = 535;
+            this.state = 530;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             if (_la === 70) {
                 {
-                this.state = 533;
+                this.state = 528;
                 this.match(StructuredTextParser.ELSE);
-                this.state = 534;
+                this.state = 529;
                 this.statementSection();
                 }
             }
 
-            this.state = 537;
+            this.state = 532;
             this.match(StructuredTextParser.END_CASE);
             }
         }
@@ -2225,28 +2213,28 @@ export class StructuredTextParser extends antlr.Parser {
             this.enterOuterAlt(localContext, 1);
             {
             {
-            this.state = 539;
+            this.state = 534;
             this.caseValue();
-            this.state = 544;
+            this.state = 539;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             while (_la === 3) {
                 {
                 {
-                this.state = 540;
+                this.state = 535;
                 this.match(StructuredTextParser.T__2);
-                this.state = 541;
+                this.state = 536;
                 this.caseValue();
                 }
                 }
-                this.state = 546;
+                this.state = 541;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
             }
             }
-            this.state = 547;
+            this.state = 542;
             this.match(StructuredTextParser.T__0);
-            this.state = 548;
+            this.state = 543;
             this.statementSection();
             }
         }
@@ -2270,7 +2258,7 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 550;
+            this.state = 545;
             _la = this.tokenStream.LA(1);
             if(!(((((_la - 115)) & ~0x1F) === 0 && ((1 << (_la - 115)) & 27) !== 0))) {
             this.errorHandler.recoverInline(this);
@@ -2300,15 +2288,15 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 552;
+            this.state = 547;
             this.match(StructuredTextParser.WHILE);
-            this.state = 553;
+            this.state = 548;
             this.expr(0);
-            this.state = 554;
+            this.state = 549;
             this.match(StructuredTextParser.DO);
-            this.state = 555;
+            this.state = 550;
             this.statementSection();
-            this.state = 556;
+            this.state = 551;
             this.match(StructuredTextParser.END_WHILE);
             }
         }
@@ -2331,15 +2319,15 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 558;
+            this.state = 553;
             this.match(StructuredTextParser.REPEAT);
-            this.state = 559;
+            this.state = 554;
             this.statementSection();
-            this.state = 560;
+            this.state = 555;
             this.match(StructuredTextParser.UNTIL);
-            this.state = 561;
+            this.state = 556;
             this.expr(0);
-            this.state = 562;
+            this.state = 557;
             this.match(StructuredTextParser.END_REPEAT);
             }
         }
@@ -2363,35 +2351,35 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 564;
+            this.state = 559;
             this.match(StructuredTextParser.FOR);
-            this.state = 565;
+            this.state = 560;
             this.match(StructuredTextParser.ID);
-            this.state = 566;
+            this.state = 561;
             this.match(StructuredTextParser.T__3);
-            this.state = 567;
+            this.state = 562;
             this.expr(0);
-            this.state = 568;
+            this.state = 563;
             this.match(StructuredTextParser.TO);
-            this.state = 569;
+            this.state = 564;
             this.expr(0);
-            this.state = 572;
+            this.state = 567;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             if (_la === 84) {
                 {
-                this.state = 570;
+                this.state = 565;
                 this.match(StructuredTextParser.BY);
-                this.state = 571;
+                this.state = 566;
                 this.expr(0);
                 }
             }
 
-            this.state = 574;
+            this.state = 569;
             this.match(StructuredTextParser.DO);
-            this.state = 575;
+            this.state = 570;
             this.statementSection();
-            this.state = 576;
+            this.state = 571;
             this.match(StructuredTextParser.END_FOR);
             }
         }
@@ -2414,9 +2402,9 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 578;
+            this.state = 573;
             this.match(StructuredTextParser.RETURN);
-            this.state = 579;
+            this.state = 574;
             this.match(StructuredTextParser.T__1);
             }
         }
@@ -2439,9 +2427,9 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 581;
+            this.state = 576;
             this.match(StructuredTextParser.EXIT);
-            this.state = 582;
+            this.state = 577;
             this.match(StructuredTextParser.T__1);
             }
         }
@@ -2464,9 +2452,9 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 584;
+            this.state = 579;
             this.match(StructuredTextParser.CONTINUE);
-            this.state = 585;
+            this.state = 580;
             this.match(StructuredTextParser.T__1);
             }
         }
@@ -2483,96 +2471,30 @@ export class StructuredTextParser extends antlr.Parser {
         }
         return localContext;
     }
-
-    public memberQualifier(): MemberQualifierContext;
-    public memberQualifier(_p: number): MemberQualifierContext;
-    public memberQualifier(_p?: number): MemberQualifierContext {
-        if (_p === undefined) {
-            _p = 0;
-        }
-
-        let parentContext = this.context;
-        let parentState = this.state;
-        let localContext = new MemberQualifierContext(this.context, parentState);
-        let previousContext = localContext;
-        let _startState = 84;
-        this.enterRecursionRule(localContext, 84, StructuredTextParser.RULE_memberQualifier, _p);
+    public memberExpression(): MemberExpressionContext {
+        let localContext = new MemberExpressionContext(this.context, this.state);
+        this.enterRule(localContext, 84, StructuredTextParser.RULE_memberExpression);
         try {
             let alternative: number;
             this.enterOuterAlt(localContext, 1);
             {
-            {
-            this.state = 588;
+            this.state = 582;
             this.primary();
-            }
-            this.context!.stop = this.tokenStream.LT(-1);
-            this.state = 595;
+            this.state = 586;
             this.errorHandler.sync(this);
-            alternative = this.interpreter.adaptivePredict(this.tokenStream, 67, this.context);
-            while (alternative !== 2 && alternative !== antlr.ATN.INVALID_ALT_NUMBER) {
-                if (alternative === 1) {
-                    if (this.parseListeners != null) {
-                        this.triggerExitRuleEvent();
-                    }
-                    previousContext = localContext;
-                    {
-                    {
-                    localContext = new MemberQualifierContext(parentContext, parentState);
-                    this.pushNewRecursionContext(localContext, _startState, StructuredTextParser.RULE_memberQualifier);
-                    this.state = 590;
-                    if (!(this.precpred(this.context, 2))) {
-                        throw this.createFailedPredicateException("this.precpred(this.context, 2)");
-                    }
-                    this.state = 591;
-                    this.match(StructuredTextParser.T__28);
-                    this.state = 592;
-                    this.primary();
-                    }
-                    }
-                }
-                this.state = 597;
-                this.errorHandler.sync(this);
-                alternative = this.interpreter.adaptivePredict(this.tokenStream, 67, this.context);
-            }
-            }
-        }
-        catch (re) {
-            if (re instanceof antlr.RecognitionException) {
-                this.errorHandler.reportError(this, re);
-                this.errorHandler.recover(this, re);
-            } else {
-                throw re;
-            }
-        }
-        finally {
-            this.unrollRecursionContexts(parentContext);
-        }
-        return localContext;
-    }
-    public primary(): PrimaryContext {
-        let localContext = new PrimaryContext(this.context, this.state);
-        this.enterRule(localContext, 86, StructuredTextParser.RULE_primary);
-        try {
-            let alternative: number;
-            this.enterOuterAlt(localContext, 1);
-            {
-            this.state = 598;
-            this.match(StructuredTextParser.ID);
-            this.state = 602;
-            this.errorHandler.sync(this);
-            alternative = this.interpreter.adaptivePredict(this.tokenStream, 68, this.context);
+            alternative = this.interpreter.adaptivePredict(this.tokenStream, 66, this.context);
             while (alternative !== 2 && alternative !== antlr.ATN.INVALID_ALT_NUMBER) {
                 if (alternative === 1) {
                     {
                     {
-                    this.state = 599;
-                    this.derefOrIndex();
+                    this.state = 583;
+                    this.postfixOp();
                     }
                     }
                 }
-                this.state = 604;
+                this.state = 588;
                 this.errorHandler.sync(this);
-                alternative = this.interpreter.adaptivePredict(this.tokenStream, 68, this.context);
+                alternative = this.interpreter.adaptivePredict(this.tokenStream, 66, this.context);
             }
             }
         }
@@ -2589,25 +2511,124 @@ export class StructuredTextParser extends antlr.Parser {
         }
         return localContext;
     }
-    public derefOrIndex(): DerefOrIndexContext {
-        let localContext = new DerefOrIndexContext(this.context, this.state);
-        this.enterRule(localContext, 88, StructuredTextParser.RULE_derefOrIndex);
+    public postfixOp(): PostfixOpContext {
+        let localContext = new PostfixOpContext(this.context, this.state);
+        this.enterRule(localContext, 86, StructuredTextParser.RULE_postfixOp);
+        let _la: number;
         try {
-            this.state = 607;
+            this.state = 598;
             this.errorHandler.sync(this);
             switch (this.tokenStream.LA(1)) {
             case StructuredTextParser.CARET:
                 this.enterOuterAlt(localContext, 1);
                 {
-                this.state = 605;
+                this.state = 589;
                 this.match(StructuredTextParser.CARET);
                 }
                 break;
             case StructuredTextParser.T__5:
                 this.enterOuterAlt(localContext, 2);
                 {
-                this.state = 606;
+                this.state = 590;
                 this.arrayIndex();
+                }
+                break;
+            case StructuredTextParser.LPAREN:
+                this.enterOuterAlt(localContext, 3);
+                {
+                this.state = 591;
+                this.match(StructuredTextParser.LPAREN);
+                this.state = 593;
+                this.errorHandler.sync(this);
+                _la = this.tokenStream.LA(1);
+                if (((((_la - 113)) & ~0x1F) === 0 && ((1 << (_la - 113)) & 125) !== 0)) {
+                    {
+                    this.state = 592;
+                    this.argumentList();
+                    }
+                }
+
+                this.state = 595;
+                this.match(StructuredTextParser.RPAREN);
+                }
+                break;
+            case StructuredTextParser.T__29:
+                this.enterOuterAlt(localContext, 4);
+                {
+                this.state = 596;
+                this.match(StructuredTextParser.T__29);
+                this.state = 597;
+                this.match(StructuredTextParser.ID);
+                }
+                break;
+            default:
+                throw new antlr.NoViableAltException(this);
+            }
+        }
+        catch (re) {
+            if (re instanceof antlr.RecognitionException) {
+                this.errorHandler.reportError(this, re);
+                this.errorHandler.recover(this, re);
+            } else {
+                throw re;
+            }
+        }
+        finally {
+            this.exitRule();
+        }
+        return localContext;
+    }
+    public primary(): PrimaryContext {
+        let localContext = new PrimaryContext(this.context, this.state);
+        this.enterRule(localContext, 88, StructuredTextParser.RULE_primary);
+        try {
+            this.state = 609;
+            this.errorHandler.sync(this);
+            switch (this.tokenStream.LA(1)) {
+            case StructuredTextParser.ID:
+                this.enterOuterAlt(localContext, 1);
+                {
+                this.state = 600;
+                this.match(StructuredTextParser.ID);
+                }
+                break;
+            case StructuredTextParser.LPAREN:
+                this.enterOuterAlt(localContext, 2);
+                {
+                this.state = 601;
+                this.match(StructuredTextParser.LPAREN);
+                this.state = 602;
+                this.expr(0);
+                this.state = 603;
+                this.match(StructuredTextParser.RPAREN);
+                }
+                break;
+            case StructuredTextParser.NUMBER:
+                this.enterOuterAlt(localContext, 3);
+                {
+                this.state = 605;
+                this.match(StructuredTextParser.NUMBER);
+                }
+                break;
+            case StructuredTextParser.BOOL:
+                this.enterOuterAlt(localContext, 4);
+                {
+                this.state = 606;
+                this.match(StructuredTextParser.BOOL);
+                }
+                break;
+            case StructuredTextParser.TIME_LITERAL:
+                this.enterOuterAlt(localContext, 5);
+                {
+                this.state = 607;
+                this.match(StructuredTextParser.TIME_LITERAL);
+                }
+                break;
+            case StructuredTextParser.STRING_LITERAL:
+                this.enterOuterAlt(localContext, 6);
+                {
+                this.state = 608;
+                this.match(StructuredTextParser.STRING_LITERAL);
                 }
                 break;
             default:
@@ -2646,74 +2667,14 @@ export class StructuredTextParser extends antlr.Parser {
             let alternative: number;
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 626;
-            this.errorHandler.sync(this);
-            switch (this.interpreter.adaptivePredict(this.tokenStream, 71, this.context) ) {
-            case 1:
-                {
-                this.state = 610;
-                this.match(StructuredTextParser.LPAREN);
-                this.state = 611;
-                this.expr(0);
-                this.state = 612;
-                this.match(StructuredTextParser.RPAREN);
-                }
-                break;
-            case 2:
-                {
-                this.state = 614;
-                this.match(StructuredTextParser.NUMBER);
-                }
-                break;
-            case 3:
-                {
-                this.state = 615;
-                this.match(StructuredTextParser.BOOL);
-                }
-                break;
-            case 4:
-                {
-                this.state = 616;
-                this.match(StructuredTextParser.TIME_LITERAL);
-                }
-                break;
-            case 5:
-                {
-                this.state = 617;
-                this.match(StructuredTextParser.STRING_LITERAL);
-                }
-                break;
-            case 6:
-                {
-                this.state = 618;
-                this.memberQualifier(0);
-                }
-                break;
-            case 7:
-                {
-                this.state = 619;
-                this.memberQualifier(0);
-                this.state = 620;
-                this.match(StructuredTextParser.LPAREN);
-                this.state = 622;
-                this.errorHandler.sync(this);
-                _la = this.tokenStream.LA(1);
-                if (((((_la - 113)) & ~0x1F) === 0 && ((1 << (_la - 113)) & 125) !== 0)) {
-                    {
-                    this.state = 621;
-                    this.argumentList();
-                    }
-                }
-
-                this.state = 624;
-                this.match(StructuredTextParser.RPAREN);
-                }
-                break;
+            {
+            this.state = 612;
+            this.memberExpression();
             }
             this.context!.stop = this.tokenStream.LT(-1);
-            this.state = 642;
+            this.state = 628;
             this.errorHandler.sync(this);
-            alternative = this.interpreter.adaptivePredict(this.tokenStream, 73, this.context);
+            alternative = this.interpreter.adaptivePredict(this.tokenStream, 71, this.context);
             while (alternative !== 2 && alternative !== antlr.ATN.INVALID_ALT_NUMBER) {
                 if (alternative === 1) {
                     if (this.parseListeners != null) {
@@ -2721,18 +2682,18 @@ export class StructuredTextParser extends antlr.Parser {
                     }
                     previousContext = localContext;
                     {
-                    this.state = 640;
+                    this.state = 626;
                     this.errorHandler.sync(this);
-                    switch (this.interpreter.adaptivePredict(this.tokenStream, 72, this.context) ) {
+                    switch (this.interpreter.adaptivePredict(this.tokenStream, 70, this.context) ) {
                     case 1:
                         {
                         localContext = new ExprContext(parentContext, parentState);
                         this.pushNewRecursionContext(localContext, _startState, StructuredTextParser.RULE_expr);
-                        this.state = 628;
-                        if (!(this.precpred(this.context, 11))) {
-                            throw this.createFailedPredicateException("this.precpred(this.context, 11)");
+                        this.state = 614;
+                        if (!(this.precpred(this.context, 5))) {
+                            throw this.createFailedPredicateException("this.precpred(this.context, 5)");
                         }
-                        this.state = 629;
+                        this.state = 615;
                         localContext._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!(_la === 31 || _la === 32 || _la === 107)) {
@@ -2742,19 +2703,19 @@ export class StructuredTextParser extends antlr.Parser {
                             this.errorHandler.reportMatch(this);
                             this.consume();
                         }
-                        this.state = 630;
-                        this.expr(12);
+                        this.state = 616;
+                        this.expr(6);
                         }
                         break;
                     case 2:
                         {
                         localContext = new ExprContext(parentContext, parentState);
                         this.pushNewRecursionContext(localContext, _startState, StructuredTextParser.RULE_expr);
-                        this.state = 631;
-                        if (!(this.precpred(this.context, 10))) {
-                            throw this.createFailedPredicateException("this.precpred(this.context, 10)");
+                        this.state = 617;
+                        if (!(this.precpred(this.context, 4))) {
+                            throw this.createFailedPredicateException("this.precpred(this.context, 4)");
                         }
-                        this.state = 632;
+                        this.state = 618;
                         localContext._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!(_la === 33 || _la === 34)) {
@@ -2764,19 +2725,19 @@ export class StructuredTextParser extends antlr.Parser {
                             this.errorHandler.reportMatch(this);
                             this.consume();
                         }
-                        this.state = 633;
-                        this.expr(11);
+                        this.state = 619;
+                        this.expr(5);
                         }
                         break;
                     case 3:
                         {
                         localContext = new ExprContext(parentContext, parentState);
                         this.pushNewRecursionContext(localContext, _startState, StructuredTextParser.RULE_expr);
-                        this.state = 634;
-                        if (!(this.precpred(this.context, 9))) {
-                            throw this.createFailedPredicateException("this.precpred(this.context, 9)");
+                        this.state = 620;
+                        if (!(this.precpred(this.context, 3))) {
+                            throw this.createFailedPredicateException("this.precpred(this.context, 3)");
                         }
-                        this.state = 635;
+                        this.state = 621;
                         localContext._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!(((((_la - 35)) & ~0x1F) === 0 && ((1 << (_la - 35)) & 63) !== 0))) {
@@ -2786,19 +2747,19 @@ export class StructuredTextParser extends antlr.Parser {
                             this.errorHandler.reportMatch(this);
                             this.consume();
                         }
-                        this.state = 636;
-                        this.expr(10);
+                        this.state = 622;
+                        this.expr(4);
                         }
                         break;
                     case 4:
                         {
                         localContext = new ExprContext(parentContext, parentState);
                         this.pushNewRecursionContext(localContext, _startState, StructuredTextParser.RULE_expr);
-                        this.state = 637;
-                        if (!(this.precpred(this.context, 8))) {
-                            throw this.createFailedPredicateException("this.precpred(this.context, 8)");
+                        this.state = 623;
+                        if (!(this.precpred(this.context, 2))) {
+                            throw this.createFailedPredicateException("this.precpred(this.context, 2)");
                         }
-                        this.state = 638;
+                        this.state = 624;
                         localContext._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!(((((_la - 89)) & ~0x1F) === 0 && ((1 << (_la - 89)) & 7) !== 0))) {
@@ -2808,16 +2769,16 @@ export class StructuredTextParser extends antlr.Parser {
                             this.errorHandler.reportMatch(this);
                             this.consume();
                         }
-                        this.state = 639;
-                        this.expr(9);
+                        this.state = 625;
+                        this.expr(3);
                         }
                         break;
                     }
                     }
                 }
-                this.state = 644;
+                this.state = 630;
                 this.errorHandler.sync(this);
-                alternative = this.interpreter.adaptivePredict(this.tokenStream, 73, this.context);
+                alternative = this.interpreter.adaptivePredict(this.tokenStream, 71, this.context);
             }
             }
         }
@@ -2840,34 +2801,34 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 653;
+            this.state = 639;
             this.errorHandler.sync(this);
-            switch (this.interpreter.adaptivePredict(this.tokenStream, 74, this.context) ) {
+            switch (this.interpreter.adaptivePredict(this.tokenStream, 72, this.context) ) {
             case 1:
                 {
-                this.state = 645;
+                this.state = 631;
                 this.getter();
                 }
                 break;
             case 2:
                 {
-                this.state = 646;
+                this.state = 632;
                 this.setter();
                 }
                 break;
             case 3:
                 {
-                this.state = 647;
+                this.state = 633;
                 this.getter();
-                this.state = 648;
+                this.state = 634;
                 this.setter();
                 }
                 break;
             case 4:
                 {
-                this.state = 650;
+                this.state = 636;
                 this.setter();
-                this.state = 651;
+                this.state = 637;
                 this.getter();
                 }
                 break;
@@ -2894,21 +2855,21 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 655;
+            this.state = 641;
             this.match(StructuredTextParser.GET);
-            this.state = 657;
+            this.state = 643;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             if (((((_la - 103)) & ~0x1F) === 0 && ((1 << (_la - 103)) & 15) !== 0)) {
                 {
-                this.state = 656;
+                this.state = 642;
                 this.accessModifier();
                 }
             }
 
-            this.state = 659;
+            this.state = 645;
             this.statementSection();
-            this.state = 660;
+            this.state = 646;
             this.match(StructuredTextParser.END_GET);
             }
         }
@@ -2932,21 +2893,21 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 662;
+            this.state = 648;
             this.match(StructuredTextParser.SET);
-            this.state = 664;
+            this.state = 650;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             if (((((_la - 103)) & ~0x1F) === 0 && ((1 << (_la - 103)) & 15) !== 0)) {
                 {
-                this.state = 663;
+                this.state = 649;
                 this.accessModifier();
                 }
             }
 
-            this.state = 666;
+            this.state = 652;
             this.statementSection();
-            this.state = 667;
+            this.state = 653;
             this.match(StructuredTextParser.END_SET);
             }
         }
@@ -2970,21 +2931,21 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 669;
+            this.state = 655;
             this.match(StructuredTextParser.T__40);
-            this.state = 670;
+            this.state = 656;
             this.match(StructuredTextParser.ID);
-            this.state = 672;
+            this.state = 658;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             if (_la === 113) {
                 {
-                this.state = 671;
+                this.state = 657;
                 this.attributeArgList();
                 }
             }
 
-            this.state = 674;
+            this.state = 660;
             this.match(StructuredTextParser.T__41);
             }
         }
@@ -3008,27 +2969,27 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 676;
+            this.state = 662;
             this.match(StructuredTextParser.LPAREN);
-            this.state = 677;
+            this.state = 663;
             this.attributeArg();
-            this.state = 682;
+            this.state = 668;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
             while (_la === 3) {
                 {
                 {
-                this.state = 678;
+                this.state = 664;
                 this.match(StructuredTextParser.T__2);
-                this.state = 679;
+                this.state = 665;
                 this.attributeArg();
                 }
                 }
-                this.state = 684;
+                this.state = 670;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
             }
-            this.state = 685;
+            this.state = 671;
             this.match(StructuredTextParser.RPAREN);
             }
         }
@@ -3052,7 +3013,7 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 687;
+            this.state = 673;
             _la = this.tokenStream.LA(1);
             if(!(((((_la - 116)) & ~0x1F) === 0 && ((1 << (_la - 116)) & 13) !== 0))) {
             this.errorHandler.recoverInline(this);
@@ -3083,7 +3044,7 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 689;
+            this.state = 675;
             _la = this.tokenStream.LA(1);
             if(!(((((_la - 103)) & ~0x1F) === 0 && ((1 << (_la - 103)) & 15) !== 0))) {
             this.errorHandler.recoverInline(this);
@@ -3114,7 +3075,7 @@ export class StructuredTextParser extends antlr.Parser {
         try {
             this.enterOuterAlt(localContext, 1);
             {
-            this.state = 691;
+            this.state = 677;
             _la = this.tokenStream.LA(1);
             if(!(((((_la - 100)) & ~0x1F) === 0 && ((1 << (_la - 100)) & 7) !== 0))) {
             this.errorHandler.recoverInline(this);
@@ -3141,36 +3102,27 @@ export class StructuredTextParser extends antlr.Parser {
 
     public override sempred(localContext: antlr.ParserRuleContext | null, ruleIndex: number, predIndex: number): boolean {
         switch (ruleIndex) {
-        case 42:
-            return this.memberQualifier_sempred(localContext as MemberQualifierContext, predIndex);
         case 45:
             return this.expr_sempred(localContext as ExprContext, predIndex);
         }
         return true;
     }
-    private memberQualifier_sempred(localContext: MemberQualifierContext | null, predIndex: number): boolean {
-        switch (predIndex) {
-        case 0:
-            return this.precpred(this.context, 2);
-        }
-        return true;
-    }
     private expr_sempred(localContext: ExprContext | null, predIndex: number): boolean {
         switch (predIndex) {
+        case 0:
+            return this.precpred(this.context, 5);
         case 1:
-            return this.precpred(this.context, 11);
+            return this.precpred(this.context, 4);
         case 2:
-            return this.precpred(this.context, 10);
+            return this.precpred(this.context, 3);
         case 3:
-            return this.precpred(this.context, 9);
-        case 4:
-            return this.precpred(this.context, 8);
+            return this.precpred(this.context, 2);
         }
         return true;
     }
 
     public static readonly _serializedATN: number[] = [
-        4,1,122,694,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,
+        4,1,122,680,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,
         7,6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,
         13,2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,2,19,7,19,2,
         20,7,20,2,21,7,21,2,22,7,22,2,23,7,23,2,24,7,24,2,25,7,25,2,26,7,
@@ -3209,224 +3161,218 @@ export class StructuredTextParser extends antlr.Parser {
         1,23,1,24,5,24,450,8,24,10,24,12,24,453,9,24,1,25,1,25,1,25,1,25,
         1,25,1,25,1,25,1,25,1,25,1,25,1,25,3,25,466,8,25,1,26,1,26,1,26,
         1,26,1,26,1,27,1,27,1,28,1,28,1,28,1,28,1,29,1,29,1,29,3,29,482,
-        8,29,1,29,1,29,1,29,3,29,487,8,29,1,29,1,29,1,29,1,30,1,30,1,30,
-        5,30,495,8,30,10,30,12,30,498,9,30,1,31,1,31,1,31,1,31,3,31,504,
-        8,31,1,32,1,32,1,32,1,32,1,32,1,32,1,32,1,32,1,32,5,32,515,8,32,
-        10,32,12,32,518,9,32,1,32,1,32,3,32,522,8,32,1,32,1,32,1,33,1,33,
-        1,33,1,33,4,33,530,8,33,11,33,12,33,531,1,33,1,33,3,33,536,8,33,
-        1,33,1,33,1,34,1,34,1,34,5,34,543,8,34,10,34,12,34,546,9,34,1,34,
-        1,34,1,34,1,35,1,35,1,36,1,36,1,36,1,36,1,36,1,36,1,37,1,37,1,37,
-        1,37,1,37,1,37,1,38,1,38,1,38,1,38,1,38,1,38,1,38,1,38,3,38,573,
-        8,38,1,38,1,38,1,38,1,38,1,39,1,39,1,39,1,40,1,40,1,40,1,41,1,41,
-        1,41,1,42,1,42,1,42,1,42,1,42,1,42,5,42,594,8,42,10,42,12,42,597,
-        9,42,1,43,1,43,5,43,601,8,43,10,43,12,43,604,9,43,1,44,1,44,3,44,
-        608,8,44,1,45,1,45,1,45,1,45,1,45,1,45,1,45,1,45,1,45,1,45,1,45,
-        1,45,1,45,3,45,623,8,45,1,45,1,45,3,45,627,8,45,1,45,1,45,1,45,1,
-        45,1,45,1,45,1,45,1,45,1,45,1,45,1,45,1,45,5,45,641,8,45,10,45,12,
-        45,644,9,45,1,46,1,46,1,46,1,46,1,46,1,46,1,46,1,46,3,46,654,8,46,
-        1,47,1,47,3,47,658,8,47,1,47,1,47,1,47,1,48,1,48,3,48,665,8,48,1,
-        48,1,48,1,48,1,49,1,49,1,49,3,49,673,8,49,1,49,1,49,1,50,1,50,1,
-        50,1,50,5,50,681,8,50,10,50,12,50,684,9,50,1,50,1,50,1,51,1,51,1,
-        52,1,52,1,53,1,53,1,53,0,2,84,90,54,0,2,4,6,8,10,12,14,16,18,20,
-        22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,
-        66,68,70,72,74,76,78,80,82,84,86,88,90,92,94,96,98,100,102,104,106,
-        0,12,2,0,57,62,64,65,1,0,4,5,1,0,9,28,2,0,4,4,30,30,2,0,115,116,
-        118,119,2,0,31,32,107,107,1,0,33,34,1,0,35,40,1,0,89,91,2,0,116,
-        116,118,119,1,0,103,106,1,0,100,102,744,0,116,1,0,0,0,2,120,1,0,
-        0,0,4,137,1,0,0,0,6,158,1,0,0,0,8,185,1,0,0,0,10,210,1,0,0,0,12,
-        239,1,0,0,0,14,258,1,0,0,0,16,324,1,0,0,0,18,326,1,0,0,0,20,345,
-        1,0,0,0,22,350,1,0,0,0,24,352,1,0,0,0,26,361,1,0,0,0,28,370,1,0,
-        0,0,30,382,1,0,0,0,32,384,1,0,0,0,34,398,1,0,0,0,36,401,1,0,0,0,
-        38,414,1,0,0,0,40,416,1,0,0,0,42,440,1,0,0,0,44,444,1,0,0,0,46,446,
-        1,0,0,0,48,451,1,0,0,0,50,465,1,0,0,0,52,467,1,0,0,0,54,472,1,0,
-        0,0,56,474,1,0,0,0,58,481,1,0,0,0,60,491,1,0,0,0,62,503,1,0,0,0,
-        64,505,1,0,0,0,66,525,1,0,0,0,68,539,1,0,0,0,70,550,1,0,0,0,72,552,
-        1,0,0,0,74,558,1,0,0,0,76,564,1,0,0,0,78,578,1,0,0,0,80,581,1,0,
-        0,0,82,584,1,0,0,0,84,587,1,0,0,0,86,598,1,0,0,0,88,607,1,0,0,0,
-        90,626,1,0,0,0,92,653,1,0,0,0,94,655,1,0,0,0,96,662,1,0,0,0,98,669,
-        1,0,0,0,100,676,1,0,0,0,102,687,1,0,0,0,104,689,1,0,0,0,106,691,
-        1,0,0,0,108,115,3,2,1,0,109,115,3,10,5,0,110,115,3,4,2,0,111,115,
-        3,12,6,0,112,115,3,14,7,0,113,115,3,16,8,0,114,108,1,0,0,0,114,109,
-        1,0,0,0,114,110,1,0,0,0,114,111,1,0,0,0,114,112,1,0,0,0,114,113,
-        1,0,0,0,115,118,1,0,0,0,116,114,1,0,0,0,116,117,1,0,0,0,117,1,1,
-        0,0,0,118,116,1,0,0,0,119,121,3,98,49,0,120,119,1,0,0,0,120,121,
-        1,0,0,0,121,122,1,0,0,0,122,124,5,43,0,0,123,125,3,104,52,0,124,
-        123,1,0,0,0,124,125,1,0,0,0,125,126,1,0,0,0,126,130,5,118,0,0,127,
-        129,3,32,16,0,128,127,1,0,0,0,129,132,1,0,0,0,130,128,1,0,0,0,130,
-        131,1,0,0,0,131,133,1,0,0,0,132,130,1,0,0,0,133,134,3,48,24,0,134,
-        135,5,44,0,0,135,3,1,0,0,0,136,138,3,98,49,0,137,136,1,0,0,0,137,
-        138,1,0,0,0,138,139,1,0,0,0,139,141,5,47,0,0,140,142,3,104,52,0,
-        141,140,1,0,0,0,141,142,1,0,0,0,142,143,1,0,0,0,143,146,5,118,0,
-        0,144,145,5,1,0,0,145,147,3,42,21,0,146,144,1,0,0,0,146,147,1,0,
-        0,0,147,151,1,0,0,0,148,150,3,32,16,0,149,148,1,0,0,0,150,153,1,
-        0,0,0,151,149,1,0,0,0,151,152,1,0,0,0,152,154,1,0,0,0,153,151,1,
-        0,0,0,154,155,3,48,24,0,155,156,5,48,0,0,156,5,1,0,0,0,157,159,3,
-        98,49,0,158,157,1,0,0,0,158,159,1,0,0,0,159,160,1,0,0,0,160,162,
-        5,92,0,0,161,163,3,104,52,0,162,161,1,0,0,0,162,163,1,0,0,0,163,
-        167,1,0,0,0,164,166,3,106,53,0,165,164,1,0,0,0,166,169,1,0,0,0,167,
-        165,1,0,0,0,167,168,1,0,0,0,168,170,1,0,0,0,169,167,1,0,0,0,170,
-        173,5,118,0,0,171,172,5,1,0,0,172,174,3,42,21,0,173,171,1,0,0,0,
-        173,174,1,0,0,0,174,178,1,0,0,0,175,177,3,32,16,0,176,175,1,0,0,
-        0,177,180,1,0,0,0,178,176,1,0,0,0,178,179,1,0,0,0,179,181,1,0,0,
-        0,180,178,1,0,0,0,181,182,3,48,24,0,182,183,5,93,0,0,183,7,1,0,0,
-        0,184,186,3,98,49,0,185,184,1,0,0,0,185,186,1,0,0,0,186,187,1,0,
-        0,0,187,189,5,49,0,0,188,190,3,104,52,0,189,188,1,0,0,0,189,190,
-        1,0,0,0,190,194,1,0,0,0,191,193,3,106,53,0,192,191,1,0,0,0,193,196,
-        1,0,0,0,194,192,1,0,0,0,194,195,1,0,0,0,195,197,1,0,0,0,196,194,
-        1,0,0,0,197,198,5,118,0,0,198,199,5,1,0,0,199,203,3,42,21,0,200,
-        202,3,32,16,0,201,200,1,0,0,0,202,205,1,0,0,0,203,201,1,0,0,0,203,
-        204,1,0,0,0,204,206,1,0,0,0,205,203,1,0,0,0,206,207,3,92,46,0,207,
-        208,5,50,0,0,208,9,1,0,0,0,209,211,3,98,49,0,210,209,1,0,0,0,210,
-        211,1,0,0,0,211,212,1,0,0,0,212,214,5,45,0,0,213,215,3,104,52,0,
-        214,213,1,0,0,0,214,215,1,0,0,0,215,219,1,0,0,0,216,218,3,106,53,
-        0,217,216,1,0,0,0,218,221,1,0,0,0,219,217,1,0,0,0,219,220,1,0,0,
-        0,220,222,1,0,0,0,221,219,1,0,0,0,222,224,5,118,0,0,223,225,3,28,
-        14,0,224,223,1,0,0,0,224,225,1,0,0,0,225,227,1,0,0,0,226,228,3,26,
-        13,0,227,226,1,0,0,0,227,228,1,0,0,0,228,232,1,0,0,0,229,231,3,30,
-        15,0,230,229,1,0,0,0,231,234,1,0,0,0,232,230,1,0,0,0,232,233,1,0,
-        0,0,233,235,1,0,0,0,234,232,1,0,0,0,235,236,3,48,24,0,236,237,5,
-        46,0,0,237,11,1,0,0,0,238,240,3,98,49,0,239,238,1,0,0,0,239,240,
-        1,0,0,0,240,241,1,0,0,0,241,243,5,94,0,0,242,244,3,104,52,0,243,
-        242,1,0,0,0,243,244,1,0,0,0,244,245,1,0,0,0,245,247,5,118,0,0,246,
-        248,3,28,14,0,247,246,1,0,0,0,247,248,1,0,0,0,248,252,1,0,0,0,249,
-        251,3,30,15,0,250,249,1,0,0,0,251,254,1,0,0,0,252,250,1,0,0,0,252,
-        253,1,0,0,0,253,255,1,0,0,0,254,252,1,0,0,0,255,256,5,95,0,0,256,
-        13,1,0,0,0,257,259,3,98,49,0,258,257,1,0,0,0,258,259,1,0,0,0,259,
-        260,1,0,0,0,260,262,5,63,0,0,261,263,3,104,52,0,262,261,1,0,0,0,
-        262,263,1,0,0,0,263,267,1,0,0,0,264,266,3,106,53,0,265,264,1,0,0,
-        0,266,269,1,0,0,0,267,265,1,0,0,0,267,268,1,0,0,0,268,270,1,0,0,
-        0,269,267,1,0,0,0,270,272,5,118,0,0,271,273,3,36,18,0,272,271,1,
-        0,0,0,273,274,1,0,0,0,274,272,1,0,0,0,274,275,1,0,0,0,275,276,1,
-        0,0,0,276,277,5,66,0,0,277,15,1,0,0,0,278,280,3,98,49,0,279,278,
-        1,0,0,0,280,283,1,0,0,0,281,279,1,0,0,0,281,282,1,0,0,0,282,284,
-        1,0,0,0,283,281,1,0,0,0,284,286,5,108,0,0,285,287,3,104,52,0,286,
-        285,1,0,0,0,286,287,1,0,0,0,287,288,1,0,0,0,288,289,5,118,0,0,289,
-        290,5,1,0,0,290,291,3,18,9,0,291,292,5,109,0,0,292,325,1,0,0,0,293,
-        295,3,98,49,0,294,293,1,0,0,0,295,298,1,0,0,0,296,294,1,0,0,0,296,
-        297,1,0,0,0,297,299,1,0,0,0,298,296,1,0,0,0,299,301,5,108,0,0,300,
-        302,3,104,52,0,301,300,1,0,0,0,301,302,1,0,0,0,302,303,1,0,0,0,303,
-        304,5,118,0,0,304,305,5,1,0,0,305,306,3,24,12,0,306,307,5,109,0,
-        0,307,325,1,0,0,0,308,310,3,98,49,0,309,308,1,0,0,0,310,313,1,0,
-        0,0,311,309,1,0,0,0,311,312,1,0,0,0,312,314,1,0,0,0,313,311,1,0,
-        0,0,314,316,5,108,0,0,315,317,3,104,52,0,316,315,1,0,0,0,316,317,
-        1,0,0,0,317,318,1,0,0,0,318,319,5,118,0,0,319,320,5,1,0,0,320,321,
-        3,42,21,0,321,322,5,2,0,0,322,323,5,109,0,0,323,325,1,0,0,0,324,
-        281,1,0,0,0,324,296,1,0,0,0,324,311,1,0,0,0,325,17,1,0,0,0,326,327,
-        5,113,0,0,327,332,3,20,10,0,328,329,5,3,0,0,329,331,3,20,10,0,330,
-        328,1,0,0,0,331,334,1,0,0,0,332,330,1,0,0,0,332,333,1,0,0,0,333,
-        335,1,0,0,0,334,332,1,0,0,0,335,337,5,114,0,0,336,338,3,42,21,0,
-        337,336,1,0,0,0,337,338,1,0,0,0,338,341,1,0,0,0,339,340,5,4,0,0,
-        340,342,3,22,11,0,341,339,1,0,0,0,341,342,1,0,0,0,342,343,1,0,0,
-        0,343,344,5,2,0,0,344,19,1,0,0,0,345,348,5,118,0,0,346,347,5,4,0,
-        0,347,349,3,90,45,0,348,346,1,0,0,0,348,349,1,0,0,0,349,21,1,0,0,
-        0,350,351,5,118,0,0,351,23,1,0,0,0,352,356,5,96,0,0,353,355,3,36,
-        18,0,354,353,1,0,0,0,355,358,1,0,0,0,356,354,1,0,0,0,356,357,1,0,
-        0,0,357,359,1,0,0,0,358,356,1,0,0,0,359,360,5,97,0,0,360,25,1,0,
-        0,0,361,362,5,51,0,0,362,367,3,42,21,0,363,364,5,3,0,0,364,366,3,
-        42,21,0,365,363,1,0,0,0,366,369,1,0,0,0,367,365,1,0,0,0,367,368,
-        1,0,0,0,368,27,1,0,0,0,369,367,1,0,0,0,370,371,5,52,0,0,371,376,
-        3,42,21,0,372,373,5,3,0,0,373,375,3,42,21,0,374,372,1,0,0,0,375,
-        378,1,0,0,0,376,374,1,0,0,0,376,377,1,0,0,0,377,29,1,0,0,0,378,376,
-        1,0,0,0,379,383,3,6,3,0,380,383,3,8,4,0,381,383,3,32,16,0,382,379,
-        1,0,0,0,382,380,1,0,0,0,382,381,1,0,0,0,383,31,1,0,0,0,384,388,3,
-        34,17,0,385,387,3,106,53,0,386,385,1,0,0,0,387,390,1,0,0,0,388,386,
-        1,0,0,0,388,389,1,0,0,0,389,392,1,0,0,0,390,388,1,0,0,0,391,393,
-        3,36,18,0,392,391,1,0,0,0,393,394,1,0,0,0,394,392,1,0,0,0,394,395,
-        1,0,0,0,395,396,1,0,0,0,396,397,5,66,0,0,397,33,1,0,0,0,398,399,
-        7,0,0,0,399,35,1,0,0,0,400,402,3,98,49,0,401,400,1,0,0,0,401,402,
-        1,0,0,0,402,403,1,0,0,0,403,404,5,118,0,0,404,405,5,1,0,0,405,408,
-        3,42,21,0,406,407,7,1,0,0,407,409,3,38,19,0,408,406,1,0,0,0,408,
-        409,1,0,0,0,409,410,1,0,0,0,410,411,5,2,0,0,411,37,1,0,0,0,412,415,
-        3,90,45,0,413,415,3,40,20,0,414,412,1,0,0,0,414,413,1,0,0,0,415,
-        39,1,0,0,0,416,417,5,6,0,0,417,422,3,90,45,0,418,419,5,3,0,0,419,
-        421,3,90,45,0,420,418,1,0,0,0,421,424,1,0,0,0,422,420,1,0,0,0,422,
-        423,1,0,0,0,423,425,1,0,0,0,424,422,1,0,0,0,425,426,5,7,0,0,426,
-        41,1,0,0,0,427,441,3,44,22,0,428,429,5,73,0,0,429,430,5,6,0,0,430,
-        431,5,116,0,0,431,432,5,8,0,0,432,433,5,116,0,0,433,434,5,7,0,0,
-        434,435,5,74,0,0,435,441,3,42,21,0,436,437,5,112,0,0,437,441,3,42,
-        21,0,438,439,5,111,0,0,439,441,3,42,21,0,440,427,1,0,0,0,440,428,
-        1,0,0,0,440,436,1,0,0,0,440,438,1,0,0,0,441,43,1,0,0,0,442,445,5,
-        118,0,0,443,445,3,46,23,0,444,442,1,0,0,0,444,443,1,0,0,0,445,45,
-        1,0,0,0,446,447,7,2,0,0,447,47,1,0,0,0,448,450,3,50,25,0,449,448,
-        1,0,0,0,450,453,1,0,0,0,451,449,1,0,0,0,451,452,1,0,0,0,452,49,1,
-        0,0,0,453,451,1,0,0,0,454,466,3,52,26,0,455,466,3,64,32,0,456,466,
-        3,66,33,0,457,466,3,72,36,0,458,466,3,74,37,0,459,466,3,76,38,0,
-        460,466,3,58,29,0,461,466,3,78,39,0,462,466,3,80,40,0,463,466,3,
-        82,41,0,464,466,5,2,0,0,465,454,1,0,0,0,465,455,1,0,0,0,465,456,
-        1,0,0,0,465,457,1,0,0,0,465,458,1,0,0,0,465,459,1,0,0,0,465,460,
-        1,0,0,0,465,461,1,0,0,0,465,462,1,0,0,0,465,463,1,0,0,0,465,464,
-        1,0,0,0,466,51,1,0,0,0,467,468,3,84,42,0,468,469,3,54,27,0,469,470,
-        3,90,45,0,470,471,5,2,0,0,471,53,1,0,0,0,472,473,7,1,0,0,473,55,
-        1,0,0,0,474,475,5,6,0,0,475,476,3,90,45,0,476,477,5,7,0,0,477,57,
-        1,0,0,0,478,479,3,84,42,0,479,480,5,29,0,0,480,482,1,0,0,0,481,478,
-        1,0,0,0,481,482,1,0,0,0,482,483,1,0,0,0,483,484,5,118,0,0,484,486,
-        5,113,0,0,485,487,3,60,30,0,486,485,1,0,0,0,486,487,1,0,0,0,487,
-        488,1,0,0,0,488,489,5,114,0,0,489,490,5,2,0,0,490,59,1,0,0,0,491,
-        496,3,62,31,0,492,493,5,3,0,0,493,495,3,62,31,0,494,492,1,0,0,0,
-        495,498,1,0,0,0,496,494,1,0,0,0,496,497,1,0,0,0,497,61,1,0,0,0,498,
-        496,1,0,0,0,499,500,5,118,0,0,500,501,7,3,0,0,501,504,3,90,45,0,
-        502,504,3,90,45,0,503,499,1,0,0,0,503,502,1,0,0,0,504,63,1,0,0,0,
-        505,506,5,67,0,0,506,507,3,90,45,0,507,508,5,68,0,0,508,516,3,48,
-        24,0,509,510,5,69,0,0,510,511,3,90,45,0,511,512,5,68,0,0,512,513,
-        3,48,24,0,513,515,1,0,0,0,514,509,1,0,0,0,515,518,1,0,0,0,516,514,
-        1,0,0,0,516,517,1,0,0,0,517,521,1,0,0,0,518,516,1,0,0,0,519,520,
-        5,70,0,0,520,522,3,48,24,0,521,519,1,0,0,0,521,522,1,0,0,0,522,523,
-        1,0,0,0,523,524,5,71,0,0,524,65,1,0,0,0,525,526,5,72,0,0,526,527,
-        3,90,45,0,527,529,5,74,0,0,528,530,3,68,34,0,529,528,1,0,0,0,530,
-        531,1,0,0,0,531,529,1,0,0,0,531,532,1,0,0,0,532,535,1,0,0,0,533,
-        534,5,70,0,0,534,536,3,48,24,0,535,533,1,0,0,0,535,536,1,0,0,0,536,
-        537,1,0,0,0,537,538,5,75,0,0,538,67,1,0,0,0,539,544,3,70,35,0,540,
-        541,5,3,0,0,541,543,3,70,35,0,542,540,1,0,0,0,543,546,1,0,0,0,544,
-        542,1,0,0,0,544,545,1,0,0,0,545,547,1,0,0,0,546,544,1,0,0,0,547,
-        548,5,1,0,0,548,549,3,48,24,0,549,69,1,0,0,0,550,551,7,4,0,0,551,
-        71,1,0,0,0,552,553,5,76,0,0,553,554,3,90,45,0,554,555,5,77,0,0,555,
-        556,3,48,24,0,556,557,5,78,0,0,557,73,1,0,0,0,558,559,5,79,0,0,559,
-        560,3,48,24,0,560,561,5,80,0,0,561,562,3,90,45,0,562,563,5,81,0,
-        0,563,75,1,0,0,0,564,565,5,82,0,0,565,566,5,118,0,0,566,567,5,4,
-        0,0,567,568,3,90,45,0,568,569,5,83,0,0,569,572,3,90,45,0,570,571,
-        5,84,0,0,571,573,3,90,45,0,572,570,1,0,0,0,572,573,1,0,0,0,573,574,
-        1,0,0,0,574,575,5,77,0,0,575,576,3,48,24,0,576,577,5,85,0,0,577,
-        77,1,0,0,0,578,579,5,86,0,0,579,580,5,2,0,0,580,79,1,0,0,0,581,582,
-        5,87,0,0,582,583,5,2,0,0,583,81,1,0,0,0,584,585,5,88,0,0,585,586,
-        5,2,0,0,586,83,1,0,0,0,587,588,6,42,-1,0,588,589,3,86,43,0,589,595,
-        1,0,0,0,590,591,10,2,0,0,591,592,5,29,0,0,592,594,3,86,43,0,593,
-        590,1,0,0,0,594,597,1,0,0,0,595,593,1,0,0,0,595,596,1,0,0,0,596,
-        85,1,0,0,0,597,595,1,0,0,0,598,602,5,118,0,0,599,601,3,88,44,0,600,
-        599,1,0,0,0,601,604,1,0,0,0,602,600,1,0,0,0,602,603,1,0,0,0,603,
-        87,1,0,0,0,604,602,1,0,0,0,605,608,5,110,0,0,606,608,3,56,28,0,607,
-        605,1,0,0,0,607,606,1,0,0,0,608,89,1,0,0,0,609,610,6,45,-1,0,610,
-        611,5,113,0,0,611,612,3,90,45,0,612,613,5,114,0,0,613,627,1,0,0,
-        0,614,627,5,116,0,0,615,627,5,115,0,0,616,627,5,117,0,0,617,627,
-        5,119,0,0,618,627,3,84,42,0,619,620,3,84,42,0,620,622,5,113,0,0,
-        621,623,3,60,30,0,622,621,1,0,0,0,622,623,1,0,0,0,623,624,1,0,0,
-        0,624,625,5,114,0,0,625,627,1,0,0,0,626,609,1,0,0,0,626,614,1,0,
-        0,0,626,615,1,0,0,0,626,616,1,0,0,0,626,617,1,0,0,0,626,618,1,0,
-        0,0,626,619,1,0,0,0,627,642,1,0,0,0,628,629,10,11,0,0,629,630,7,
-        5,0,0,630,641,3,90,45,12,631,632,10,10,0,0,632,633,7,6,0,0,633,641,
-        3,90,45,11,634,635,10,9,0,0,635,636,7,7,0,0,636,641,3,90,45,10,637,
-        638,10,8,0,0,638,639,7,8,0,0,639,641,3,90,45,9,640,628,1,0,0,0,640,
-        631,1,0,0,0,640,634,1,0,0,0,640,637,1,0,0,0,641,644,1,0,0,0,642,
-        640,1,0,0,0,642,643,1,0,0,0,643,91,1,0,0,0,644,642,1,0,0,0,645,654,
-        3,94,47,0,646,654,3,96,48,0,647,648,3,94,47,0,648,649,3,96,48,0,
-        649,654,1,0,0,0,650,651,3,96,48,0,651,652,3,94,47,0,652,654,1,0,
-        0,0,653,645,1,0,0,0,653,646,1,0,0,0,653,647,1,0,0,0,653,650,1,0,
-        0,0,654,93,1,0,0,0,655,657,5,53,0,0,656,658,3,104,52,0,657,656,1,
-        0,0,0,657,658,1,0,0,0,658,659,1,0,0,0,659,660,3,48,24,0,660,661,
-        5,54,0,0,661,95,1,0,0,0,662,664,5,55,0,0,663,665,3,104,52,0,664,
-        663,1,0,0,0,664,665,1,0,0,0,665,666,1,0,0,0,666,667,3,48,24,0,667,
-        668,5,56,0,0,668,97,1,0,0,0,669,670,5,41,0,0,670,672,5,118,0,0,671,
-        673,3,100,50,0,672,671,1,0,0,0,672,673,1,0,0,0,673,674,1,0,0,0,674,
-        675,5,42,0,0,675,99,1,0,0,0,676,677,5,113,0,0,677,682,3,102,51,0,
-        678,679,5,3,0,0,679,681,3,102,51,0,680,678,1,0,0,0,681,684,1,0,0,
-        0,682,680,1,0,0,0,682,683,1,0,0,0,683,685,1,0,0,0,684,682,1,0,0,
-        0,685,686,5,114,0,0,686,101,1,0,0,0,687,688,7,9,0,0,688,103,1,0,
-        0,0,689,690,7,10,0,0,690,105,1,0,0,0,691,692,7,11,0,0,692,107,1,
-        0,0,0,79,114,116,120,124,130,137,141,146,151,158,162,167,173,178,
-        185,189,194,203,210,214,219,224,227,232,239,243,247,252,258,262,
-        267,274,281,286,296,301,311,316,324,332,337,341,348,356,367,376,
-        382,388,394,401,408,414,422,440,444,451,465,481,486,496,503,516,
-        521,531,535,544,572,595,602,607,622,626,640,642,653,657,664,672,
-        682
+        8,29,1,29,1,29,1,29,1,30,1,30,1,30,5,30,490,8,30,10,30,12,30,493,
+        9,30,1,31,1,31,1,31,1,31,3,31,499,8,31,1,32,1,32,1,32,1,32,1,32,
+        1,32,1,32,1,32,1,32,5,32,510,8,32,10,32,12,32,513,9,32,1,32,1,32,
+        3,32,517,8,32,1,32,1,32,1,33,1,33,1,33,1,33,4,33,525,8,33,11,33,
+        12,33,526,1,33,1,33,3,33,531,8,33,1,33,1,33,1,34,1,34,1,34,5,34,
+        538,8,34,10,34,12,34,541,9,34,1,34,1,34,1,34,1,35,1,35,1,36,1,36,
+        1,36,1,36,1,36,1,36,1,37,1,37,1,37,1,37,1,37,1,37,1,38,1,38,1,38,
+        1,38,1,38,1,38,1,38,1,38,3,38,568,8,38,1,38,1,38,1,38,1,38,1,39,
+        1,39,1,39,1,40,1,40,1,40,1,41,1,41,1,41,1,42,1,42,5,42,585,8,42,
+        10,42,12,42,588,9,42,1,43,1,43,1,43,1,43,3,43,594,8,43,1,43,1,43,
+        1,43,3,43,599,8,43,1,44,1,44,1,44,1,44,1,44,1,44,1,44,1,44,1,44,
+        3,44,610,8,44,1,45,1,45,1,45,1,45,1,45,1,45,1,45,1,45,1,45,1,45,
+        1,45,1,45,1,45,1,45,1,45,5,45,627,8,45,10,45,12,45,630,9,45,1,46,
+        1,46,1,46,1,46,1,46,1,46,1,46,1,46,3,46,640,8,46,1,47,1,47,3,47,
+        644,8,47,1,47,1,47,1,47,1,48,1,48,3,48,651,8,48,1,48,1,48,1,48,1,
+        49,1,49,1,49,3,49,659,8,49,1,49,1,49,1,50,1,50,1,50,1,50,5,50,667,
+        8,50,10,50,12,50,670,9,50,1,50,1,50,1,51,1,51,1,52,1,52,1,53,1,53,
+        1,53,0,1,90,54,0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,
+        36,38,40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,
+        80,82,84,86,88,90,92,94,96,98,100,102,104,106,0,12,2,0,57,62,64,
+        65,1,0,4,5,1,0,9,28,2,0,4,4,29,29,2,0,115,116,118,119,2,0,31,32,
+        107,107,1,0,33,34,1,0,35,40,1,0,89,91,2,0,116,116,118,119,1,0,103,
+        106,1,0,100,102,729,0,116,1,0,0,0,2,120,1,0,0,0,4,137,1,0,0,0,6,
+        158,1,0,0,0,8,185,1,0,0,0,10,210,1,0,0,0,12,239,1,0,0,0,14,258,1,
+        0,0,0,16,324,1,0,0,0,18,326,1,0,0,0,20,345,1,0,0,0,22,350,1,0,0,
+        0,24,352,1,0,0,0,26,361,1,0,0,0,28,370,1,0,0,0,30,382,1,0,0,0,32,
+        384,1,0,0,0,34,398,1,0,0,0,36,401,1,0,0,0,38,414,1,0,0,0,40,416,
+        1,0,0,0,42,440,1,0,0,0,44,444,1,0,0,0,46,446,1,0,0,0,48,451,1,0,
+        0,0,50,465,1,0,0,0,52,467,1,0,0,0,54,472,1,0,0,0,56,474,1,0,0,0,
+        58,478,1,0,0,0,60,486,1,0,0,0,62,498,1,0,0,0,64,500,1,0,0,0,66,520,
+        1,0,0,0,68,534,1,0,0,0,70,545,1,0,0,0,72,547,1,0,0,0,74,553,1,0,
+        0,0,76,559,1,0,0,0,78,573,1,0,0,0,80,576,1,0,0,0,82,579,1,0,0,0,
+        84,582,1,0,0,0,86,598,1,0,0,0,88,609,1,0,0,0,90,611,1,0,0,0,92,639,
+        1,0,0,0,94,641,1,0,0,0,96,648,1,0,0,0,98,655,1,0,0,0,100,662,1,0,
+        0,0,102,673,1,0,0,0,104,675,1,0,0,0,106,677,1,0,0,0,108,115,3,2,
+        1,0,109,115,3,10,5,0,110,115,3,4,2,0,111,115,3,12,6,0,112,115,3,
+        14,7,0,113,115,3,16,8,0,114,108,1,0,0,0,114,109,1,0,0,0,114,110,
+        1,0,0,0,114,111,1,0,0,0,114,112,1,0,0,0,114,113,1,0,0,0,115,118,
+        1,0,0,0,116,114,1,0,0,0,116,117,1,0,0,0,117,1,1,0,0,0,118,116,1,
+        0,0,0,119,121,3,98,49,0,120,119,1,0,0,0,120,121,1,0,0,0,121,122,
+        1,0,0,0,122,124,5,43,0,0,123,125,3,104,52,0,124,123,1,0,0,0,124,
+        125,1,0,0,0,125,126,1,0,0,0,126,130,5,118,0,0,127,129,3,32,16,0,
+        128,127,1,0,0,0,129,132,1,0,0,0,130,128,1,0,0,0,130,131,1,0,0,0,
+        131,133,1,0,0,0,132,130,1,0,0,0,133,134,3,48,24,0,134,135,5,44,0,
+        0,135,3,1,0,0,0,136,138,3,98,49,0,137,136,1,0,0,0,137,138,1,0,0,
+        0,138,139,1,0,0,0,139,141,5,47,0,0,140,142,3,104,52,0,141,140,1,
+        0,0,0,141,142,1,0,0,0,142,143,1,0,0,0,143,146,5,118,0,0,144,145,
+        5,1,0,0,145,147,3,42,21,0,146,144,1,0,0,0,146,147,1,0,0,0,147,151,
+        1,0,0,0,148,150,3,32,16,0,149,148,1,0,0,0,150,153,1,0,0,0,151,149,
+        1,0,0,0,151,152,1,0,0,0,152,154,1,0,0,0,153,151,1,0,0,0,154,155,
+        3,48,24,0,155,156,5,48,0,0,156,5,1,0,0,0,157,159,3,98,49,0,158,157,
+        1,0,0,0,158,159,1,0,0,0,159,160,1,0,0,0,160,162,5,92,0,0,161,163,
+        3,104,52,0,162,161,1,0,0,0,162,163,1,0,0,0,163,167,1,0,0,0,164,166,
+        3,106,53,0,165,164,1,0,0,0,166,169,1,0,0,0,167,165,1,0,0,0,167,168,
+        1,0,0,0,168,170,1,0,0,0,169,167,1,0,0,0,170,173,5,118,0,0,171,172,
+        5,1,0,0,172,174,3,42,21,0,173,171,1,0,0,0,173,174,1,0,0,0,174,178,
+        1,0,0,0,175,177,3,32,16,0,176,175,1,0,0,0,177,180,1,0,0,0,178,176,
+        1,0,0,0,178,179,1,0,0,0,179,181,1,0,0,0,180,178,1,0,0,0,181,182,
+        3,48,24,0,182,183,5,93,0,0,183,7,1,0,0,0,184,186,3,98,49,0,185,184,
+        1,0,0,0,185,186,1,0,0,0,186,187,1,0,0,0,187,189,5,49,0,0,188,190,
+        3,104,52,0,189,188,1,0,0,0,189,190,1,0,0,0,190,194,1,0,0,0,191,193,
+        3,106,53,0,192,191,1,0,0,0,193,196,1,0,0,0,194,192,1,0,0,0,194,195,
+        1,0,0,0,195,197,1,0,0,0,196,194,1,0,0,0,197,198,5,118,0,0,198,199,
+        5,1,0,0,199,203,3,42,21,0,200,202,3,32,16,0,201,200,1,0,0,0,202,
+        205,1,0,0,0,203,201,1,0,0,0,203,204,1,0,0,0,204,206,1,0,0,0,205,
+        203,1,0,0,0,206,207,3,92,46,0,207,208,5,50,0,0,208,9,1,0,0,0,209,
+        211,3,98,49,0,210,209,1,0,0,0,210,211,1,0,0,0,211,212,1,0,0,0,212,
+        214,5,45,0,0,213,215,3,104,52,0,214,213,1,0,0,0,214,215,1,0,0,0,
+        215,219,1,0,0,0,216,218,3,106,53,0,217,216,1,0,0,0,218,221,1,0,0,
+        0,219,217,1,0,0,0,219,220,1,0,0,0,220,222,1,0,0,0,221,219,1,0,0,
+        0,222,224,5,118,0,0,223,225,3,28,14,0,224,223,1,0,0,0,224,225,1,
+        0,0,0,225,227,1,0,0,0,226,228,3,26,13,0,227,226,1,0,0,0,227,228,
+        1,0,0,0,228,232,1,0,0,0,229,231,3,30,15,0,230,229,1,0,0,0,231,234,
+        1,0,0,0,232,230,1,0,0,0,232,233,1,0,0,0,233,235,1,0,0,0,234,232,
+        1,0,0,0,235,236,3,48,24,0,236,237,5,46,0,0,237,11,1,0,0,0,238,240,
+        3,98,49,0,239,238,1,0,0,0,239,240,1,0,0,0,240,241,1,0,0,0,241,243,
+        5,94,0,0,242,244,3,104,52,0,243,242,1,0,0,0,243,244,1,0,0,0,244,
+        245,1,0,0,0,245,247,5,118,0,0,246,248,3,28,14,0,247,246,1,0,0,0,
+        247,248,1,0,0,0,248,252,1,0,0,0,249,251,3,30,15,0,250,249,1,0,0,
+        0,251,254,1,0,0,0,252,250,1,0,0,0,252,253,1,0,0,0,253,255,1,0,0,
+        0,254,252,1,0,0,0,255,256,5,95,0,0,256,13,1,0,0,0,257,259,3,98,49,
+        0,258,257,1,0,0,0,258,259,1,0,0,0,259,260,1,0,0,0,260,262,5,63,0,
+        0,261,263,3,104,52,0,262,261,1,0,0,0,262,263,1,0,0,0,263,267,1,0,
+        0,0,264,266,3,106,53,0,265,264,1,0,0,0,266,269,1,0,0,0,267,265,1,
+        0,0,0,267,268,1,0,0,0,268,270,1,0,0,0,269,267,1,0,0,0,270,272,5,
+        118,0,0,271,273,3,36,18,0,272,271,1,0,0,0,273,274,1,0,0,0,274,272,
+        1,0,0,0,274,275,1,0,0,0,275,276,1,0,0,0,276,277,5,66,0,0,277,15,
+        1,0,0,0,278,280,3,98,49,0,279,278,1,0,0,0,280,283,1,0,0,0,281,279,
+        1,0,0,0,281,282,1,0,0,0,282,284,1,0,0,0,283,281,1,0,0,0,284,286,
+        5,108,0,0,285,287,3,104,52,0,286,285,1,0,0,0,286,287,1,0,0,0,287,
+        288,1,0,0,0,288,289,5,118,0,0,289,290,5,1,0,0,290,291,3,18,9,0,291,
+        292,5,109,0,0,292,325,1,0,0,0,293,295,3,98,49,0,294,293,1,0,0,0,
+        295,298,1,0,0,0,296,294,1,0,0,0,296,297,1,0,0,0,297,299,1,0,0,0,
+        298,296,1,0,0,0,299,301,5,108,0,0,300,302,3,104,52,0,301,300,1,0,
+        0,0,301,302,1,0,0,0,302,303,1,0,0,0,303,304,5,118,0,0,304,305,5,
+        1,0,0,305,306,3,24,12,0,306,307,5,109,0,0,307,325,1,0,0,0,308,310,
+        3,98,49,0,309,308,1,0,0,0,310,313,1,0,0,0,311,309,1,0,0,0,311,312,
+        1,0,0,0,312,314,1,0,0,0,313,311,1,0,0,0,314,316,5,108,0,0,315,317,
+        3,104,52,0,316,315,1,0,0,0,316,317,1,0,0,0,317,318,1,0,0,0,318,319,
+        5,118,0,0,319,320,5,1,0,0,320,321,3,42,21,0,321,322,5,2,0,0,322,
+        323,5,109,0,0,323,325,1,0,0,0,324,281,1,0,0,0,324,296,1,0,0,0,324,
+        311,1,0,0,0,325,17,1,0,0,0,326,327,5,113,0,0,327,332,3,20,10,0,328,
+        329,5,3,0,0,329,331,3,20,10,0,330,328,1,0,0,0,331,334,1,0,0,0,332,
+        330,1,0,0,0,332,333,1,0,0,0,333,335,1,0,0,0,334,332,1,0,0,0,335,
+        337,5,114,0,0,336,338,3,42,21,0,337,336,1,0,0,0,337,338,1,0,0,0,
+        338,341,1,0,0,0,339,340,5,4,0,0,340,342,3,22,11,0,341,339,1,0,0,
+        0,341,342,1,0,0,0,342,343,1,0,0,0,343,344,5,2,0,0,344,19,1,0,0,0,
+        345,348,5,118,0,0,346,347,5,4,0,0,347,349,3,90,45,0,348,346,1,0,
+        0,0,348,349,1,0,0,0,349,21,1,0,0,0,350,351,5,118,0,0,351,23,1,0,
+        0,0,352,356,5,96,0,0,353,355,3,36,18,0,354,353,1,0,0,0,355,358,1,
+        0,0,0,356,354,1,0,0,0,356,357,1,0,0,0,357,359,1,0,0,0,358,356,1,
+        0,0,0,359,360,5,97,0,0,360,25,1,0,0,0,361,362,5,51,0,0,362,367,3,
+        42,21,0,363,364,5,3,0,0,364,366,3,42,21,0,365,363,1,0,0,0,366,369,
+        1,0,0,0,367,365,1,0,0,0,367,368,1,0,0,0,368,27,1,0,0,0,369,367,1,
+        0,0,0,370,371,5,52,0,0,371,376,3,42,21,0,372,373,5,3,0,0,373,375,
+        3,42,21,0,374,372,1,0,0,0,375,378,1,0,0,0,376,374,1,0,0,0,376,377,
+        1,0,0,0,377,29,1,0,0,0,378,376,1,0,0,0,379,383,3,6,3,0,380,383,3,
+        8,4,0,381,383,3,32,16,0,382,379,1,0,0,0,382,380,1,0,0,0,382,381,
+        1,0,0,0,383,31,1,0,0,0,384,388,3,34,17,0,385,387,3,106,53,0,386,
+        385,1,0,0,0,387,390,1,0,0,0,388,386,1,0,0,0,388,389,1,0,0,0,389,
+        392,1,0,0,0,390,388,1,0,0,0,391,393,3,36,18,0,392,391,1,0,0,0,393,
+        394,1,0,0,0,394,392,1,0,0,0,394,395,1,0,0,0,395,396,1,0,0,0,396,
+        397,5,66,0,0,397,33,1,0,0,0,398,399,7,0,0,0,399,35,1,0,0,0,400,402,
+        3,98,49,0,401,400,1,0,0,0,401,402,1,0,0,0,402,403,1,0,0,0,403,404,
+        5,118,0,0,404,405,5,1,0,0,405,408,3,42,21,0,406,407,7,1,0,0,407,
+        409,3,38,19,0,408,406,1,0,0,0,408,409,1,0,0,0,409,410,1,0,0,0,410,
+        411,5,2,0,0,411,37,1,0,0,0,412,415,3,90,45,0,413,415,3,40,20,0,414,
+        412,1,0,0,0,414,413,1,0,0,0,415,39,1,0,0,0,416,417,5,6,0,0,417,422,
+        3,90,45,0,418,419,5,3,0,0,419,421,3,90,45,0,420,418,1,0,0,0,421,
+        424,1,0,0,0,422,420,1,0,0,0,422,423,1,0,0,0,423,425,1,0,0,0,424,
+        422,1,0,0,0,425,426,5,7,0,0,426,41,1,0,0,0,427,441,3,44,22,0,428,
+        429,5,73,0,0,429,430,5,6,0,0,430,431,5,116,0,0,431,432,5,8,0,0,432,
+        433,5,116,0,0,433,434,5,7,0,0,434,435,5,74,0,0,435,441,3,42,21,0,
+        436,437,5,112,0,0,437,441,3,42,21,0,438,439,5,111,0,0,439,441,3,
+        42,21,0,440,427,1,0,0,0,440,428,1,0,0,0,440,436,1,0,0,0,440,438,
+        1,0,0,0,441,43,1,0,0,0,442,445,5,118,0,0,443,445,3,46,23,0,444,442,
+        1,0,0,0,444,443,1,0,0,0,445,45,1,0,0,0,446,447,7,2,0,0,447,47,1,
+        0,0,0,448,450,3,50,25,0,449,448,1,0,0,0,450,453,1,0,0,0,451,449,
+        1,0,0,0,451,452,1,0,0,0,452,49,1,0,0,0,453,451,1,0,0,0,454,466,3,
+        52,26,0,455,466,3,64,32,0,456,466,3,66,33,0,457,466,3,72,36,0,458,
+        466,3,74,37,0,459,466,3,76,38,0,460,466,3,58,29,0,461,466,3,78,39,
+        0,462,466,3,80,40,0,463,466,3,82,41,0,464,466,5,2,0,0,465,454,1,
+        0,0,0,465,455,1,0,0,0,465,456,1,0,0,0,465,457,1,0,0,0,465,458,1,
+        0,0,0,465,459,1,0,0,0,465,460,1,0,0,0,465,461,1,0,0,0,465,462,1,
+        0,0,0,465,463,1,0,0,0,465,464,1,0,0,0,466,51,1,0,0,0,467,468,3,84,
+        42,0,468,469,3,54,27,0,469,470,3,90,45,0,470,471,5,2,0,0,471,53,
+        1,0,0,0,472,473,7,1,0,0,473,55,1,0,0,0,474,475,5,6,0,0,475,476,3,
+        90,45,0,476,477,5,7,0,0,477,57,1,0,0,0,478,479,3,84,42,0,479,481,
+        5,113,0,0,480,482,3,60,30,0,481,480,1,0,0,0,481,482,1,0,0,0,482,
+        483,1,0,0,0,483,484,5,114,0,0,484,485,5,2,0,0,485,59,1,0,0,0,486,
+        491,3,62,31,0,487,488,5,3,0,0,488,490,3,62,31,0,489,487,1,0,0,0,
+        490,493,1,0,0,0,491,489,1,0,0,0,491,492,1,0,0,0,492,61,1,0,0,0,493,
+        491,1,0,0,0,494,495,5,118,0,0,495,496,7,3,0,0,496,499,3,90,45,0,
+        497,499,3,90,45,0,498,494,1,0,0,0,498,497,1,0,0,0,499,63,1,0,0,0,
+        500,501,5,67,0,0,501,502,3,90,45,0,502,503,5,68,0,0,503,511,3,48,
+        24,0,504,505,5,69,0,0,505,506,3,90,45,0,506,507,5,68,0,0,507,508,
+        3,48,24,0,508,510,1,0,0,0,509,504,1,0,0,0,510,513,1,0,0,0,511,509,
+        1,0,0,0,511,512,1,0,0,0,512,516,1,0,0,0,513,511,1,0,0,0,514,515,
+        5,70,0,0,515,517,3,48,24,0,516,514,1,0,0,0,516,517,1,0,0,0,517,518,
+        1,0,0,0,518,519,5,71,0,0,519,65,1,0,0,0,520,521,5,72,0,0,521,522,
+        3,90,45,0,522,524,5,74,0,0,523,525,3,68,34,0,524,523,1,0,0,0,525,
+        526,1,0,0,0,526,524,1,0,0,0,526,527,1,0,0,0,527,530,1,0,0,0,528,
+        529,5,70,0,0,529,531,3,48,24,0,530,528,1,0,0,0,530,531,1,0,0,0,531,
+        532,1,0,0,0,532,533,5,75,0,0,533,67,1,0,0,0,534,539,3,70,35,0,535,
+        536,5,3,0,0,536,538,3,70,35,0,537,535,1,0,0,0,538,541,1,0,0,0,539,
+        537,1,0,0,0,539,540,1,0,0,0,540,542,1,0,0,0,541,539,1,0,0,0,542,
+        543,5,1,0,0,543,544,3,48,24,0,544,69,1,0,0,0,545,546,7,4,0,0,546,
+        71,1,0,0,0,547,548,5,76,0,0,548,549,3,90,45,0,549,550,5,77,0,0,550,
+        551,3,48,24,0,551,552,5,78,0,0,552,73,1,0,0,0,553,554,5,79,0,0,554,
+        555,3,48,24,0,555,556,5,80,0,0,556,557,3,90,45,0,557,558,5,81,0,
+        0,558,75,1,0,0,0,559,560,5,82,0,0,560,561,5,118,0,0,561,562,5,4,
+        0,0,562,563,3,90,45,0,563,564,5,83,0,0,564,567,3,90,45,0,565,566,
+        5,84,0,0,566,568,3,90,45,0,567,565,1,0,0,0,567,568,1,0,0,0,568,569,
+        1,0,0,0,569,570,5,77,0,0,570,571,3,48,24,0,571,572,5,85,0,0,572,
+        77,1,0,0,0,573,574,5,86,0,0,574,575,5,2,0,0,575,79,1,0,0,0,576,577,
+        5,87,0,0,577,578,5,2,0,0,578,81,1,0,0,0,579,580,5,88,0,0,580,581,
+        5,2,0,0,581,83,1,0,0,0,582,586,3,88,44,0,583,585,3,86,43,0,584,583,
+        1,0,0,0,585,588,1,0,0,0,586,584,1,0,0,0,586,587,1,0,0,0,587,85,1,
+        0,0,0,588,586,1,0,0,0,589,599,5,110,0,0,590,599,3,56,28,0,591,593,
+        5,113,0,0,592,594,3,60,30,0,593,592,1,0,0,0,593,594,1,0,0,0,594,
+        595,1,0,0,0,595,599,5,114,0,0,596,597,5,30,0,0,597,599,5,118,0,0,
+        598,589,1,0,0,0,598,590,1,0,0,0,598,591,1,0,0,0,598,596,1,0,0,0,
+        599,87,1,0,0,0,600,610,5,118,0,0,601,602,5,113,0,0,602,603,3,90,
+        45,0,603,604,5,114,0,0,604,610,1,0,0,0,605,610,5,116,0,0,606,610,
+        5,115,0,0,607,610,5,117,0,0,608,610,5,119,0,0,609,600,1,0,0,0,609,
+        601,1,0,0,0,609,605,1,0,0,0,609,606,1,0,0,0,609,607,1,0,0,0,609,
+        608,1,0,0,0,610,89,1,0,0,0,611,612,6,45,-1,0,612,613,3,84,42,0,613,
+        628,1,0,0,0,614,615,10,5,0,0,615,616,7,5,0,0,616,627,3,90,45,6,617,
+        618,10,4,0,0,618,619,7,6,0,0,619,627,3,90,45,5,620,621,10,3,0,0,
+        621,622,7,7,0,0,622,627,3,90,45,4,623,624,10,2,0,0,624,625,7,8,0,
+        0,625,627,3,90,45,3,626,614,1,0,0,0,626,617,1,0,0,0,626,620,1,0,
+        0,0,626,623,1,0,0,0,627,630,1,0,0,0,628,626,1,0,0,0,628,629,1,0,
+        0,0,629,91,1,0,0,0,630,628,1,0,0,0,631,640,3,94,47,0,632,640,3,96,
+        48,0,633,634,3,94,47,0,634,635,3,96,48,0,635,640,1,0,0,0,636,637,
+        3,96,48,0,637,638,3,94,47,0,638,640,1,0,0,0,639,631,1,0,0,0,639,
+        632,1,0,0,0,639,633,1,0,0,0,639,636,1,0,0,0,640,93,1,0,0,0,641,643,
+        5,53,0,0,642,644,3,104,52,0,643,642,1,0,0,0,643,644,1,0,0,0,644,
+        645,1,0,0,0,645,646,3,48,24,0,646,647,5,54,0,0,647,95,1,0,0,0,648,
+        650,5,55,0,0,649,651,3,104,52,0,650,649,1,0,0,0,650,651,1,0,0,0,
+        651,652,1,0,0,0,652,653,3,48,24,0,653,654,5,56,0,0,654,97,1,0,0,
+        0,655,656,5,41,0,0,656,658,5,118,0,0,657,659,3,100,50,0,658,657,
+        1,0,0,0,658,659,1,0,0,0,659,660,1,0,0,0,660,661,5,42,0,0,661,99,
+        1,0,0,0,662,663,5,113,0,0,663,668,3,102,51,0,664,665,5,3,0,0,665,
+        667,3,102,51,0,666,664,1,0,0,0,667,670,1,0,0,0,668,666,1,0,0,0,668,
+        669,1,0,0,0,669,671,1,0,0,0,670,668,1,0,0,0,671,672,5,114,0,0,672,
+        101,1,0,0,0,673,674,7,9,0,0,674,103,1,0,0,0,675,676,7,10,0,0,676,
+        105,1,0,0,0,677,678,7,11,0,0,678,107,1,0,0,0,77,114,116,120,124,
+        130,137,141,146,151,158,162,167,173,178,185,189,194,203,210,214,
+        219,224,227,232,239,243,247,252,258,262,267,274,281,286,296,301,
+        311,316,324,332,337,341,348,356,367,376,382,388,394,401,408,414,
+        422,440,444,451,465,481,491,498,511,516,526,530,539,567,586,593,
+        598,609,626,628,639,643,650,658,668
     ];
 
     private static __ATN: antlr.ATN;
@@ -4440,8 +4386,8 @@ export class AssignmentContext extends antlr.ParserRuleContext {
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }
-    public memberQualifier(): MemberQualifierContext {
-        return this.getRuleContext(0, MemberQualifierContext)!;
+    public memberExpression(): MemberExpressionContext {
+        return this.getRuleContext(0, MemberExpressionContext)!;
     }
     public assignmentOperator(): AssignmentOperatorContext {
         return this.getRuleContext(0, AssignmentOperatorContext)!;
@@ -4503,17 +4449,14 @@ export class CallStatementContext extends antlr.ParserRuleContext {
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }
-    public ID(): antlr.TerminalNode {
-        return this.getToken(StructuredTextParser.ID, 0)!;
+    public memberExpression(): MemberExpressionContext {
+        return this.getRuleContext(0, MemberExpressionContext)!;
     }
     public LPAREN(): antlr.TerminalNode {
         return this.getToken(StructuredTextParser.LPAREN, 0)!;
     }
     public RPAREN(): antlr.TerminalNode {
         return this.getToken(StructuredTextParser.RPAREN, 0)!;
-    }
-    public memberQualifier(): MemberQualifierContext | null {
-        return this.getRuleContext(0, MemberQualifierContext);
     }
     public argumentList(): ArgumentListContext | null {
         return this.getRuleContext(0, ArgumentListContext);
@@ -4915,22 +4858,63 @@ export class ContinueStatementContext extends antlr.ParserRuleContext {
 }
 
 
-export class MemberQualifierContext extends antlr.ParserRuleContext {
+export class MemberExpressionContext extends antlr.ParserRuleContext {
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }
     public primary(): PrimaryContext {
         return this.getRuleContext(0, PrimaryContext)!;
     }
-    public memberQualifier(): MemberQualifierContext | null {
-        return this.getRuleContext(0, MemberQualifierContext);
+    public postfixOp(): PostfixOpContext[];
+    public postfixOp(i: number): PostfixOpContext | null;
+    public postfixOp(i?: number): PostfixOpContext[] | PostfixOpContext | null {
+        if (i === undefined) {
+            return this.getRuleContexts(PostfixOpContext);
+        }
+
+        return this.getRuleContext(i, PostfixOpContext);
     }
     public override get ruleIndex(): number {
-        return StructuredTextParser.RULE_memberQualifier;
+        return StructuredTextParser.RULE_memberExpression;
     }
     public override accept<Result>(visitor: StructuredTextVisitor<Result>): Result | null {
-        if (visitor.visitMemberQualifier) {
-            return visitor.visitMemberQualifier(this);
+        if (visitor.visitMemberExpression) {
+            return visitor.visitMemberExpression(this);
+        } else {
+            return visitor.visitChildren(this);
+        }
+    }
+}
+
+
+export class PostfixOpContext extends antlr.ParserRuleContext {
+    public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
+        super(parent, invokingState);
+    }
+    public CARET(): antlr.TerminalNode | null {
+        return this.getToken(StructuredTextParser.CARET, 0);
+    }
+    public arrayIndex(): ArrayIndexContext | null {
+        return this.getRuleContext(0, ArrayIndexContext);
+    }
+    public LPAREN(): antlr.TerminalNode | null {
+        return this.getToken(StructuredTextParser.LPAREN, 0);
+    }
+    public RPAREN(): antlr.TerminalNode | null {
+        return this.getToken(StructuredTextParser.RPAREN, 0);
+    }
+    public argumentList(): ArgumentListContext | null {
+        return this.getRuleContext(0, ArgumentListContext);
+    }
+    public ID(): antlr.TerminalNode | null {
+        return this.getToken(StructuredTextParser.ID, 0);
+    }
+    public override get ruleIndex(): number {
+        return StructuredTextParser.RULE_postfixOp;
+    }
+    public override accept<Result>(visitor: StructuredTextVisitor<Result>): Result | null {
+        if (visitor.visitPostfixOp) {
+            return visitor.visitPostfixOp(this);
         } else {
             return visitor.visitChildren(this);
         }
@@ -4942,70 +4926,14 @@ export class PrimaryContext extends antlr.ParserRuleContext {
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }
-    public ID(): antlr.TerminalNode {
-        return this.getToken(StructuredTextParser.ID, 0)!;
-    }
-    public derefOrIndex(): DerefOrIndexContext[];
-    public derefOrIndex(i: number): DerefOrIndexContext | null;
-    public derefOrIndex(i?: number): DerefOrIndexContext[] | DerefOrIndexContext | null {
-        if (i === undefined) {
-            return this.getRuleContexts(DerefOrIndexContext);
-        }
-
-        return this.getRuleContext(i, DerefOrIndexContext);
-    }
-    public override get ruleIndex(): number {
-        return StructuredTextParser.RULE_primary;
-    }
-    public override accept<Result>(visitor: StructuredTextVisitor<Result>): Result | null {
-        if (visitor.visitPrimary) {
-            return visitor.visitPrimary(this);
-        } else {
-            return visitor.visitChildren(this);
-        }
-    }
-}
-
-
-export class DerefOrIndexContext extends antlr.ParserRuleContext {
-    public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
-        super(parent, invokingState);
-    }
-    public CARET(): antlr.TerminalNode | null {
-        return this.getToken(StructuredTextParser.CARET, 0);
-    }
-    public arrayIndex(): ArrayIndexContext | null {
-        return this.getRuleContext(0, ArrayIndexContext);
-    }
-    public override get ruleIndex(): number {
-        return StructuredTextParser.RULE_derefOrIndex;
-    }
-    public override accept<Result>(visitor: StructuredTextVisitor<Result>): Result | null {
-        if (visitor.visitDerefOrIndex) {
-            return visitor.visitDerefOrIndex(this);
-        } else {
-            return visitor.visitChildren(this);
-        }
-    }
-}
-
-
-export class ExprContext extends antlr.ParserRuleContext {
-    public _op?: Token | null;
-    public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
-        super(parent, invokingState);
+    public ID(): antlr.TerminalNode | null {
+        return this.getToken(StructuredTextParser.ID, 0);
     }
     public LPAREN(): antlr.TerminalNode | null {
         return this.getToken(StructuredTextParser.LPAREN, 0);
     }
-    public expr(): ExprContext[];
-    public expr(i: number): ExprContext | null;
-    public expr(i?: number): ExprContext[] | ExprContext | null {
-        if (i === undefined) {
-            return this.getRuleContexts(ExprContext);
-        }
-
-        return this.getRuleContext(i, ExprContext);
+    public expr(): ExprContext | null {
+        return this.getRuleContext(0, ExprContext);
     }
     public RPAREN(): antlr.TerminalNode | null {
         return this.getToken(StructuredTextParser.RPAREN, 0);
@@ -5022,11 +4950,35 @@ export class ExprContext extends antlr.ParserRuleContext {
     public STRING_LITERAL(): antlr.TerminalNode | null {
         return this.getToken(StructuredTextParser.STRING_LITERAL, 0);
     }
-    public memberQualifier(): MemberQualifierContext | null {
-        return this.getRuleContext(0, MemberQualifierContext);
+    public override get ruleIndex(): number {
+        return StructuredTextParser.RULE_primary;
     }
-    public argumentList(): ArgumentListContext | null {
-        return this.getRuleContext(0, ArgumentListContext);
+    public override accept<Result>(visitor: StructuredTextVisitor<Result>): Result | null {
+        if (visitor.visitPrimary) {
+            return visitor.visitPrimary(this);
+        } else {
+            return visitor.visitChildren(this);
+        }
+    }
+}
+
+
+export class ExprContext extends antlr.ParserRuleContext {
+    public _op?: Token | null;
+    public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
+        super(parent, invokingState);
+    }
+    public memberExpression(): MemberExpressionContext | null {
+        return this.getRuleContext(0, MemberExpressionContext);
+    }
+    public expr(): ExprContext[];
+    public expr(i: number): ExprContext | null;
+    public expr(i?: number): ExprContext[] | ExprContext | null {
+        if (i === undefined) {
+            return this.getRuleContexts(ExprContext);
+        }
+
+        return this.getRuleContext(i, ExprContext);
     }
     public MOD(): antlr.TerminalNode | null {
         return this.getToken(StructuredTextParser.MOD, 0);

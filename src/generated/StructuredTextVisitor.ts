@@ -45,9 +45,9 @@ import { ForStatementContext } from "./StructuredTextParser.js";
 import { ReturnStatementContext } from "./StructuredTextParser.js";
 import { ExitStatementContext } from "./StructuredTextParser.js";
 import { ContinueStatementContext } from "./StructuredTextParser.js";
-import { MemberQualifierContext } from "./StructuredTextParser.js";
+import { MemberExpressionContext } from "./StructuredTextParser.js";
+import { PostfixOpContext } from "./StructuredTextParser.js";
 import { PrimaryContext } from "./StructuredTextParser.js";
-import { DerefOrIndexContext } from "./StructuredTextParser.js";
 import { ExprContext } from "./StructuredTextParser.js";
 import { PropertyBodyContext } from "./StructuredTextParser.js";
 import { GetterContext } from "./StructuredTextParser.js";
@@ -320,23 +320,23 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      */
     visitContinueStatement?: (ctx: ContinueStatementContext) => Result;
     /**
-     * Visit a parse tree produced by `StructuredTextParser.memberQualifier`.
+     * Visit a parse tree produced by `StructuredTextParser.memberExpression`.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    visitMemberQualifier?: (ctx: MemberQualifierContext) => Result;
+    visitMemberExpression?: (ctx: MemberExpressionContext) => Result;
+    /**
+     * Visit a parse tree produced by `StructuredTextParser.postfixOp`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitPostfixOp?: (ctx: PostfixOpContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.primary`.
      * @param ctx the parse tree
      * @return the visitor result
      */
     visitPrimary?: (ctx: PrimaryContext) => Result;
-    /**
-     * Visit a parse tree produced by `StructuredTextParser.derefOrIndex`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitDerefOrIndex?: (ctx: DerefOrIndexContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.expr`.
      * @param ctx the parse tree

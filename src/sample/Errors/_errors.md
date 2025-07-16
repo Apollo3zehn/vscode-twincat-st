@@ -9,3 +9,5 @@
 - C0538: The number of inputs/outputs of the method 'RESET' does not correspond to the interface 'I_PLANTCOMPONENTFIXTURE'.
 
 - Fix C0035 (fix syntax error, double method call) and C0185 (fix syntax error + Colorization )
+
+- finish native data type support

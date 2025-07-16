@@ -1,7 +1,7 @@
 import { ParserRuleContext, Token } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Uri } from "vscode";
 import { StAccessModifier, StBuiltinType, StSourceFile, StSymbol, StSymbolKind, StTypeInfo, VariableKind } from "../core.js";
-import { AccessModifierContext, EnumMemberContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MemberExpressionContext, MethodContext, PostfixOpContext, ProgramContext, PropertyContext, StatementContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { AccessModifierContext, EnumMemberContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StatementContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 import { getContextRange, getOriginalText, getTokenRange } from "../utils.js";
 
@@ -153,8 +153,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
         symbol.typeHierarchyInfo = new StTypeInfo();
         symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
-        this._parent = symbol;
+        this.addFakeTypeUsage(symbol);
         this.addGlobalObject(symbol);
+
+        this._parent = symbol;
     }
 
     private createType(ctx: TypeDeclContext): StSymbol | undefined {
@@ -181,8 +183,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
-        this._parent = symbol;
+        this.addFakeTypeUsage(symbol);
         this.addGlobalObject(symbol);
+
+        this._parent = symbol;
         this._declaration = symbol;
 
         return symbol;
@@ -207,7 +211,9 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
+        this.addFakeTypeUsage(symbol);
         this.addGlobalObject(symbol);
+        
         this._parent = symbol;
         this._declaration = symbol;
         this._variableKind = VariableKind.Global;
@@ -396,6 +402,20 @@ export class StVisitor extends StructuredTextVisitor<void> {
     //#endregion
 
     //#region Utils
+
+    private addFakeTypeUsage(symbol: StSymbol) {
+
+        symbol.typeUsage = new StSymbol(
+            this._documentUri,
+            symbol.id,
+            StSymbolKind.TypeUsage,
+            undefined,
+            symbol.range,
+            symbol.selectionRange
+        );
+
+        symbol.typeUsage.declaration = symbol;
+    }
 
     private getAccessModifier(ctx: AccessModifierContext | undefined): StAccessModifier | undefined {
 

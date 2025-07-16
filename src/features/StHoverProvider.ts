@@ -34,7 +34,7 @@ export class StHoverProvider implements HoverProvider {
 
         let comment: String | undefined;
 
-        if (declarationSymbol.context.start) {
+        if (declarationSymbol.context?.start) {
             
             const startTokenIndex = declarationSymbol.context.start.tokenIndex;
             const endTokenIndex = declarationSymbol.context.stop?.tokenIndex;
@@ -84,7 +84,7 @@ export class StHoverProvider implements HoverProvider {
 
             case StSymbolKind.VariableDeclaration:
                 
-                const context = symbol.context;
+                const context = symbol.context!;
                 
                 let prefix = "";
                 let qualifier = "";

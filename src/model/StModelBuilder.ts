@@ -474,7 +474,11 @@ export class SemanticModelBuilder {
         return currentTypeUsage;
     }
 
-    private evaluatePostfixOps(member: StSymbol, postfixOps: PostfixOpContext[], sourceFile: StSourceFile): StSymbol | undefined {
+    private evaluatePostfixOps(
+        member: StSymbol,
+        postfixOps: PostfixOpContext[],
+        sourceFile: StSourceFile
+    ): StSymbol | undefined {
 
         let currentTypeUsage = member.declaration?.typeUsage;
 
@@ -527,9 +531,9 @@ export class SemanticModelBuilder {
 
                 let typeKind: StSymbolKind | undefined;
 
-                const declaration = currentTypeUsage.declaration;
+                const typeDeclaration = currentTypeUsage.declaration;
 
-                switch (declaration?.kind) {
+                switch (typeDeclaration?.kind) {
 
                     case StSymbolKind.Program:
                     case StSymbolKind.Function:
@@ -539,7 +543,7 @@ export class SemanticModelBuilder {
                     case StSymbolKind.Gvl:
                     case StSymbolKind.Enum:
                     case StSymbolKind.Struct:
-                        this.C0036(member, sourceFile);
+                        this.C0036(member, typeDeclaration, sourceFile);
                         break;
                     
                     case StSymbolKind.VariableDeclaration:
@@ -561,6 +565,8 @@ export class SemanticModelBuilder {
                         this.C0035(member, sourceFile);
                         break;
                 }
+
+                // TODO: currentTypeUsage = xxx
             }
         }
 
@@ -568,11 +574,11 @@ export class SemanticModelBuilder {
     }
 
     // C0080: Function block '{name}' must be instantiated to be accessed
-    private C0080(symbol: StSymbol, sourceFile: StSourceFile) {
+    private C0080(member: StSymbol, sourceFile: StSourceFile) {
 
         const diagnostic = new Diagnostic(
-            symbol.selectionRange ?? symbol.range,
-            `Function block '${symbol.id}' must be instantiated to be accessed`,
+            member.selectionRange ?? member.range,
+            `Function block '${member.id}' must be instantiated to be accessed`,
             DiagnosticSeverity.Error
         );
 
@@ -581,11 +587,11 @@ export class SemanticModelBuilder {
     }
 
     // C0035: Program name, function or function block instance expected instead of '{name}'
-    private C0035(symbol: StSymbol, sourceFile: StSourceFile) {
+    private C0035(member: StSymbol, sourceFile: StSourceFile) {
 
         const diagnostic = new Diagnostic(
-            symbol.selectionRange ?? symbol.range,
-            `Program name, function or function block instance expected instead of '${symbol.id}'`,
+            member.selectionRange ?? member.range,
+            `Program name, function or function block instance expected instead of '${member.id}'`,
             DiagnosticSeverity.Error
         );
 
@@ -594,11 +600,11 @@ export class SemanticModelBuilder {
     }
 
     // C0036: Cannot call object of type '{name}'
-    private C0036(symbol: StSymbol, sourceFile: StSourceFile) {
+    private C0036(member: StSymbol, typeDeclaration: StSymbol, sourceFile: StSourceFile) {
 
         const diagnostic = new Diagnostic(
-            symbol.selectionRange ?? symbol.range,
-            `Cannot call object of type '${getTypeOfType(symbol.kind)}'`,
+            member.selectionRange ?? member.range,
+            `Cannot call object of type '${getTypeOfType(typeDeclaration.kind)}'`,
             DiagnosticSeverity.Error
         );
 

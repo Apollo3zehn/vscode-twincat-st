@@ -1,9 +1,7 @@
+// C0036: Cannot call object of type '{name}'
 FUNCTION_BLOCK FB_C0036
-    // C0036: Cannot call object of type 'VAR_GLOBAL'
     GVL_C0036();
     E_C0036();
-
-    // C0036: Cannot call object of type 'TYPE'
     ST_C0036();
 END_FUNCTION_BLOCK
 

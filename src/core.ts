@@ -28,7 +28,7 @@ export class StSymbol {
         public readonly documentUri: Uri,
         public readonly id: string,
         public readonly kind: StSymbolKind,
-        public readonly context: ParserRuleContext,
+        public readonly context: ParserRuleContext | undefined,         // Only undefined when fake type usage
         public readonly range: Range,
         public readonly selectionRange: Range | undefined) {
         //
@@ -65,22 +65,34 @@ export class StSymbol {
 
     // For variable declarations
     get isArray(): boolean {
+
         if (this.kind !== StSymbolKind.TypeUsage)
             throw new Error("StSymbolKind is not TypeUsage");
+
+        if (!this.context)
+            return false;
 
         return !!(this.context as TypeContext).ARRAY();
     }
     
     get isPointer(): boolean {
+
         if (this.kind !== StSymbolKind.TypeUsage)
             throw new Error("StSymbolKind is not TypeUsage");
+
+        if (!this.context)
+            return false;
 
         return !!(this.context as TypeContext).POINTER_TO();
     }
 
     get isReference(): boolean {
+
         if (this.kind !== StSymbolKind.TypeUsage)
             throw new Error("StSymbolKind is not TypeUsage");
+
+        if (!this.context)
+            return false;
 
         return !!(this.context as TypeContext).REFERENCE_TO();
     }

@@ -11,3 +11,6 @@
 - Fix C0035 (fix syntax error, double method call) and C0185 (fix syntax error + Colorization )
 
 - finish native data type support
+
+- repair:
+    Do enum members have a "type usage" or something similar? Currently it is undefined which makes C0035 fail partially

@@ -14,3 +14,9 @@
 
 - repair:
     Do enum members have a "type usage" or something similar? Currently it is undefined which makes C0035 fail partially
+
+
+- M_A_1().A; => C0061 Bit access on function call is not allowed (M_A_1() => INT)
+- C0050: Bit access requires literal or symbolic integer constant
+- M_A.A: C0037: 'A' is no input of 'M_A' (M_A => method)
+- THIS^.C: C0004: 'C' is no component of 'FB_GdpFixture'

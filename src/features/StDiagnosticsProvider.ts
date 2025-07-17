@@ -54,10 +54,10 @@ export class StDiagnosticsProvider {
 
             if (
                 symbol.kind === StSymbolKind.VariableDeclaration &&
-                symbol.typeUsage?.declaration
+                symbol.typeUsage?.type?.declaration
             ) {
                 const typeUsage = symbol.typeUsage;
-                const typeKind = typeUsage.declaration!.kind;
+                const typeKind = typeUsage.type!.declaration!.kind;
 
                 if (!
                     (
@@ -91,7 +91,7 @@ export class StDiagnosticsProvider {
             ) {
                 const diagnostic = new Diagnostic(
                     symbol.selectionRange ?? symbol.range,
-                    `Amiguous use of name '${symbol.id}'`,
+                    `Ambiguous use of name '${symbol.id}'`,
                     DiagnosticSeverity.Warning
                 );
 
@@ -119,48 +119,6 @@ export class StDiagnosticsProvider {
 
                 diagnostic.tags = [DiagnosticTag.Unnecessary];
                 diagnostics.push(diagnostic);
-            }
-
-            if (symbol.kind === StSymbolKind.TypeUsage) {
-
-                const type = symbol.type!;
-                const isArrayOrPointerOrReference = type.isArray || type.isPointer || type.isReference;
-
-                // C0077: Unknown type: '{type}'
-                if (
-                    !(
-                        type.builtinType ||
-                        type.declaration ||
-                        isArrayOrPointerOrReference
-                    )
-                ) {
-                    const diagnostic = new Diagnostic(
-                        symbol.selectionRange ?? symbol.range,
-                        `Unknown type: '${symbol.id ?? "?"}'`,
-                        DiagnosticSeverity.Error
-                    );
-                    
-                    diagnostic.code = "C0077";
-                    diagnostics.push(diagnostic);
-                }
-
-                // C0261: A reference type is not allowed as base type of an array, pointer, or reference
-                if (isArrayOrPointerOrReference && type.underlyingType) {
-
-                    const underlyingType = type.underlyingType;
-
-                    if (underlyingType.isReference) {
-
-                        const diagnostic = new Diagnostic(
-                            symbol.selectionRange ?? symbol.range,
-                            "A reference type is not allowed as base type of an array, pointer, or reference",
-                            DiagnosticSeverity.Error
-                        );
-                        
-                        diagnostic.code = "C0261";
-                        diagnostics.push(diagnostic);
-                    }
-                }
             }
         }
 

@@ -31,7 +31,7 @@ export class StType {
 
     public context: TypeContext | undefined;
 
-    get isArray(): boolean {
+    public get isArray(): boolean {
 
         if (!this.context)
             return false;
@@ -39,7 +39,7 @@ export class StType {
         return !!this.context.ARRAY();
     }
     
-    get isPointer(): boolean {
+    public get isPointer(): boolean {
 
         if (!this.context)
             return false;
@@ -47,7 +47,7 @@ export class StType {
         return !!this.context.POINTER_TO();
     }
 
-    get isReference(): boolean {
+    public get isReference(): boolean {
 
         if (!this.context)
             return false;
@@ -55,13 +55,16 @@ export class StType {
         return !!this.context.REFERENCE_TO();
     }
 
-    getId(): string | undefined {
+    public getId(): string {
 
         if (this.builtinType)
             return StBuiltinType[this.builtinType];
 
+        else if (this.declaration)
+            return this.declaration.id
+                
         else
-            return this.declaration?.id;
+            return "Unknown type";
     }
 }
 

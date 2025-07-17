@@ -43,56 +43,71 @@ export class SemanticModelBuilder {
                 if (symbol.kind != StSymbolKind.TypeUsage)
                     continue;
 
-                if (symbol.type!.builtinType)
-                    continue;
-                        
-                const declaration = this.findTypeDeclaration(symbol);
-                symbol.type!.declaration = declaration;
+                const type = symbol.type!;
+                const isArrayOrPointerOrReference = type.isArray || type.isPointer || type.isReference;
 
-                if (declaration) {
+                if (isArrayOrPointerOrReference && type.underlyingType) {
 
-                    // Inheritance
-                    if (ctx.parent instanceof ExtendsClauseContext && symbol.parent) {
+                    const underlyingType = type.underlyingType;
 
-                        const parentTypeInfo = symbol.parent.typeHierarchyInfo;
+                    if (underlyingType.isReference)
+                        this.C0261(symbol, sourceFile);
+                }
 
-                        if (parentTypeInfo) {
+                if (!(type.builtinType || isArrayOrPointerOrReference)) {
+                       
+                    const declaration = this.findTypeDeclaration(symbol);
+                    type.declaration = declaration;
 
-                            if (!parentTypeInfo.baseTypes)
-                                parentTypeInfo.baseTypes = []
+                    if (declaration) {
 
-                            parentTypeInfo.baseTypes.push(declaration);
+                        // Inheritance
+                        if (ctx.parent instanceof ExtendsClauseContext && symbol.parent) {
 
-                            // Add back reference
-                            const declaringSymbolTypeInfo = declaration.typeHierarchyInfo!;
+                            const parentTypeInfo = symbol.parent.typeHierarchyInfo;
 
-                            if (!declaringSymbolTypeInfo.subTypes)
-                                declaringSymbolTypeInfo.subTypes = []
+                            if (parentTypeInfo) {
 
-                            declaringSymbolTypeInfo.subTypes.push(symbol.parent);
+                                if (!parentTypeInfo.baseTypes)
+                                    parentTypeInfo.baseTypes = []
+
+                                parentTypeInfo.baseTypes.push(declaration);
+
+                                // Add back reference
+                                const declaringSymbolTypeInfo = declaration.typeHierarchyInfo!;
+
+                                if (!declaringSymbolTypeInfo.subTypes)
+                                    declaringSymbolTypeInfo.subTypes = []
+
+                                declaringSymbolTypeInfo.subTypes.push(symbol.parent);
+                            }
+                        }
+
+                        // Interfaces
+                        if (ctx.parent instanceof ImplementsClauseContext && symbol.parent) {
+
+                            const parentTypeInfo = symbol.parent.typeHierarchyInfo;
+
+                            if (parentTypeInfo) {
+
+                                if (!parentTypeInfo.interfaces)
+                                    parentTypeInfo.interfaces = []
+
+                                parentTypeInfo.interfaces.push(declaration);
+
+                                // Add back reference
+                                const declaringSymbolTypeInfo = declaration.typeHierarchyInfo!;
+
+                                if (!declaringSymbolTypeInfo.subTypes)
+                                    declaringSymbolTypeInfo.subTypes = []
+
+                                declaringSymbolTypeInfo.subTypes.push(symbol.parent);
+                            }
                         }
                     }
 
-                    // Interfaces
-                    if (ctx.parent instanceof ImplementsClauseContext && symbol.parent) {
-
-                        const parentTypeInfo = symbol.parent.typeHierarchyInfo;
-
-                        if (parentTypeInfo) {
-
-                            if (!parentTypeInfo.interfaces)
-                                parentTypeInfo.interfaces = []
-
-                            parentTypeInfo.interfaces.push(declaration);
-
-                            // Add back reference
-                            const declaringSymbolTypeInfo = declaration.typeHierarchyInfo!;
-
-                            if (!declaringSymbolTypeInfo.subTypes)
-                                declaringSymbolTypeInfo.subTypes = []
-
-                            declaringSymbolTypeInfo.subTypes.push(symbol.parent);
-                        }
+                    else {
+                        this.C0077(symbol, sourceFile);
                     }
                 }
             }
@@ -394,7 +409,7 @@ export class SemanticModelBuilder {
             );
 
             diagnostic.code = "C0032";
-            // sourceFile.diagnostics.push(diagnostic);
+            sourceFile.diagnostics.push(diagnostic);
         }
     }
 
@@ -433,9 +448,10 @@ export class SemanticModelBuilder {
 
                 if (currentMember.declaration.kind === StSymbolKind.Property) {
 
+                    const isLastMemberAccess = memberAccesses[memberAccesses.length - 1] === memberAccess;
                     const isAssignment = currentMember.context.parent?.parent instanceof AssignmentContext;
 
-                    if (!isAssignment) {
+                    if (!(isAssignment && isLastMemberAccess)) {
 
                         const propertyCtx = currentMember.declaration.context as PropertyContext;
                         const propertyBodyCtx = propertyCtx.propertyBody();
@@ -484,9 +500,15 @@ export class SemanticModelBuilder {
         // The calling method ensures that declaration is defined
         const memberDeclaration = member.declaration!;
 
+        let noMoreOpsAllowed = false;
         let currentType = memberDeclaration.typeUsage?.type;
 
         for (const postfixOp of postfixOps) {
+
+            if (noMoreOpsAllowed) {
+                this.C0185(member, sourceFile);
+                return undefined;
+            }
 
             if (postfixOp.dereference()) {
                 
@@ -508,7 +530,13 @@ export class SemanticModelBuilder {
             else if (postfixOp.arrayIndex()) {
                 
                 if (!currentType?.isArray) {
-                    this.C0047(postfixOp, member, memberDeclaration.id, sourceFile);
+                    
+                    const id = currentType
+                        ? currentType.getId()
+                        : memberDeclaration.id;
+
+                    this.C0047(postfixOp, member, id, sourceFile);
+
                     return undefined;
                 }
 
@@ -517,6 +545,8 @@ export class SemanticModelBuilder {
 
             else if (postfixOp.call()) {
 
+                noMoreOpsAllowed = true;
+
                 // Member declaration is a variable declaration
                 if (currentType) {
 
@@ -524,8 +554,6 @@ export class SemanticModelBuilder {
                         continue;
 
                     this.C0035(member, sourceFile);
-
-                    // TODO: throw XXX when there are more postfixops after this one
                 }
 
                 // Member declaration is something else
@@ -534,14 +562,16 @@ export class SemanticModelBuilder {
 
                         case StSymbolKind.Method:
                         case StSymbolKind.Function:
-                            // all good
-                            // TODO: throw XXX when there are more postfixops after this one)
                             break;
                             
                         case StSymbolKind.FunctionBlock:
                             this.C0080(member, sourceFile);
                             return undefined;
 
+                        case StSymbolKind.EnumMember:
+                            this.C0035(member, sourceFile);
+                            return undefined;
+                        
                         default:
                             this.C0036(member, memberDeclaration, sourceFile);
                             return undefined;
@@ -610,7 +640,7 @@ export class SemanticModelBuilder {
 
         const diagnostic = new Diagnostic(
             getContextRange(postfixOp.arrayIndex()) ?? member.selectionRange ?? member.range,
-            `Cannot apply indexing with [] to an expression of type '${typeId}}'`,
+            `Cannot apply indexing with [] to an expression of type '${typeId}'`,
             DiagnosticSeverity.Error
         );
 
@@ -631,6 +661,19 @@ export class SemanticModelBuilder {
         sourceFile.diagnostics.push(diagnostic);
     }
 
+    // C0077: Unknown type: '{type}'
+    private C0077(symbol: StSymbol, sourceFile: StSourceFile) {
+        
+        const diagnostic = new Diagnostic(
+            symbol.selectionRange ?? symbol.range,
+            `Unknown type: '${symbol.id ?? "?"}'`,
+            DiagnosticSeverity.Error
+        );
+
+        diagnostic.code = "C0077";
+        sourceFile.diagnostics.push(diagnostic);
+    }
+
     // C0080: Function block '{name}' must be instantiated to be accessed
     private C0080(member: StSymbol, sourceFile: StSourceFile) {
 
@@ -645,15 +688,41 @@ export class SemanticModelBuilder {
     }
 
     // C0143: The property '{name}' cannot be used in this context because it lacks the get accessor
-    private C0143(currentMember: StSymbol, sourceFile: StSourceFile) {
+    private C0143(member: StSymbol, sourceFile: StSourceFile) {
         
         const diagnostic = new Diagnostic(
-            currentMember.selectionRange ?? currentMember.range,
-            `The property '${currentMember.id}' cannot be used in this context because it lacks the get accessor`,
+            member.selectionRange ?? member.range,
+            `The property '${member.id}' cannot be used in this context because it lacks the get accessor`,
             DiagnosticSeverity.Error
         );
 
         diagnostic.code = "C0143";
+        sourceFile.diagnostics.push(diagnostic);
+    }
+
+    // C0185: It is not possible to perform component access '.', index access '[]' or call '()' on result of function call. Assign result to help variable first.
+    private C0185(member: StSymbol, sourceFile: StSourceFile) {
+
+        const diagnostic = new Diagnostic(
+            member.selectionRange ?? member.range,
+            "It is not possible to perform component access '.', index access '[]' or call '()' on result of function call. Assign result to help variable first.",
+            DiagnosticSeverity.Error
+        );
+
+        diagnostic.code = "C0143";
+        sourceFile.diagnostics.push(diagnostic);
+    }
+
+    // C0261: A reference type is not allowed as base type of an array, pointer, or reference
+    private C0261(symbol: StSymbol, sourceFile: StSourceFile) {
+        
+        const diagnostic = new Diagnostic(
+            symbol.selectionRange ?? symbol.range,
+            "A reference type is not allowed as base type of an array, pointer, or reference",
+            DiagnosticSeverity.Error
+        );
+
+        diagnostic.code = "C0261";
         sourceFile.diagnostics.push(diagnostic);
     }
 

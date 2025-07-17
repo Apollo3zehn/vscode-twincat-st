@@ -21,8 +21,6 @@ FUNCTION_BLOCK FB_C0035
 
     _a := A();
     A();
-
-    M_A()();
 END_FUNCTION_BLOCK
 
 TYPE E_C0035 :

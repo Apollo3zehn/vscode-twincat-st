@@ -1,3 +1,4 @@
+// Ambiguous use of name 'name'
 FUNCTION_BLOCK AmbiguousUse
 
     VAR

@@ -305,6 +305,8 @@ export class StVisitor extends StructuredTextVisitor<void> {
         );
 
         const type = new StType();
+        type.context = ctx;
+
         const baseType = ctx.baseType();
 
         if (baseType) {

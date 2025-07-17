@@ -46,9 +46,10 @@ export class SemanticModelBuilder {
                 if (symbol.type!.builtinType)
                     continue;
                         
-                symbol.declaration = this.findTypeDeclaration(symbol);
+                const declaration = this.findTypeDeclaration(symbol);
+                symbol.type!.declaration = declaration;
 
-                if (symbol.declaration) {
+                if (declaration) {
 
                     // Inheritance
                     if (ctx.parent instanceof ExtendsClauseContext && symbol.parent) {
@@ -60,10 +61,10 @@ export class SemanticModelBuilder {
                             if (!parentTypeInfo.baseTypes)
                                 parentTypeInfo.baseTypes = []
 
-                            parentTypeInfo.baseTypes.push(symbol.declaration);
+                            parentTypeInfo.baseTypes.push(declaration);
 
                             // Add back reference
-                            const declaringSymbolTypeInfo = symbol.declaration.typeHierarchyInfo!;
+                            const declaringSymbolTypeInfo = declaration.typeHierarchyInfo!;
 
                             if (!declaringSymbolTypeInfo.subTypes)
                                 declaringSymbolTypeInfo.subTypes = []
@@ -82,10 +83,10 @@ export class SemanticModelBuilder {
                             if (!parentTypeInfo.interfaces)
                                 parentTypeInfo.interfaces = []
 
-                            parentTypeInfo.interfaces.push(symbol.declaration);
+                            parentTypeInfo.interfaces.push(declaration);
 
                             // Add back reference
-                            const declaringSymbolTypeInfo = symbol.declaration.typeHierarchyInfo!;
+                            const declaringSymbolTypeInfo = declaration.typeHierarchyInfo!;
 
                             if (!declaringSymbolTypeInfo.subTypes)
                                 declaringSymbolTypeInfo.subTypes = []
@@ -198,7 +199,7 @@ export class SemanticModelBuilder {
 
             scope = isType
                 ? declaration
-                : declaration?.typeUsage?.declaration;
+                : declaration?.typeUsage?.type?.declaration;
         }
 
         else {
@@ -393,7 +394,7 @@ export class SemanticModelBuilder {
             );
 
             diagnostic.code = "C0032";
-            sourceFile.diagnostics.push(diagnostic);
+            // sourceFile.diagnostics.push(diagnostic);
         }
     }
 
@@ -480,7 +481,8 @@ export class SemanticModelBuilder {
         sourceFile: StSourceFile
     ): StType | undefined {
 
-        const memberDeclaration = member.declaration!; // The calling method ensures that declaration is defined
+        // The calling method ensures that declaration is defined
+        const memberDeclaration = member.declaration!;
 
         let currentType = memberDeclaration.typeUsage?.type;
 
@@ -515,51 +517,35 @@ export class SemanticModelBuilder {
 
             else if (postfixOp.call()) {
 
-                let typeKind: StSymbolKind | undefined;
+                // Member declaration is a variable declaration
+                if (currentType) {
 
-                switch (memberDeclaration.kind) {
+                    if (currentType!.declaration?.kind === StSymbolKind.FunctionBlock)
+                        continue;
 
-                    case StSymbolKind.Method:
-                    case StSymbolKind.Function:
-                        // all good
-                        // TODO: throw XXX when there are more postfixops after this one
-                        break;
+                    this.C0035(member, sourceFile);
 
-                    case StSymbolKind.VariableDeclaration:
+                    // TODO: throw XXX when there are more postfixops after this one
+                }
 
-                        const typeDeclaration = currentType!.declaration;
+                // Member declaration is something else
+                else {
+                    switch (memberDeclaration.kind) {
 
-                        switch (typeDeclaration?.kind) {
-
-                            case StSymbolKind.Program:
-                            case StSymbolKind.Function:
-                            case StSymbolKind.Method:
-                                continue;
+                        case StSymbolKind.Method:
+                        case StSymbolKind.Function:
+                            // all good
+                            // TODO: throw XXX when there are more postfixops after this one)
+                            break;
                             
-                            case StSymbolKind.VariableDeclaration:
-                                
-                                typeKind = memberDeclaration.typeUsage?.declaration?.kind;
-                                
-                                if (typeKind === StSymbolKind.FunctionBlock)
-                                    continue;
+                        case StSymbolKind.FunctionBlock:
+                            this.C0080(member, sourceFile);
+                            return undefined;
 
-                                this.C0035(member, sourceFile);
-                                return undefined;
-                            
-                            case StSymbolKind.FunctionBlock:
-                                this.C0080(member, sourceFile);
-                                return undefined;
-                            
-                            default:
-                                this.C0035(member, sourceFile);
-                                return undefined;
-                        }
-
-                        // TODO: throw XXX when there are more postfixops after this one
-                        
-                    default:
-                        this.C0036(member, memberDeclaration, sourceFile);
-                        return undefined;
+                        default:
+                            this.C0036(member, memberDeclaration, sourceFile);
+                            return undefined;
+                    }
                 }
             }
         }

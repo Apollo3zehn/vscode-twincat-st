@@ -69,6 +69,10 @@ FUNCTION_BLOCK MemberQualifier
         F_MemberQualifier();
     END_METHOD
 
+    METHOD MyMethod2 : INT
+        //
+    END_METHOD
+
     // Assignments + Expressions (variable usage and method/function usage)
     _variable := _variable;
     _variable := THIS^._variable;
@@ -89,6 +93,7 @@ FUNCTION_BLOCK MemberQualifier
     // Call statements
     _b1();
     MyMethod();
+    MyMethod2();
     THIS^.MyMethod();
 
     THIS^._b1.MyMethod();

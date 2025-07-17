@@ -8,4 +8,9 @@ FUNCTION_BLOCK FB_C0047
 
     _a := _a[0];
     _a := _b^[0];
+    GVL_C0047[0];
 END_FUNCTION_BLOCK
+
+VAR_GLOBAL GVL_C0047
+    dummy: INT;
+END_VAR

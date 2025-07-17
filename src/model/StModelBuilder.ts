@@ -1,9 +1,9 @@
 import { CharStream, CommonTokenStream } from "antlr4ng";
-import { Diagnostic, DiagnosticSeverity, TextDocument, TreeItem, Uri, workspace } from "vscode";
-import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind } from "../core.js";
+import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vscode";
+import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
 import { AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
-import { getContextRange, getOriginalText, getTokenRange, getTypeIdFromTypeUsage, getTypeOfType } from "../utils.js";
+import { getContextRange, getOriginalText, getTokenRange, getTypeOfType } from "../utils.js";
 import { StVisitor } from "./StVisitor.js";
 
 export class SemanticModelBuilder {
@@ -43,7 +43,7 @@ export class SemanticModelBuilder {
                 if (symbol.kind != StSymbolKind.TypeUsage)
                     continue;
 
-                if (symbol.builtinType)
+                if (symbol.type!.builtinType)
                     continue;
                         
                 symbol.declaration = this.findTypeDeclaration(symbol);
@@ -182,19 +182,6 @@ export class SemanticModelBuilder {
     //#region Variable usages or call statements
 
     private findDeclaration(member: StSymbol, qualifier: StSymbol | undefined) {
-        
-        /* Input examples:
-         * 
-         * Call statements
-         *      a.b.c();
-         *      d();
-         * 
-         * Assignments
-         *      x = a.b.c;
-         *      x = d;
-         *      x = a.b.c();
-         *      x = d();
-         */
 
         // Find scope
         let scope: StSymbol | undefined;
@@ -287,10 +274,10 @@ export class SemanticModelBuilder {
     private evaluateAssignment(assignment: AssignmentContext, sourceFile: StSourceFile) {
         
         const lhsCtx = assignment.memberExpression();
-        const lhsTypeUsage = this.evaluateMemberExpression(lhsCtx, sourceFile, true);
+        const lhsType = this.evaluateMemberExpression(lhsCtx, sourceFile, true);
 
         const rhsCtx = assignment.expr();
-        const rhsTypeUsage = this.evaluateExpression(rhsCtx, sourceFile);
+        const rhsType = this.evaluateExpression(rhsCtx, sourceFile);
 
         const operatorCtx = assignment.assignmentOperator();
         const operatorText = operatorCtx.getText();
@@ -298,7 +285,7 @@ export class SemanticModelBuilder {
 
         if (isRefAssignment) {
 
-            if (!lhsTypeUsage?.isReference) {
+            if (!lhsType?.isReference) {
 
                 const diagnostic = new Diagnostic(
                     getContextRange(lhsCtx)!,
@@ -313,10 +300,10 @@ export class SemanticModelBuilder {
 
         else {
             
-            if (lhsTypeUsage?.builtinType && rhsTypeUsage?.builtinType) {
+            if (lhsType?.builtinType && rhsType?.builtinType) {
 
-                const lhsNativeType = StModel.nativeTypes.get(lhsTypeUsage?.builtinType);
-                const rhsNativeType = StModel.nativeTypes.get(rhsTypeUsage?.builtinType);
+                const lhsNativeType = StModel.nativeTypes.get(lhsType?.builtinType);
+                const rhsNativeType = StModel.nativeTypes.get(rhsType?.builtinType);
 
                 if (!lhsNativeType || !rhsNativeType)
                     return;
@@ -340,7 +327,7 @@ export class SemanticModelBuilder {
 
                                     const warning = new Diagnostic(
                                         getContextRange(rhsCtx)!,
-                                        `Implicit conversion from signed type '${StBuiltinType[rhsTypeUsage?.builtinType]}' to unsigned type '${StBuiltinType[lhsTypeUsage?.builtinType]}': Possible change of sign`,
+                                        `Implicit conversion from signed type '${StBuiltinType[rhsType?.builtinType]}' to unsigned type '${StBuiltinType[lhsType?.builtinType]}': Possible change of sign`,
                                         DiagnosticSeverity.Warning
                                     );
 
@@ -351,7 +338,7 @@ export class SemanticModelBuilder {
 
                                     const warning = new Diagnostic(
                                         getContextRange(rhsCtx)!,
-                                        `Implicit conversion from unsigned type '${StBuiltinType[rhsTypeUsage?.builtinType]}' to signed type '${StBuiltinType[lhsTypeUsage?.builtinType]}': Possible change of sign`,
+                                        `Implicit conversion from unsigned type '${StBuiltinType[rhsType?.builtinType]}' to signed type '${StBuiltinType[lhsType?.builtinType]}': Possible change of sign`,
                                         DiagnosticSeverity.Warning
                                     );
 
@@ -376,7 +363,7 @@ export class SemanticModelBuilder {
                             ) {
                                 const warning = new Diagnostic(
                                     getContextRange(rhsCtx)!,
-                                    `Implicit conversion from '${StBuiltinType[rhsTypeUsage?.builtinType]}' to '${StBuiltinType[lhsTypeUsage?.builtinType]}': Possible loss of information`,
+                                    `Implicit conversion from '${StBuiltinType[rhsType?.builtinType]}' to '${StBuiltinType[lhsType?.builtinType]}': Possible loss of information`,
                                     DiagnosticSeverity.Warning
                                 );
 
@@ -391,12 +378,12 @@ export class SemanticModelBuilder {
             }
 
             // C0032: Cannot convert type '{type}' to type '{type}'
-            const lhsTypeId = lhsTypeUsage
-                ? getTypeIdFromTypeUsage(lhsTypeUsage)
+            const lhsTypeId = lhsType
+                ? lhsType.getId()
                 : getOriginalText(lhsCtx);
             
-            const rhsTypeId = rhsTypeUsage
-                ? getTypeIdFromTypeUsage(rhsTypeUsage)
+            const rhsTypeId = rhsType
+                ? rhsType.getId()
                 : getOriginalText(rhsCtx);
 
             const diagnostic = new Diagnostic(
@@ -410,7 +397,7 @@ export class SemanticModelBuilder {
         }
     }
 
-    private evaluateExpression(expression: ExprContext, sourceFile: StSourceFile): StSymbol | undefined {
+    private evaluateExpression(expression: ExprContext, sourceFile: StSourceFile): StType | undefined {
 
         const memberExpression = expression.memberExpression();
 
@@ -424,12 +411,12 @@ export class SemanticModelBuilder {
         memberExpression: MemberExpressionContext,
         sourceFile: StSourceFile,
         isAssignment: boolean
-    ): StSymbol | undefined {
+    ): StType | undefined {
 
         const memberAccesses = memberExpression.memberAccess();
 
         let currentMember: StSymbol | undefined = undefined;
-        let currentTypeUsage: StSymbol | undefined = undefined;
+        let currentType: StType | undefined = undefined;
         let currentQualifier: StSymbol | undefined = undefined;
 
         for (const memberAccess of memberAccesses) {
@@ -441,11 +428,33 @@ export class SemanticModelBuilder {
 
             this.findDeclaration(currentMember, currentQualifier);
 
-            currentTypeUsage = this.evaluatePostfixOps(
-                currentMember,
-                memberAccess.postfixOp(),
-                sourceFile
-            );
+            if (currentMember.declaration) {
+
+                if (currentMember.declaration.kind === StSymbolKind.Property) {
+
+                    const isAssignment = currentMember.context.parent?.parent instanceof AssignmentContext;
+
+                    if (!isAssignment) {
+
+                        const propertyCtx = currentMember.declaration.context as PropertyContext;
+                        const propertyBodyCtx = propertyCtx.propertyBody();
+                        const getter = propertyBodyCtx.getter();
+
+                        if (!getter)                           
+                            this.C0143(currentMember, sourceFile);
+                    }
+                }
+
+                currentType = this.evaluatePostfixOps(
+                    currentMember,
+                    memberAccess.postfixOp(),
+                    sourceFile
+                );
+            }
+
+            else {
+                this.C0046(currentMember, sourceFile);
+            }
 
             currentQualifier = currentMember;
         }
@@ -458,131 +467,116 @@ export class SemanticModelBuilder {
             const propertyBodyCtx = propertyCtx.propertyBody();
             const setter = propertyBodyCtx.setter();
 
-            if (!setter) {
-                // C0018 '{name}' is no valid assignment target
-                const diagnostic = new Diagnostic(
-                    lastMember.selectionRange ?? lastMember.range,
-                    `'${lastMember.id}' is no valid assignment target`,
-                    DiagnosticSeverity.Error
-                );
-
-                diagnostic.code = "C0018";
-                sourceFile.diagnostics.push(diagnostic);
-            }
+            if (!setter)
+                this.C0018(lastMember, sourceFile);
         }
 
-        return currentTypeUsage;
-    }
+        return currentType;
+    }  
 
     private evaluatePostfixOps(
         member: StSymbol,
         postfixOps: PostfixOpContext[],
         sourceFile: StSourceFile
-    ): StSymbol | undefined {
+    ): StType | undefined {
 
-        let currentTypeUsage = member.declaration?.typeUsage;
+        const memberDeclaration = member.declaration!; // The calling method ensures that declaration is defined
+
+        let currentType = memberDeclaration.typeUsage?.type;
 
         for (const postfixOp of postfixOps) {
 
-            if (!currentTypeUsage)
-                break;
-
-            // C0064: Dereference requires a pointer
             if (postfixOp.dereference()) {
-
-                if (!currentTypeUsage.isPointer) {
-
-                    const diagnostic = new Diagnostic(
-                        getTokenRange(postfixOp.dereference()?.CARET().symbol) ?? member.selectionRange ?? member.range,
-                        `Dereference requires a pointer`,
-                        DiagnosticSeverity.Error
-                    );
-
-                    diagnostic.code = "C0064";
-                    sourceFile.diagnostics.push(diagnostic);
-
-                    break;
+                
+                if (member.id === "THIS") {
+                    currentType = currentType?.underlyingType;
                 }
+                
+                else {
 
-                currentTypeUsage = currentTypeUsage.underlyingTypeUsage;
+                    if (!currentType?.isPointer) {
+                        this.C0064(postfixOp, member, sourceFile);
+                        return undefined;
+                    }
+
+                    currentType = currentType.underlyingType;
+                }
             }
             
-            // C0047: Cannot apply indexing with [] to an expression of type '{type}'
             else if (postfixOp.arrayIndex()) {
-
-                if (!currentTypeUsage.isArray) {
-
-                    const diagnostic = new Diagnostic(
-                        getContextRange(postfixOp.arrayIndex()) ?? member.selectionRange ?? member.range,
-                        `Cannot apply indexing with [] to an expression of type '${currentTypeUsage.id}'`,
-                        DiagnosticSeverity.Error
-                    );
-
-                    diagnostic.code = "C0047";
-                    sourceFile.diagnostics.push(diagnostic);
-
-                    break;
+                
+                if (!currentType?.isArray) {
+                    this.C0047(postfixOp, member, memberDeclaration.id, sourceFile);
+                    return undefined;
                 }
 
-                currentTypeUsage = currentTypeUsage.underlyingTypeUsage;
+                currentType = currentType.underlyingType;
             }
 
             else if (postfixOp.call()) {
 
                 let typeKind: StSymbolKind | undefined;
 
-                const typeDeclaration = currentTypeUsage.declaration;
+                switch (memberDeclaration.kind) {
 
-                switch (typeDeclaration?.kind) {
-
-                    case StSymbolKind.Program:
-                    case StSymbolKind.Function:
                     case StSymbolKind.Method:
-                        continue;
-
-                    case StSymbolKind.Gvl:
-                    case StSymbolKind.Enum:
-                    case StSymbolKind.Struct:
-                        this.C0036(member, typeDeclaration, sourceFile);
+                    case StSymbolKind.Function:
+                        // all good
+                        // TODO: throw XXX when there are more postfixops after this one
                         break;
-                    
+
                     case StSymbolKind.VariableDeclaration:
-                        
-                        typeKind = member.declaration?.typeUsage?.declaration?.kind;
-                        
-                        if (typeKind === StSymbolKind.FunctionBlock)
-                            continue;
 
-                        this.C0035(member, sourceFile);
+                        const typeDeclaration = currentType!.declaration;
 
-                        break;
-                    
-                    case StSymbolKind.FunctionBlock:
-                        this.C0080(currentTypeUsage, sourceFile);
-                        break;
-                    
+                        switch (typeDeclaration?.kind) {
+
+                            case StSymbolKind.Program:
+                            case StSymbolKind.Function:
+                            case StSymbolKind.Method:
+                                continue;
+                            
+                            case StSymbolKind.VariableDeclaration:
+                                
+                                typeKind = memberDeclaration.typeUsage?.declaration?.kind;
+                                
+                                if (typeKind === StSymbolKind.FunctionBlock)
+                                    continue;
+
+                                this.C0035(member, sourceFile);
+                                return undefined;
+                            
+                            case StSymbolKind.FunctionBlock:
+                                this.C0080(member, sourceFile);
+                                return undefined;
+                            
+                            default:
+                                this.C0035(member, sourceFile);
+                                return undefined;
+                        }
+
+                        // TODO: throw XXX when there are more postfixops after this one
+                        
                     default:
-                        this.C0035(member, sourceFile);
-                        break;
+                        this.C0036(member, memberDeclaration, sourceFile);
+                        return undefined;
                 }
-
-                // TODO: currentTypeUsage = xxx
             }
         }
 
-        return currentTypeUsage;
+        return currentType;
     }
 
-    // C0080: Function block '{name}' must be instantiated to be accessed
-    private C0080(member: StSymbol, sourceFile: StSourceFile) {
-
+    // C0018 '{name}' is no valid assignment target
+    private C0018(lastMember: StSymbol, sourceFile: StSourceFile) {
+        
         const diagnostic = new Diagnostic(
-            member.selectionRange ?? member.range,
-            `Function block '${member.id}' must be instantiated to be accessed`,
+            lastMember.selectionRange ?? lastMember.range,
+            `'${lastMember.id}' is no valid assignment target`,
             DiagnosticSeverity.Error
         );
 
-        diagnostic.code = "C0080";
+        diagnostic.code = "C0018";
         sourceFile.diagnostics.push(diagnostic);
     }
 
@@ -600,15 +594,80 @@ export class SemanticModelBuilder {
     }
 
     // C0036: Cannot call object of type '{name}'
-    private C0036(member: StSymbol, typeDeclaration: StSymbol, sourceFile: StSourceFile) {
+    private C0036(member: StSymbol, declaration: StSymbol, sourceFile: StSourceFile) {
 
         const diagnostic = new Diagnostic(
             member.selectionRange ?? member.range,
-            `Cannot call object of type '${getTypeOfType(typeDeclaration.kind)}'`,
+            `Cannot call object of type '${getTypeOfType(declaration.kind)}'`,
             DiagnosticSeverity.Error
         );
 
         diagnostic.code = "C0036";
+        sourceFile.diagnostics.push(diagnostic);
+    }
+
+    // C0046: Identifier '{id}' not defined
+    private C0046(currentMember: StSymbol, sourceFile: StSourceFile) {
+        
+        const diagnostic = new Diagnostic(
+            currentMember.selectionRange ?? currentMember.range,
+            `Identifier '${currentMember.id}' not defined`,
+            DiagnosticSeverity.Error
+        );
+
+        diagnostic.code = "C0046";
+        sourceFile.diagnostics.push(diagnostic);
+    }
+
+    // C0047: Cannot apply indexing with [] to an expression of type '{type}'
+    private C0047(postfixOp: PostfixOpContext, member: StSymbol, typeId: string, sourceFile: StSourceFile) {
+
+        const diagnostic = new Diagnostic(
+            getContextRange(postfixOp.arrayIndex()) ?? member.selectionRange ?? member.range,
+            `Cannot apply indexing with [] to an expression of type '${typeId}}'`,
+            DiagnosticSeverity.Error
+        );
+
+        diagnostic.code = "C0047";
+        sourceFile.diagnostics.push(diagnostic);
+    }
+
+    // C0064: Dereference requires a pointer
+    private C0064(postfixOp: PostfixOpContext, member: StSymbol, sourceFile: StSourceFile) {
+
+        const diagnostic = new Diagnostic(
+            getTokenRange(postfixOp.dereference()?.CARET().symbol) ?? member.selectionRange ?? member.range,
+            `Dereference requires a pointer`,
+            DiagnosticSeverity.Error
+        );
+
+        diagnostic.code = "C0064";
+        sourceFile.diagnostics.push(diagnostic);
+    }
+
+    // C0080: Function block '{name}' must be instantiated to be accessed
+    private C0080(member: StSymbol, sourceFile: StSourceFile) {
+
+        const diagnostic = new Diagnostic(
+            member.selectionRange ?? member.range,
+            `Function block '${member.id}' must be instantiated to be accessed`,
+            DiagnosticSeverity.Error
+        );
+
+        diagnostic.code = "C0080";
+        sourceFile.diagnostics.push(diagnostic);
+    }
+
+    // C0143: The property '{name}' cannot be used in this context because it lacks the get accessor
+    private C0143(currentMember: StSymbol, sourceFile: StSourceFile) {
+        
+        const diagnostic = new Diagnostic(
+            currentMember.selectionRange ?? currentMember.range,
+            `The property '${currentMember.id}' cannot be used in this context because it lacks the get accessor`,
+            DiagnosticSeverity.Error
+        );
+
+        diagnostic.code = "C0143";
         sourceFile.diagnostics.push(diagnostic);
     }
 

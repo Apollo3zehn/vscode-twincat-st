@@ -22,13 +22,56 @@ export class StSourceFile {
     public readonly diagnostics: Diagnostic[] = [];
 }
 
+export class StType {
+
+    public builtinType: StBuiltinType | undefined;      // builtin types
+    public declaration: StSymbol | undefined;           // custom types
+
+    public underlyingType: StType | undefined;          // arrays, references, pointers, enums, aliases
+
+    public context: TypeContext | undefined;
+
+    get isArray(): boolean {
+
+        if (!this.context)
+            return false;
+
+        return !!this.context.ARRAY();
+    }
+    
+    get isPointer(): boolean {
+
+        if (!this.context)
+            return false;
+
+        return !!this.context.POINTER_TO();
+    }
+
+    get isReference(): boolean {
+
+        if (!this.context)
+            return false;
+
+        return !!this.context.REFERENCE_TO();
+    }
+
+    getId(): string | undefined {
+
+        if (this.builtinType)
+            return StBuiltinType[this.builtinType];
+
+        else
+            return this.declaration?.id;
+    }
+}
+
 export class StSymbol {
 
     constructor(
         public readonly documentUri: Uri,
         public readonly id: string,
         public readonly kind: StSymbolKind,
-        public readonly context: ParserRuleContext | undefined,         // Only undefined when fake type usage
+        public readonly context: ParserRuleContext,
         public readonly range: Range,
         public readonly selectionRange: Range | undefined) {
         //
@@ -37,17 +80,18 @@ export class StSymbol {
     public accessModifier: StAccessModifier | undefined;                // for many things
     public references: StSymbol[] | undefined;                          // for many things
 
-    public typeHierarchyInfo: StTypeInfo | undefined;                   // for type declarations
-
-    public typeUsage: StSymbol | undefined;                             // for variable declarations
+    public typeUsage: StSymbol | undefined;                             // for variable declarations & properties
     public variableKind: VariableKind | undefined;                      // for variable declarations
     public parent: StSymbol | undefined;                                // for variable declarations
 
-    public declaration: StSymbol | undefined;                           // for variable and type usages (custom types)
+    public typeHierarchyInfo: StTypeHierarchyInfo | undefined;          // for type declarations
 
-    public underlyingTypeUsage: StSymbol | undefined;                   // for type usage (arrays, references, pointers, enums, aliases)
-    public builtinType: StBuiltinType | undefined;                      // for type usage (builtin types)
-    
+    public returnTypeUsage: StSymbol | undefined;                       // for method & function declarations
+
+    public declaration: StSymbol | undefined;                           // for variable usages
+
+    public type: StType | undefined;                                    // for type usages
+   
     public variablesAndProperties: Map<string, StSymbol> | undefined;   // for function blocks, functions, methods, global variable lists, enums, structs
     public methods: Map<string, StSymbol> | undefined;                  // for function blocks, interfaces
 
@@ -62,40 +106,6 @@ export class StSymbol {
 
         this.children!.push(symbol);
     }
-
-    // For variable declarations
-    get isArray(): boolean {
-
-        if (this.kind !== StSymbolKind.TypeUsage)
-            throw new Error("StSymbolKind is not TypeUsage");
-
-        if (!this.context)
-            return false;
-
-        return !!(this.context as TypeContext).ARRAY();
-    }
-    
-    get isPointer(): boolean {
-
-        if (this.kind !== StSymbolKind.TypeUsage)
-            throw new Error("StSymbolKind is not TypeUsage");
-
-        if (!this.context)
-            return false;
-
-        return !!(this.context as TypeContext).POINTER_TO();
-    }
-
-    get isReference(): boolean {
-
-        if (this.kind !== StSymbolKind.TypeUsage)
-            throw new Error("StSymbolKind is not TypeUsage");
-
-        if (!this.context)
-            return false;
-
-        return !!(this.context as TypeContext).REFERENCE_TO();
-    }
 }
 
 export class StNativeTypeDetails {
@@ -107,9 +117,9 @@ export class StNativeTypeDetails {
     }
 }
 
-export class StTypeInfo {
+export class StTypeHierarchyInfo {
 
-    constructor(init?: Partial<StTypeInfo>) {
+    constructor(init?: Partial<StTypeHierarchyInfo>) {
         Object.assign(this, init);
     }
 

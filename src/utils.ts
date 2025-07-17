@@ -1,6 +1,6 @@
 import { ParserRuleContext, Token, Interval } from "antlr4ng";
 import { Position, Range } from "vscode";
-import { StBuiltinType, StSourceFile, StSymbol, StSymbolKind } from "./core.js";
+import { StBuiltinType, StSourceFile, StSymbol, StSymbolKind, StType } from "./core.js";
 import { AssignmentContext, ExprContext } from "./generated/StructuredTextParser.js";
 
 export function isInRange(range: Range | undefined, position: Position): boolean {
@@ -77,15 +77,6 @@ export function getOriginalText(ctx: ParserRuleContext): string | undefined {
         return ctx.start.inputStream.getTextFromInterval(Interval.of(start, stop));
 
     return undefined;
-}
-
-export function getTypeIdFromTypeUsage(typeUsage: StSymbol): string | undefined {
-
-    if (typeUsage.builtinType)
-        return StBuiltinType[typeUsage.builtinType];
-
-    else
-        return typeUsage.declaration?.id;
 }
 
 export function getTypeOfType(kind: StSymbolKind): string {

@@ -1,6 +1,6 @@
 import { ParserRuleContext, Token } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Uri } from "vscode";
-import { StAccessModifier, StBuiltinType, StSourceFile, StSymbol, StSymbolKind, StTypeInfo, VariableKind } from "../core.js";
+import { StAccessModifier, StBuiltinType, StSourceFile, StSymbol, StSymbolKind, StType, StTypeHierarchyInfo, VariableKind } from "../core.js";
 import { AccessModifierContext, EnumMemberContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StatementContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 import { getContextRange, getOriginalText, getTokenRange } from "../utils.js";
@@ -11,7 +11,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
     private _documentUri: Uri;
     private _parent: StSymbol | undefined;
     private _declaration: StSymbol | undefined;
-    private _underlyingTypeUsage: StSymbol | undefined;
+    private _underlyingType: StType | undefined;
     private _variableKind: VariableKind = VariableKind.None;
 
     constructor(sourceFile: StSourceFile, documentUri: Uri) {
@@ -29,13 +29,13 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
     public override visitTypeDecl = (ctx: TypeDeclContext): void => {
 
-        this._underlyingTypeUsage = undefined;
+        this._underlyingType = undefined;
 
         const symbol = this.createType(ctx);
         this.visitChildren(ctx);
 
-        if (symbol)
-            symbol.underlyingTypeUsage = this._underlyingTypeUsage;
+        if (symbol?.type)
+            symbol.type.underlyingType = this._underlyingType;
     };
 
     public override visitEnumMember = (ctx: EnumMemberContext): void => {
@@ -63,12 +63,14 @@ export class StVisitor extends StructuredTextVisitor<void> {
     };
 
     public override visitFunction = (ctx: FunctionContext): void => {
-        this.createFunction(ctx)
+
+        this.createFunction(ctx);
         this.visitChildren(ctx);
     };
 
     public override visitMethod = (ctx: MethodContext): void => {
-        this.createMethod(ctx)
+
+        this.createMethod(ctx);
         this.visitChildren(ctx);
 
         /* Workaround for the fact that a method can act as a parent itself.
@@ -115,7 +117,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this.visitChildren(ctx);
 
         const symbol = this.createTypeUsage(ctx);
-        this._underlyingTypeUsage = symbol;
+        this._underlyingType = symbol.type;
     }
 
     //#endregion
@@ -138,7 +140,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, StSymbolKind.Interface);
 
-        symbol.typeHierarchyInfo = new StTypeInfo();
+        symbol.typeHierarchyInfo = new StTypeHierarchyInfo();
         symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
@@ -150,16 +152,16 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, StSymbolKind.FunctionBlock);
 
-        symbol.typeHierarchyInfo = new StTypeInfo();
+        symbol.typeHierarchyInfo = new StTypeHierarchyInfo();
         symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
-        this.addFakeTypeUsage(symbol);
         this.addGlobalObject(symbol);
 
         this._parent = symbol;
     }
 
     private createType(ctx: TypeDeclContext): StSymbol | undefined {
+
         const structDeclCtx = ctx.structDecl();
         const enumDeclCtx = ctx.enumDecl();
         const typeCtx = ctx.type();
@@ -183,7 +185,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
-        this.addFakeTypeUsage(symbol);
         this.addGlobalObject(symbol);
 
         this._parent = symbol;
@@ -211,7 +212,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
-        this.addFakeTypeUsage(symbol);
         this.addGlobalObject(symbol);
         
         this._parent = symbol;
@@ -304,6 +304,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
             StSymbolKind.TypeUsage
         );
 
+        const type = new StType();
         const baseType = ctx.baseType();
 
         if (baseType) {
@@ -315,17 +316,29 @@ export class StVisitor extends StructuredTextVisitor<void> {
                 const typeText = builtinType.getText().toUpperCase();
 
                 if (typeText in StBuiltinType)
-                    symbol.builtinType = typeText as StBuiltinType;
+                    type.builtinType = typeText as StBuiltinType;
             }
         }
 
         // If this is not a base type, it must get a base type assigned
         else {
-            symbol.underlyingTypeUsage = this._underlyingTypeUsage;
+            type.underlyingType = this._underlyingType;
         }
 
-        if (this._declaration)
-            this._declaration.typeUsage = symbol;
+        if (this._declaration) {
+            if (
+                this._declaration.kind === StSymbolKind.Method ||
+                this._declaration.kind === StSymbolKind.Function
+            ) {
+                this._declaration.returnTypeUsage = symbol
+            }
+
+            else {
+                this._declaration.typeUsage = symbol;
+            }
+        }
+
+        symbol.type = type;
 
         return symbol;
     }
@@ -402,20 +415,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
     //#endregion
 
     //#region Utils
-
-    private addFakeTypeUsage(symbol: StSymbol) {
-
-        symbol.typeUsage = new StSymbol(
-            this._documentUri,
-            symbol.id,
-            StSymbolKind.TypeUsage,
-            undefined,
-            symbol.range,
-            symbol.selectionRange
-        );
-
-        symbol.typeUsage.declaration = symbol;
-    }
 
     private getAccessModifier(ctx: AccessModifierContext | undefined): StAccessModifier | undefined {
 

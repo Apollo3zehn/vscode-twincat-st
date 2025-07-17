@@ -1,6 +1,5 @@
 import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, TextDocument } from "vscode";
 import { StAccessModifier, StModel, StSymbolKind } from "../core.js";
-import { AssignmentContext, PropertyContext } from "../generated/StructuredTextParser.js";
 import { getTypeOfType } from "../utils.js";
 
 export class StDiagnosticsProvider {
@@ -124,13 +123,14 @@ export class StDiagnosticsProvider {
 
             if (symbol.kind === StSymbolKind.TypeUsage) {
 
-                const isArrayOrPointerOrReference = symbol.isArray || symbol.isPointer || symbol.isReference;
+                const type = symbol.type!;
+                const isArrayOrPointerOrReference = type.isArray || type.isPointer || type.isReference;
 
                 // C0077: Unknown type: '{type}'
                 if (
                     !(
-                        symbol.builtinType ||
-                        symbol.declaration ||
+                        type.builtinType ||
+                        type.declaration ||
                         isArrayOrPointerOrReference
                     )
                 ) {
@@ -145,14 +145,14 @@ export class StDiagnosticsProvider {
                 }
 
                 // C0261: A reference type is not allowed as base type of an array, pointer, or reference
-                if (isArrayOrPointerOrReference && symbol.underlyingTypeUsage) {
+                if (isArrayOrPointerOrReference && type.underlyingType) {
 
-                    const underlyingTypeUsage = symbol.underlyingTypeUsage;
+                    const underlyingType = type.underlyingType;
 
-                    if (underlyingTypeUsage.isReference) {
+                    if (underlyingType.isReference) {
 
                         const diagnostic = new Diagnostic(
-                            underlyingTypeUsage.selectionRange ?? underlyingTypeUsage.range,
+                            symbol.selectionRange ?? symbol.range,
                             "A reference type is not allowed as base type of an array, pointer, or reference",
                             DiagnosticSeverity.Error
                         );
@@ -160,49 +160,6 @@ export class StDiagnosticsProvider {
                         diagnostic.code = "C0261";
                         diagnostics.push(diagnostic);
                     }
-                }
-            }
-
-            if (symbol.kind === StSymbolKind.VariableUsage) {
-
-                if (symbol.declaration) {
-
-                    if (symbol.declaration.kind === StSymbolKind.Property) {
-
-                        const isAssignment = symbol.context?.parent?.parent instanceof AssignmentContext;
-
-                        if (!isAssignment) {
-
-                            const propertyCtx = symbol.declaration.context as PropertyContext;
-                            const propertyBodyCtx = propertyCtx.propertyBody();
-                            const getter = propertyBodyCtx.getter();
-
-                            if (!getter) {
-                                
-                                // C0143: The property '{name}' cannot be used in this context because it lacks the get accessor
-                                const diagnostic = new Diagnostic(
-                                    symbol.selectionRange ?? symbol.range,
-                                    `The property '${symbol.id}' cannot be used in this context because it lacks the get accessor`,
-                                    DiagnosticSeverity.Error
-                                );
-
-                                diagnostic.code = "C0143";
-                                diagnostics.push(diagnostic);
-                            }
-                        }
-                    }
-                }
-
-                else {
-                    // C0046: Identifier '{id}' not defined
-                    const diagnostic = new Diagnostic(
-                        symbol.selectionRange ?? symbol.range,
-                        `Identifier '${symbol.id}' not defined`,
-                        DiagnosticSeverity.Error
-                    );
-
-                    diagnostic.code = "C0046";
-                    diagnostics.push(diagnostic);
                 }
             }
         }

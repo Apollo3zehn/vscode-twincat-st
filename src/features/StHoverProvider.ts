@@ -1,6 +1,6 @@
 import { Hover, HoverProvider, MarkdownString, Position, ProviderResult, TextDocument } from "vscode";
-import { StAccessModifier, StBuiltinType, StModel, StSymbol, StSymbolKind } from "../core.js";
-import { EnumDeclContext, EnumMemberContext, FunctionBlockContext, PropertyContext, StructDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { StAccessModifier, StModel, StSymbol, StSymbolKind } from "../core.js";
+import { EnumMemberContext, StructDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { isInRange } from "../utils.js";
 
 export class StHoverProvider implements HoverProvider {
@@ -34,7 +34,7 @@ export class StHoverProvider implements HoverProvider {
 
         let comment: String | undefined;
 
-        if (declarationSymbol.context?.start) {
+        if (declarationSymbol.context.start) {
             
             const startTokenIndex = declarationSymbol.context.start.tokenIndex;
             const endTokenIndex = declarationSymbol.context.stop?.tokenIndex;
@@ -158,13 +158,13 @@ export class StHoverProvider implements HoverProvider {
                 return `VAR_GLOBAL ${accessModifier}${symbol.id}`;
             
             case StSymbolKind.Alias:
-                return `ALIAS ${accessModifier}${symbol.id} : ${this.getTypeId(symbol)}`;
+                return `ALIAS ${accessModifier}${symbol.id} : ${symbol.type?.getId()}`;
             
             case StSymbolKind.Struct:
                 return `STRUCT ${accessModifier}${symbol.id}`;
             
             case StSymbolKind.Enum:
-                return `ENUM ${accessModifier}${symbol.id} : ${this.getTypeId(symbol)}`;
+                return `ENUM ${accessModifier}${symbol.id} : ${symbol.type?.getId()}`;
             
             case StSymbolKind.EnumMember:
 
@@ -177,14 +177,5 @@ export class StHoverProvider implements HoverProvider {
         }
 
         return symbol.id ?? "";
-    }
-
-    private getTypeId(symbol: StSymbol): string {
-        
-        if (symbol.builtinType)
-            return StBuiltinType[symbol.builtinType];
-
-        else
-            return symbol.underlyingTypeUsage?.id ?? "??"
     }
 }

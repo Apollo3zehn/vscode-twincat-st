@@ -1,6 +1,6 @@
 import { CharStream, CommonTokenStream } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vscode";
-import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType } from "../core.js";
+import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, VariableKind } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
 import { AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
 import { getContextRange, getOriginalText, getTokenRange, getTypeOfType } from "../utils.js";
@@ -449,7 +449,6 @@ export class SemanticModelBuilder {
                 if (currentMember.declaration.kind === StSymbolKind.Property) {
 
                     const isLastMemberAccess = memberAccesses[memberAccesses.length - 1] === memberAccess;
-                    const isAssignment = currentMember.context.parent?.parent instanceof AssignmentContext;
 
                     if (!(isAssignment && isLastMemberAccess)) {
 
@@ -476,17 +475,33 @@ export class SemanticModelBuilder {
             currentQualifier = currentMember;
         }
 
-        const lastMember = currentMember;
+        const lastMember = currentMember!;
 
-        if (isAssignment && lastMember?.declaration?.kind === StSymbolKind.Property) {
+        if (isAssignment) {
 
-            const propertyCtx = lastMember.declaration.context as PropertyContext;
-            const propertyBodyCtx = propertyCtx.propertyBody();
-            const setter = propertyBodyCtx.setter();
+            const lastMemberDeclaration = lastMember?.declaration;
 
-            if (!setter)
-                this.C0018(lastMember, sourceFile);
+            if (lastMemberDeclaration?.kind === StSymbolKind.Property) {
+
+                const propertyCtx = lastMemberDeclaration.context as PropertyContext;
+                const propertyBodyCtx = propertyCtx.propertyBody();
+                const setter = propertyBodyCtx.setter();
+
+                if (!setter)
+                    this.C0018(lastMember, sourceFile);
+            }
+
+            if (!(
+                lastMemberDeclaration?.variableKind === VariableKind.Input ||
+                lastMemberDeclaration?.variableKind === VariableKind.InOut
+            ))  
+            {
+                #error Test this
+                this.C0037(lastMember, sourceFile);
+            }
         }
+
+        
 
         return currentType;
     }  
@@ -619,6 +634,19 @@ export class SemanticModelBuilder {
         );
 
         diagnostic.code = "C0036";
+        sourceFile.diagnostics.push(diagnostic);
+    }
+
+    // C0037: '{name}' is no input of '{name}'
+    private C0037(member: StSymbol, sourceFile: StSourceFile) {
+
+        const diagnostic = new Diagnostic(
+            member.selectionRange ?? member.range,
+            `'${member.id}' is no input of '${member.declaration?.typeUsage?.type?.getId()}'`,
+            DiagnosticSeverity.Error
+        );
+
+        diagnostic.code = "C0037";
         sourceFile.diagnostics.push(diagnostic);
     }
 

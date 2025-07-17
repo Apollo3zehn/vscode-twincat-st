@@ -1,6 +1,8 @@
 - assignment: incompatible types
 
-- Assignment to VAR_OUTPUT C0018?
+- Assignment to VAR_OUTPUT
+    C0037: 'outy' is no input of 'FB_GdpFixture'
+
 
 - M_B()[0]; => Warning "The code has no effect. Is this the intent?"
 

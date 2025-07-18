@@ -34,8 +34,18 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const symbol = this.createType(ctx);
         this.visitChildren(ctx);
 
-        if (symbol?.type)
-            symbol.type.underlyingType = this._underlyingType;
+        if (this._underlyingType) {
+            if (symbol?.type)
+                symbol.type = this._underlyingType;
+        }
+
+        else {
+            if (symbol?.kind === StSymbolKind.Enum) {
+                const defaultType = new StType();
+                defaultType.builtinType = StBuiltinType.INT;
+                symbol.type = defaultType;
+            }
+        }
     };
 
     public override visitEnumMember = (ctx: EnumMemberContext): void => {

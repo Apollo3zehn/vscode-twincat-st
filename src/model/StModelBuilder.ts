@@ -2,7 +2,7 @@ import { CharStream, CommonTokenStream } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vscode";
 import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, VariableKind } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
-import { AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
+import { AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
 import { getContextRange, getOriginalText, getTokenRange, getTypeOfType } from "../utils.js";
 import { StVisitor } from "./StVisitor.js";
 
@@ -315,6 +315,9 @@ export class SemanticModelBuilder {
         }
 
         else {
+
+            if (lhsType?.declaration && lhsType?.declaration === rhsType?.declaration)
+                return;
             
             if (lhsType?.builtinType && rhsType?.builtinType) {
 
@@ -420,7 +423,32 @@ export class SemanticModelBuilder {
         if (memberExpression)
             return this.evaluateMemberExpression(memberExpression, sourceFile, false);
 
+        const literal = expression.literal();
+
+        if (literal)
+            return this.evaluateLiteral(literal);
+
         return undefined;
+    }
+
+    private evaluateLiteral(
+        literal: LiteralContext
+    ): StType | undefined {
+
+        // literal
+        //     : NUMBER
+        //     | BOOL
+        //     | TIME_LITERAL
+        //     | STRING_LITERAL
+        //     ;
+
+        if (literal.BOOL()) {
+
+            const type =  new StType();
+            type.builtinType = StBuiltinType.BOOL;
+
+            return type;
+        }
     }
 
     private evaluateMemberExpression(
@@ -517,7 +545,10 @@ export class SemanticModelBuilder {
         const memberDeclaration = member.declaration!;
 
         let noMoreOpsAllowed = false;
-        let currentType = memberDeclaration.typeUsage?.type;
+
+        let currentType = memberDeclaration.kind === StSymbolKind.EnumMember
+            ? memberDeclaration.parent?.type
+            : memberDeclaration.typeUsage?.type;
 
         for (const postfixOp of postfixOps) {
 
@@ -561,23 +592,42 @@ export class SemanticModelBuilder {
 
             else if (postfixOp.call()) {
 
+                /* Hint: Calls are always standalone, the following is
+                 * not possible in Structured Text:
+                 *
+                 * - MyArrayOfMethods[0]()          (because of C0261)
+                 * - MyMethodWhichReturnsArray()[0] (because of C0185)
+                 */
+
                 noMoreOpsAllowed = true;
 
                 // Member declaration is a variable declaration
                 if (currentType) {
 
-                    if (currentType!.declaration?.kind === StSymbolKind.FunctionBlock)
+                    if (currentType!.declaration?.kind === StSymbolKind.FunctionBlock) {
+                        currentType = undefined;
                         continue;
+                    }
 
                     this.C0035(member, sourceFile);
                 }
 
                 // Member declaration is something else
                 else {
+
+                    /* The following is valid syntax, but will not compile:
+                     * MyArrayOfMethods[0]();
+                     * This means that this branch is only ever executed when
+                     * the call is the very first postfix operation, which
+                     * in turn means we can make use of memberDeclaration instead
+                     * of trying to work with currentType.
+                     */
+
                     switch (memberDeclaration.kind) {
 
                         case StSymbolKind.Method:
                         case StSymbolKind.Function:
+                            currentType = memberDeclaration.returnTypeUsage?.type;
                             break;
                             
                         case StSymbolKind.FunctionBlock:

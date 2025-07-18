@@ -29,35 +29,53 @@ export class StSemanticTokenProvider implements DocumentSemanticTokensProvider {
 
         for (const symbol of sourceFile.symbolMap.values()) {
 
-            // Colorize GVL and Enum names as function block (token type 0)
-            if (
-                symbol.kind === StSymbolKind.VariableUsage &&
-                (
-                    symbol.declaration?.kind === StSymbolKind.Gvl ||
-                    symbol.declaration?.kind === StSymbolKind.Enum
-                )
-            ) {
-                builder.push(
-                    symbol.range.start.line,
-                    symbol.range.start.character,
-                    symbol.id.length,
-                    0, // class token type
-                    0
-                );
-            }
+            if (token.isCancellationRequested)
+                return;
 
-            // Colorize Enum members as enumMember (token type 1)
-            if (
-                symbol.kind === StSymbolKind.VariableUsage &&
-                symbol.declaration?.kind === StSymbolKind.EnumMember
-            ) {
-                builder.push(
-                    symbol.range.start.line,
-                    symbol.range.start.character,
-                    symbol.id.length,
-                    1, // enumMember token type
-                    0
-                );
+            if (symbol.kind === StSymbolKind.VariableUsage) {
+
+                // Colorize GVL and Enum names as function block (token type 0)
+                if (
+                    (
+                        symbol.declaration?.kind === StSymbolKind.Gvl ||
+                        symbol.declaration?.kind === StSymbolKind.Enum
+                    )
+                ) {
+                    builder.push(
+                        symbol.range.start.line,
+                        symbol.range.start.character,
+                        symbol.id.length,
+                        0, // class token type
+                        0
+                    );
+                }
+
+                // Colorize Enum members as enumMember (token type 1)
+                if (symbol.declaration?.kind === StSymbolKind.EnumMember) {
+
+                    builder.push(
+                        symbol.range.start.line,
+                        symbol.range.start.character,
+                        symbol.id.length,
+                        1, // enumMember token type
+                        0
+                    );
+                }
+
+                // Colorize usages of methods/functions as function (token type 2)
+                if (
+                    symbol.declaration?.kind === StSymbolKind.Method ||
+                    symbol.declaration?.kind === StSymbolKind.Function
+                ) {
+                    
+                    builder.push(
+                        symbol.range.start.line,
+                        symbol.range.start.character,
+                        symbol.id.length,
+                        2, // function token type
+                        0
+                    );
+                }
             }
         }
 

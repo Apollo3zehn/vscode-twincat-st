@@ -39,3 +39,4 @@
 - TwinCAT remote control (compiling)
 - Suggestions / Error tolerant parser
 - test explorer
+- Clean up extension.ts

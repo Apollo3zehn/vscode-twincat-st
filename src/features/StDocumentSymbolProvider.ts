@@ -9,7 +9,10 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
         this._model = model;
     }
 
-    provideDocumentSymbols(document: TextDocument, token: CancellationToken): ProviderResult<SymbolInformation[] | DocumentSymbol[]> {
+    provideDocumentSymbols(
+        document: TextDocument,
+        token: CancellationToken
+    ): ProviderResult<SymbolInformation[] | DocumentSymbol[]> {
 
         const sourceFile = this._model.sourceFileMap.get(document.uri.toString());
 
@@ -29,6 +32,9 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
         );
         
         for (const compilationUnit of topLevelUnits) {
+
+            if (token.isCancellationRequested)
+                return;
 
             const symbol = this.toSymbol(compilationUnit);
 

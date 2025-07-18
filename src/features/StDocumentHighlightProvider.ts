@@ -5,7 +5,11 @@ import { isInRange } from "../utils.js";
 export class StDocumentHighlightProvider implements DocumentHighlightProvider {
     constructor(private model: StModel) {}
 
-    provideDocumentHighlights(document: TextDocument, position: Position, token: CancellationToken): ProviderResult<DocumentHighlight[]> {
+    provideDocumentHighlights(
+        document: TextDocument,
+        position: Position,
+        token: CancellationToken
+    ): ProviderResult<DocumentHighlight[]> {
 
         const sourceFile = this.model.sourceFileMap.get(document.uri.toString());
 

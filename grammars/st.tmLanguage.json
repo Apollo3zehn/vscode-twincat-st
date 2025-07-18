@@ -377,19 +377,10 @@
       "patterns": [
         { "include": "#comments" },
         { "include": "#keywords" },
-        { "include": "#calls" },
         { "include": "#assignments" },
         { "include": "#operators" },
         { "include": "#identifiers" }
       ]
-    },
-    "calls": {
-      "match": "\\b((?:[_a-zA-Z][_a-zA-Z0-9]*\\.)*)([_a-zA-Z][_a-zA-Z0-9]*)\\(([^;]*)\\);",
-      "captures": {
-        "1": { "patterns": [{ "include": "#identifiers" }] },
-        "2": { "name": "entity.name.function.member.st" },
-        "3": { "patterns": [{ "include": "#expression" }] }
-      }
     },
     "extends": {
       "patterns": [
@@ -464,7 +455,6 @@
         { "include": "#literals" },
         { "include": "#keywords" },
         { "include": "#operators" },
-        { "include": "#calls" },
         { "include": "#identifiers" }
       ]
     },

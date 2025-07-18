@@ -491,17 +491,18 @@ export class SemanticModelBuilder {
                     this.C0018(lastMember, sourceFile);
             }
 
-            if (!(
-                lastMemberDeclaration?.variableKind === VariableKind.Input ||
-                lastMemberDeclaration?.variableKind === VariableKind.InOut
-            ))  
+            if (
+                lastMemberDeclaration?.kind === StSymbolKind.VariableDeclaration &&
+                memberAccesses.length > 1 &&
+                !(
+                    lastMemberDeclaration?.variableKind === VariableKind.Input ||
+                    lastMemberDeclaration?.variableKind === VariableKind.InOut
+                )
+            )  
             {
-                #error Test this
                 this.C0037(lastMember, sourceFile);
             }
         }
-
-        
 
         return currentType;
     }  
@@ -642,7 +643,7 @@ export class SemanticModelBuilder {
 
         const diagnostic = new Diagnostic(
             member.selectionRange ?? member.range,
-            `'${member.id}' is no input of '${member.declaration?.typeUsage?.type?.getId()}'`,
+            `'${member.id}' is no input of '${member.declaration?.parent?.id}'`,
             DiagnosticSeverity.Error
         );
 

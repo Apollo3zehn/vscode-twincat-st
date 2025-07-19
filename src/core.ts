@@ -152,7 +152,7 @@ export enum StSymbolKind {
 export enum StNativeTypeKind {
     Integer,
     Float,
-    Boolean
+    Logical
 }
 
 export enum VariableKind {
@@ -172,26 +172,40 @@ export enum StAccessModifier {
 }
 
 export enum StBuiltinType {
-    INT = "INT",
-    REAL = "REAL",
+    // Logical types
     BOOL = "BOOL",
-    STRING = "STRING",
-    DINT = "DINT",
+    BIT = "BIT",
+
+    // Bitstring types
     BYTE = "BYTE",
     WORD = "WORD",
     DWORD = "DWORD",
     LWORD = "LWORD",
-    SINT = "SINT",
+
+    // Unsigned integer types
     USINT = "USINT",
     UINT = "UINT",
     UDINT = "UDINT",
-    LINT = "LINT",
     ULINT = "ULINT",
+
+    // Signed integer types
+    SINT = "SINT",
+    INT = "INT",
+    DINT = "DINT",
+    LINT = "LINT",
+
+    // Floating point types
+    REAL = "REAL",
     LREAL = "LREAL",
+
+    // Time and date types
     TIME = "TIME",
     DATE = "DATE",
     TIME_OF_DAY = "TIME_OF_DAY",
-    DATE_AND_TIME = "DATE_AND_TIME"
+    DATE_AND_TIME = "DATE_AND_TIME",
+
+    // String types
+    STRING = "STRING"
 }
 
 export class StModel {
@@ -199,8 +213,9 @@ export class StModel {
     public readonly sourceFileMap = new Map<string, StSourceFile>();
 
     public static readonly nativeTypes = new Map<StBuiltinType, StNativeTypeDetails>([
-        [StBuiltinType.BOOL,  new StNativeTypeDetails(StNativeTypeKind.Boolean, 1, undefined)],
-        
+        [StBuiltinType.BOOL,  new StNativeTypeDetails(StNativeTypeKind.Logical, 1, undefined)],
+        [StBuiltinType.BIT,   new StNativeTypeDetails(StNativeTypeKind.Logical, 1, undefined)],
+
         [StBuiltinType.BYTE,  new StNativeTypeDetails(StNativeTypeKind.Integer, 1, false)],
         [StBuiltinType.WORD,  new StNativeTypeDetails(StNativeTypeKind.Integer, 2, false)],
         [StBuiltinType.DWORD, new StNativeTypeDetails(StNativeTypeKind.Integer, 4, false)],

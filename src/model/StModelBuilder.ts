@@ -1,8 +1,8 @@
-import { CharStream, CommonTokenStream } from "antlr4ng";
+import { CharStream, CommonTokenStream, EpsilonTransition, ParserRuleContext } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vscode";
 import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, VariableKind } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
-import { AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser } from "../generated/StructuredTextParser.js";
+import { AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
 import { getContextRange, getOriginalText, getTokenRange, getTypeOfType } from "../utils.js";
 import { StVisitor } from "./StVisitor.js";
 
@@ -110,6 +110,22 @@ export class SemanticModelBuilder {
                         this.C0077(symbol, sourceFile);
                     }
                 }
+            }
+        }
+
+        // ... then evaluate all variable declaration initializers
+        for (const sourceFile of this._model.sourceFileMap.values()) {
+            
+            for (const [ctx, symbol] of sourceFile.symbolMap) {
+                
+                if (symbol.kind != StSymbolKind.VariableDeclaration)
+                    continue;
+
+                const varDeclCtx = ctx as VarDeclContext;
+                const expression = varDeclCtx.exprOrArrayInit()?.expr();
+
+                if (expression)
+                    this.evaluateExpression(expression, sourceFile);
             }
         }
 
@@ -321,6 +337,9 @@ export class SemanticModelBuilder {
             
             if (lhsType?.builtinType && rhsType?.builtinType) {
 
+                if (lhsType.builtinType === rhsType.builtinType)
+                    return;
+
                 const lhsNativeType = StModel.nativeTypes.get(lhsType?.builtinType);
                 const rhsNativeType = StModel.nativeTypes.get(rhsType?.builtinType);
 
@@ -329,9 +348,9 @@ export class SemanticModelBuilder {
 
                 switch (lhsNativeType.kind) {
 
-                    case StNativeTypeKind.Boolean:
+                    case StNativeTypeKind.Logical:
 
-                        if (rhsNativeType.kind === StNativeTypeKind.Boolean)
+                        if (rhsNativeType.kind === StNativeTypeKind.Logical)
                             return;
 
                         break;
@@ -377,8 +396,14 @@ export class SemanticModelBuilder {
                             rhsNativeType.kind === StNativeTypeKind.Integer
                         ) {
                             if (
-                                rhsNativeType.kind === StNativeTypeKind.Integer &&
-                                rhsNativeType.size >= lhsNativeType.size
+                                (
+                                    rhsNativeType.kind === StNativeTypeKind.Float &&
+                                    rhsNativeType.size > lhsNativeType.size
+                                ) ||
+                                (
+                                    rhsNativeType.kind === StNativeTypeKind.Integer &&
+                                    rhsNativeType.size >= lhsNativeType.size
+                                )
                             ) {
                                 const warning = new Diagnostic(
                                     getContextRange(rhsCtx)!,
@@ -426,13 +451,14 @@ export class SemanticModelBuilder {
         const literal = expression.literal();
 
         if (literal)
-            return this.evaluateLiteral(literal);
+            return this.evaluateLiteral(literal, sourceFile);
 
         return undefined;
     }
 
     private evaluateLiteral(
-        literal: LiteralContext
+        literal: LiteralContext,
+        sourceFile: StSourceFile
     ): StType | undefined {
 
         // literal
@@ -449,6 +475,139 @@ export class SemanticModelBuilder {
 
             return type;
         }
+
+        else if (literal.INTEGER_NUMBER()) {
+
+            const integerNumber = literal.INTEGER_NUMBER()!;
+            let text = integerNumber.getText();
+
+            const isNegative = text.startsWith("-");
+
+            if (isNegative)
+                text = text.substring(1);
+
+            const splittedText = text.split('#');
+
+            let requestedBuiltinType: StBuiltinType | undefined;
+            let radix: number = 10;
+            let value: number;
+
+            /* Important: Do not convert type to uppercase
+             * first because TwinCAT requires the input string 
+             * to be uppercase, otherwise it is a syntax error.
+             */
+            if (splittedText.length === 3) {
+                requestedBuiltinType = splittedText[0] as StBuiltinType;
+                radix = parseInt(splittedText[1], 10);
+            }
+
+            else if (splittedText.length === 2) {
+
+                if (splittedText[0] in StBuiltinType)
+                    requestedBuiltinType = splittedText[0] as StBuiltinType;
+                    
+                else
+                    radix = parseInt(splittedText[0], 10);
+            }
+
+            value = parseInt(splittedText[splittedText.length - 1], radix);
+
+            let requiredBuiltinType: StBuiltinType;
+
+            if (isNegative) {
+
+                if (-value >= -Math.pow(2, 7))
+                    requiredBuiltinType = StBuiltinType.SINT;         // -2^7 .. 2^7-1
+                    
+                else if (-value >= -Math.pow(2, 15))
+                    requiredBuiltinType = StBuiltinType.INT;          // -2^15 .. 2^15-1
+                    
+                else if (-value >= -Math.pow(2, 31))
+                    requiredBuiltinType = StBuiltinType.DINT;         // -2^31 .. 2^31-1
+                    
+                else if (-value >= -Math.pow(2, 63))
+                    requiredBuiltinType = StBuiltinType.LINT;         // -2^63 .. 2^63-1
+                    
+                else {
+                    // Value is too large for any supported type
+                    this.CannotEvaluateExpression(literal, sourceFile);
+                    return undefined;
+                }
+            }
+
+            else {
+
+                if (value <= Math.pow(2, 7) - 1)
+                    requiredBuiltinType = StBuiltinType.SINT;         // -2^7 .. 2^7-1
+                    
+                else if (value <= Math.pow(2, 8) - 1)
+                    requiredBuiltinType = StBuiltinType.USINT;        // 0 .. 2^8-1
+                    
+                else if (value <= Math.pow(2, 15) - 1)
+                    requiredBuiltinType = StBuiltinType.INT;          // -2^15 .. 2^15-1
+                    
+                else if (value <= Math.pow(2, 16) - 1)
+                    requiredBuiltinType = StBuiltinType.UINT;         // 0 .. 2^16-1
+                    
+                else if (value <= Math.pow(2, 31) - 1)
+                    requiredBuiltinType = StBuiltinType.DINT;         // -2^31 .. 2^31-1
+                    
+                else if (value <= Math.pow(2, 32) - 1)
+                    requiredBuiltinType = StBuiltinType.UDINT;        // 0 .. 2^32-1
+                    
+                else if (value <= Math.pow(2, 63) - 1)
+                    requiredBuiltinType = StBuiltinType.LINT;         // -2^63 .. 2^63-1
+                    
+                else if (value <= Math.pow(2, 64) - 1)
+                    requiredBuiltinType = StBuiltinType.ULINT;        // 0 .. 2^64-1
+                    
+                else {
+                    // Value is too large for any supported type
+                    this.CannotEvaluateExpression(literal, sourceFile);
+                    return undefined;
+                }
+            }
+
+            // TODO: 
+            // - Replace CannotEvaluateExpression with proper behavior
+            // - Compare requiredBuiltinType vs requestedBuiltinType
+            // - Make Literals.st all work
+            // - Make C0032_Initializer_Literals.st all fail
+            
+            const type = new StType();
+            type.builtinType = requestedBuiltinType ?? requiredBuiltinType;
+
+            return type;
+        }
+
+        else if (literal.REAL_NUMBER()) {
+
+            const realNumber = literal.REAL_NUMBER()!;
+            let text = realNumber.getText();
+
+            const isNegative = text.startsWith("-");
+
+            if (isNegative)
+                text = text.substring(1);
+
+            const splittedText = text.split('#');
+
+            let requestBuiltinType: StBuiltinType = StBuiltinType.LREAL;
+            let value: number;
+
+            /* Important: Do not convert type to uppercase
+             * first because TwinCAT requires the input string 
+             * to be uppercase, otherwise it is a syntax error.
+             */
+            if (splittedText.length === 2)
+                requestBuiltinType = splittedText[0] as StBuiltinType;
+
+            value = parseFloat(splittedText[splittedText.length - 1]);
+
+            // TODO: Continue here and return REAL or LREAL (or always LREAL?)
+        }
+
+        this.CannotEvaluateExpression(literal, sourceFile);
     }
 
     private evaluateMemberExpression(
@@ -647,6 +806,17 @@ export class SemanticModelBuilder {
         }
 
         return currentType;
+    }
+
+    private CannotEvaluateExpression(expression: ParserRuleContext, sourceFile: StSourceFile) {
+        
+        const diagnostic = new Diagnostic(
+            getContextRange(expression)!,
+            `Unable to evaluate expression. Please create a new issue with a minimal sample here: https://github.com/Apollo3zehn/vscode-twincat-st`,
+            DiagnosticSeverity.Error
+        );
+
+        sourceFile.diagnostics.push(diagnostic);
     }
 
     // C0018 '{name}' is no valid assignment target

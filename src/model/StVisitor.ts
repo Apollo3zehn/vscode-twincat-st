@@ -1,7 +1,7 @@
 import { ParserRuleContext, Token } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Uri } from "vscode";
 import { StAccessModifier, StBuiltinType, StSourceFile, StSymbol, StSymbolKind, StType, StTypeHierarchyInfo, VariableKind } from "../core.js";
-import { AccessModifierContext, EnumMemberContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StatementContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { AccessModifierContext, EnumMemberContext, ExprOrArrayInitContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StatementContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 import { getContextRange, getOriginalText, getTokenRange } from "../utils.js";
 

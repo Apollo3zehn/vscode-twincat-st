@@ -71,6 +71,7 @@
       "patterns": [
         { "name": "constant.numeric.float.scientific.st", "match": "\\b\\d+(?:\\.\\d+)?[eE][\\-+]?\\d+\\b" },
         { "name": "constant.numeric.hex.st", "match": "\\b(?:16#|(?:BYTE|D?WORD|L?WORD|U?(S|D|L)?INT)#16#)[0-9A-Fa-f_]+\\b" },
+        { "name": "constant.numeric.dec.st", "match": "\\b(?:10#|(?:BYTE|D?WORD|L?WORD|U?(S|D|L)?INT)#10#)[0-9_]+\\b" },
         { "name": "constant.numeric.octal.st", "match": "\\b(?:8#|(?:BYTE|D?WORD|L?WORD|U?(S|D|L)?INT)#8#)[0-7_]+\\b" },
         { "name": "constant.numeric.binary.st", "match": "\\b(?:2#|(?:BYTE|D?WORD|L?WORD|U?(S|D|L)?INT)#2#)[01_]+\\b" },
         { "name": "constant.numeric.typed.st", "match": "\\b(?:BYTE|D?WORD|L?WORD|U?(S|D|L)?INT)#\\d+\\b" },
@@ -356,7 +357,7 @@
       "patterns": [
         {
           "name": "storage.type.st",
-          "match": "\\b(POINTER TO|REFERENCE TO|INT|REAL|BOOL|STRING|DINT|BYTE|WORD|DWORD|LWORD|SINT|USINT|UINT|UDINT|LINT|ULINT|LREAL|TIME|DATE|TIME_OF_DAY|DATE_AND_TIME)\\b"
+          "match": "\\b(POINTER TO|REFERENCE TO|INT|REAL|BOOL|BIT|STRING|DINT|BYTE|WORD|DWORD|LWORD|SINT|USINT|UINT|UDINT|LINT|ULINT|LREAL|TIME|DATE|TIME_OF_DAY|DATE_AND_TIME)\\b"
         },
         {
           "match": "(ARRAY)\\s*(\\[.*?\\])\\s*(OF)\\s*(.*)",

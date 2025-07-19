@@ -97,7 +97,7 @@ arrayInit
 // =======================
 type
     : baseType
-    | ARRAY '[' NUMBER '..' NUMBER ']' OF type
+    | ARRAY '[' INTEGER_NUMBER '..' INTEGER_NUMBER ']' OF type
     | POINTER_TO type
     | REFERENCE_TO type
     ;
@@ -108,9 +108,20 @@ baseType
     ;
 
 builtinType
-    : 'INT' | 'REAL' | 'BOOL' | 'STRING' | 'DINT' | 'BYTE' | 'WORD' | 'DWORD' | 'LWORD'
-    | 'SINT' | 'USINT' | 'UINT' | 'UDINT' | 'LINT' | 'ULINT' | 'LREAL'
+    // Logical types
+    : 'BOOL' | 'BIT'
+    // Bitstring types
+    | 'BYTE' | 'WORD' | 'DWORD' | 'LWORD'
+    // Unsigned integer types
+    | 'USINT' | 'UINT' | 'UDINT' | 'ULINT'
+    // Signed integer types
+    | 'SINT' | 'INT' | 'DINT' | 'LINT'
+    // Floating point types
+    | 'REAL' | 'LREAL'
+    // Time and date types
     | 'TIME' | 'DATE' | 'TIME_OF_DAY' | 'DATE_AND_TIME'
+    // String types
+    | 'STRING'
     ;
 
 // =======================
@@ -175,7 +186,7 @@ caseElement
     ;
 
 caseValue
-    : NUMBER | BOOL | STRING_LITERAL | ID
+    : INTEGER_NUMBER | BOOL | STRING_LITERAL | ID
     ;
 
 whileStatement
@@ -235,7 +246,8 @@ call
     ;
 
 literal
-    : NUMBER
+    : INTEGER_NUMBER
+    | REAL_NUMBER
     | BOOL
     | TIME_LITERAL
     | STRING_LITERAL
@@ -281,7 +293,7 @@ attributeArgList
     ;
 
 attributeArg
-    : ID | NUMBER | STRING_LITERAL
+    : ID | INTEGER_NUMBER | REAL_NUMBER | STRING_LITERAL
     ;
 
 // =======================
@@ -373,25 +385,48 @@ POINTER_TO          : 'POINTER TO' ;
 
 // Literals and identifiers
 BOOL                : 'TRUE' | 'FALSE' ;
-NUMBER              : '-'? (
-                        [a-zA-Z_][a-zA-Z0-9_]* '#' (
-                            [0-9]+ ('.' [0-9]+)? ([eE][+\-]?[0-9]+)?
+
+INTEGER_NUMBER
+                    : '-'? (
+                        ( 
+                            'BYTE' | 'WORD' | 'DWORD' | 'LWORD'
+                            | 'USINT' | 'UINT' | 'UDINT' | 'ULINT'
+                            | 'SINT' | 'INT' | 'DINT' | 'LINT'
+                        ) '#' (
+                            [0-9]+
                             | '2#' [01_]+
                             | '8#' [0-7_]+
+                            | '10#' [0-9_]+
                             | '16#' [0-9A-Fa-f_]+
                         )
                         | (
-                            [0-9]+ ('.' [0-9]+)? ([eE][+\-]?[0-9]+)?
+                            [0-9]+
                             | '2#' [01_]+
                             | '8#' [0-7_]+
+                            | '10#' [0-9_]+
                             | '16#' [0-9A-Fa-f_]+
+                        )
+                        | [0-9]+
+                    )
+                    ;
+
+REAL_NUMBER
+                    : '-'? (
+                        ( 
+                            'REAL' | 'LREAL'
+                        ) '#' (
+                            [0-9]+ ('.' [0-9]+)? ([eE][+\-]?[0-9]+)?
+                        )
+                        | (
+                            [0-9]+ ('.' [0-9]+)? ([eE][+\-]?[0-9]+)?
                         )
                         | [0-9]+ ('.' [0-9]+)? ([eE][+\-]?[0-9]+)?
                     )
                     ;
+
 TIME_LITERAL        : 'T#' [0-9]+ ( 'MS' | 'S' | 'M' | 'H' | 'D' ) ;
-ID                  : [a-zA-Z_][a-zA-Z0-9_]* ;
 STRING_LITERAL      : '"' (~["\r\n])* '"' | '\'' (~['\r\n])* '\'' ;
+ID                  : [a-zA-Z_][a-zA-Z0-9_]* ;
 
 // Symbols
 WS                  : [ \t\r\n]+ -> skip ;

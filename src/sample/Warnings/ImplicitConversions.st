@@ -22,7 +22,6 @@ FUNCTION_BLOCK ImplicitConversions_Warnings
     VAR
 
         // Bitstring Types
-        _bool:  BOOL; // Contrary to the documentation, bool cannot be implicitly converted to other bitstring types
         _byte:  BYTE;
         _word:  WORD;
         _dword: DWORD;
@@ -109,6 +108,7 @@ FUNCTION_BLOCK ImplicitConversions_Warnings
     _real := _ulint;
     _real := _dint;
     _real := _lint;
+    _real := _lreal;
 
     _lreal := _lword;
     _lreal := _ulint;

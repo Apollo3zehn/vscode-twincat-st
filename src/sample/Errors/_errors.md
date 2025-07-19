@@ -1,3 +1,5 @@
+- C0001: Constant 'USINT#1228' too large for type 'USINT'
+
 - assignment: incompatible types, (inheritance, interfaces)
 
 - M_B()[0]; => Warning "The code has no effect. Is this the intent?"

@@ -74,7 +74,7 @@
         { "name": "constant.numeric.dec.st", "match": "\\b(?:10#|(?:BYTE|D?WORD|L?WORD|U?(S|D|L)?INT)#10#)[0-9_]+\\b" },
         { "name": "constant.numeric.octal.st", "match": "\\b(?:8#|(?:BYTE|D?WORD|L?WORD|U?(S|D|L)?INT)#8#)[0-7_]+\\b" },
         { "name": "constant.numeric.binary.st", "match": "\\b(?:2#|(?:BYTE|D?WORD|L?WORD|U?(S|D|L)?INT)#2#)[01_]+\\b" },
-        { "name": "constant.numeric.typed.st", "match": "\\b(?:BYTE|D?WORD|L?WORD|U?(S|D|L)?INT)#\\d+\\b" },
+        { "name": "constant.numeric.typed.st", "match": "\\b(?:BYTE|D?WORD|L?WORD|U?(S|D|L)?INT|REAL|LREAL)#\\d+\\b" },
         { "name": "constant.numeric.float.st", "match": "\\b\\d+\\.\\d+\\b" },
         { "name": "constant.numeric.integer.st", "match": "\\b\\d+\\b" }
       ]

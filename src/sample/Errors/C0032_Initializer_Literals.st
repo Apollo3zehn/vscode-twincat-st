@@ -14,14 +14,12 @@ FUNCTION_BLOCK C0032_Initializer_Literals
         // Bitstring Types
         _word:          WORD    := 16#FFFFFF;
 
-        // Unsigned Integer Types
+        // Unsigned Integer Typeas
         _uint:          UINT    := 16#FFFFFF;
 
         // Signed Integer Types
-        _int:           INT     := 16#7FFF;
-
-        // Floating Point Types
-        _real:          REAL    := 1e39;
+        _int:           INT     := 16#FFFFFFFF;
+        _int2:          INT     := 18446744073709551616;
 
         // String Types
 

@@ -1,4 +1,4 @@
-import { CharStream, CommonTokenStream, EpsilonTransition, ParserRuleContext } from "antlr4ng";
+import { CharStream, CommonTokenStream, ParserRuleContext } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vscode";
 import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, VariableKind } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
@@ -122,10 +122,26 @@ export class SemanticModelBuilder {
                     continue;
 
                 const varDeclCtx = ctx as VarDeclContext;
-                const expression = varDeclCtx.exprOrArrayInit()?.expr();
 
-                if (expression)
-                    this.evaluateExpression(expression, sourceFile);
+                const lhsCtx = varDeclCtx.type();
+                const lhsTypeUsage = sourceFile.symbolMap.get(lhsCtx);
+                const lhsType = lhsTypeUsage?.type;
+
+                const rhsCtx = varDeclCtx.exprOrArrayInit()?.expr();
+                let rhsType: StType | undefined;
+
+                if (rhsCtx)
+                    rhsType = this.evaluateExpression(rhsCtx, sourceFile);
+
+                if (lhsType && rhsType) {
+
+                    this.CheckTypes(
+                        lhsType, lhsCtx,
+                        rhsType, rhsCtx!,
+                        false,
+                        sourceFile
+                    );
+                }
             }
         }
 
@@ -315,129 +331,14 @@ export class SemanticModelBuilder {
         const operatorText = operatorCtx.getText();
         const isRefAssignment = operatorText === 'REF=';
 
-        if (isRefAssignment) {
+        if (lhsType && rhsType) {
 
-            if (!lhsType?.isReference) {
-
-                const diagnostic = new Diagnostic(
-                    getContextRange(lhsCtx)!,
-                    "Reference assign is only allowed to variables of reference type",
-                    DiagnosticSeverity.Error
-                );
-
-                diagnostic.code = "C0140";
-                sourceFile.diagnostics.push(diagnostic);
-            }
-        }
-
-        else {
-
-            if (lhsType?.declaration && lhsType?.declaration === rhsType?.declaration)
-                return;
-            
-            if (lhsType?.builtinType && rhsType?.builtinType) {
-
-                if (lhsType.builtinType === rhsType.builtinType)
-                    return;
-
-                const lhsNativeType = StModel.nativeTypes.get(lhsType?.builtinType);
-                const rhsNativeType = StModel.nativeTypes.get(rhsType?.builtinType);
-
-                if (!lhsNativeType || !rhsNativeType)
-                    return;
-
-                switch (lhsNativeType.kind) {
-
-                    case StNativeTypeKind.Logical:
-
-                        if (rhsNativeType.kind === StNativeTypeKind.Logical)
-                            return;
-
-                        break;
-
-                    case StNativeTypeKind.Integer:
-
-                        if (rhsNativeType.kind === StNativeTypeKind.Integer) {
-
-                            if (rhsNativeType.size <= lhsNativeType.size) {
-
-                                if (rhsNativeType.signed && !lhsNativeType.signed) {
-
-                                    const warning = new Diagnostic(
-                                        getContextRange(rhsCtx)!,
-                                        `Implicit conversion from signed type '${StBuiltinType[rhsType?.builtinType]}' to unsigned type '${StBuiltinType[lhsType?.builtinType]}': Possible change of sign`,
-                                        DiagnosticSeverity.Warning
-                                    );
-
-                                    sourceFile.diagnostics.push(warning);
-                                }
-
-                                else if (!rhsNativeType.signed && lhsNativeType.signed) {
-
-                                    const warning = new Diagnostic(
-                                        getContextRange(rhsCtx)!,
-                                        `Implicit conversion from unsigned type '${StBuiltinType[rhsType?.builtinType]}' to signed type '${StBuiltinType[lhsType?.builtinType]}': Possible change of sign`,
-                                        DiagnosticSeverity.Warning
-                                    );
-
-                                    sourceFile.diagnostics.push(warning);
-                                }
-
-                                return;
-                            }
-                        }
-
-                        break;
-
-                    case StNativeTypeKind.Float:
-
-                        if (
-                            rhsNativeType.kind === StNativeTypeKind.Float ||
-                            rhsNativeType.kind === StNativeTypeKind.Integer
-                        ) {
-                            if (
-                                (
-                                    rhsNativeType.kind === StNativeTypeKind.Float &&
-                                    rhsNativeType.size > lhsNativeType.size
-                                ) ||
-                                (
-                                    rhsNativeType.kind === StNativeTypeKind.Integer &&
-                                    rhsNativeType.size >= lhsNativeType.size
-                                )
-                            ) {
-                                const warning = new Diagnostic(
-                                    getContextRange(rhsCtx)!,
-                                    `Implicit conversion from '${StBuiltinType[rhsType?.builtinType]}' to '${StBuiltinType[lhsType?.builtinType]}': Possible loss of information`,
-                                    DiagnosticSeverity.Warning
-                                );
-
-                                sourceFile.diagnostics.push(warning);
-                            }
-
-                            return;
-                        }
-
-                        break;
-                }
-            }
-
-            // C0032: Cannot convert type '{type}' to type '{type}'
-            const lhsTypeId = lhsType
-                ? lhsType.getId()
-                : getOriginalText(lhsCtx);
-            
-            const rhsTypeId = rhsType
-                ? rhsType.getId()
-                : getOriginalText(rhsCtx);
-
-            const diagnostic = new Diagnostic(
-                getContextRange(rhsCtx)!,
-                `Cannot convert type '${rhsTypeId}' to type '${lhsTypeId}'`,
-                DiagnosticSeverity.Error
+            this.CheckTypes(
+                lhsType, lhsCtx,
+                rhsType, rhsCtx,
+                isRefAssignment,
+                sourceFile
             );
-
-            diagnostic.code = "C0032";
-            sourceFile.diagnostics.push(diagnostic);
         }
     }
 
@@ -460,6 +361,14 @@ export class SemanticModelBuilder {
         literal: LiteralContext,
         sourceFile: StSourceFile
     ): StType | undefined {
+
+        // TODO: LREAL should be returned by default but this causes unnecessary
+        // warnings when assigning the literal to a value of type REAL.
+        // This is relevant for error message in C0032_Initializer_Literals.st, _bool_real: BOOL := 1.0;
+        //
+        // Something similar happens here:
+        //      _word_1: WORD := 1;
+        //      "Implicit conversion from signed type 'SINT' to unsigned type 'WORD': Possible change of sign"
 
         // literal
         //     : NUMBER
@@ -529,8 +438,13 @@ export class SemanticModelBuilder {
                     requiredBuiltinType = StBuiltinType.LINT;         // -2^63 .. 2^63-1
                     
                 else {
-                    // Value is too large for any supported type
-                    this.CannotEvaluateExpression(literal, sourceFile);
+
+                    if (requestedBuiltinType)
+                        this.C0001(literal, StBuiltinType[requestedBuiltinType], sourceFile);
+
+                    else
+                        this.C0001(literal, "ANY_INT", sourceFile);
+
                     return undefined;
                 }
             }
@@ -562,17 +476,32 @@ export class SemanticModelBuilder {
                     requiredBuiltinType = StBuiltinType.ULINT;        // 0 .. 2^64-1
                     
                 else {
-                    // Value is too large for any supported type
-                    this.CannotEvaluateExpression(literal, sourceFile);
+                    
+                    if (requestedBuiltinType)
+                        this.C0001(literal, StBuiltinType[requestedBuiltinType], sourceFile);
+
+                    else
+                        this.C0001(literal, "ANY_INT", sourceFile);
+
                     return undefined;
                 }
             }
 
-            // TODO: 
-            // - Replace CannotEvaluateExpression with proper behavior
-            // - Compare requiredBuiltinType vs requestedBuiltinType
-            // - Make Literals.st all work
-            // - Make C0032_Initializer_Literals.st all fail
+            if (requestedBuiltinType) {
+
+                const requestedNativeType = StModel.nativeTypes.get(requestedBuiltinType);
+                const requiredNativeType = StModel.nativeTypes.get(requiredBuiltinType);
+
+                if (
+                    requestedNativeType &&
+                    requiredNativeType &&
+                    requestedNativeType.max! < requiredNativeType.max!
+                ) {
+                    this.C0001(literal, StBuiltinType[requestedBuiltinType], sourceFile);
+                }
+
+                return undefined;
+            }
             
             const type = new StType();
             type.builtinType = requestedBuiltinType ?? requiredBuiltinType;
@@ -592,7 +521,7 @@ export class SemanticModelBuilder {
 
             const splittedText = text.split('#');
 
-            let requestBuiltinType: StBuiltinType = StBuiltinType.LREAL;
+            let requestedBuiltinType: StBuiltinType | undefined;
             let value: number;
 
             /* Important: Do not convert type to uppercase
@@ -600,11 +529,73 @@ export class SemanticModelBuilder {
              * to be uppercase, otherwise it is a syntax error.
              */
             if (splittedText.length === 2)
-                requestBuiltinType = splittedText[0] as StBuiltinType;
+                requestedBuiltinType = splittedText[0] as StBuiltinType;
 
             value = parseFloat(splittedText[splittedText.length - 1]);
 
-            // TODO: Continue here and return REAL or LREAL (or always LREAL?)
+            let requiredBuiltinType: StBuiltinType;
+
+            // https://infosys.beckhoff.com/english.php?content=../content/1033/tc3_plc_intro/2529405067.html&id=
+
+            if (isNegative) {
+
+                if (-value >= -3.402823e+38)
+                    requiredBuiltinType = StBuiltinType.REAL;
+                    
+                else if (-value >= -1.7976931348623158e+308)
+                    requiredBuiltinType = StBuiltinType.LREAL;
+                    
+                else {
+                    
+                    if (requestedBuiltinType)
+                        this.C0001(literal, StBuiltinType[requestedBuiltinType], sourceFile);
+
+                    else
+                        this.C0001(literal, "ANY_REAL", sourceFile);
+
+                    return undefined;
+                }
+            }
+
+            else {
+
+                if (value <= 3.402823e+38)
+                    requiredBuiltinType = StBuiltinType.REAL;
+                    
+                else if (value <= 1.7976931348623158e+308)
+                    requiredBuiltinType = StBuiltinType.LREAL;
+                                       
+                else {
+                    
+                    if (requestedBuiltinType)
+                        this.C0001(literal, StBuiltinType[requestedBuiltinType], sourceFile);
+
+                    else
+                        this.C0001(literal, "ANY_REAL", sourceFile);
+
+                    return undefined;
+                }
+            }
+
+            if (requestedBuiltinType) {
+
+                const requestedNativeType = StModel.nativeTypes.get(requestedBuiltinType);
+                const requiredNativeType = StModel.nativeTypes.get(requiredBuiltinType);
+
+                if (
+                    requestedNativeType &&
+                    requiredNativeType &&
+                    requestedNativeType.max! < requiredNativeType.max!
+                ) {
+                    this.C0001(literal, StBuiltinType[requestedBuiltinType], sourceFile);
+                    return undefined;
+                }
+            }
+
+            const type = new StType();
+            type.builtinType = requestedBuiltinType ?? requiredBuiltinType;
+
+            return type;
         }
 
         this.CannotEvaluateExpression(literal, sourceFile);
@@ -816,6 +807,154 @@ export class SemanticModelBuilder {
             DiagnosticSeverity.Error
         );
 
+        sourceFile.diagnostics.push(diagnostic);
+    }
+
+    private CheckTypes(
+        lhsType: StType,
+        lhsCtx: ParserRuleContext,
+        rhsType: StType,
+        rhsCtx: ParserRuleContext,
+        isRefAssignment: boolean,
+        sourceFile: StSourceFile
+    ) {
+
+        if (isRefAssignment) {
+
+            if (!lhsType.isReference) {
+
+                const diagnostic = new Diagnostic(
+                    getContextRange(lhsCtx)!,
+                    "Reference assign is only allowed to variables of reference type",
+                    DiagnosticSeverity.Error
+                );
+
+                diagnostic.code = "C0140";
+                sourceFile.diagnostics.push(diagnostic);
+            }
+        }
+
+        else {
+
+            if (lhsType.declaration && lhsType.declaration === rhsType.declaration)
+                return;
+            
+            if (lhsType.builtinType && rhsType.builtinType) {
+
+                if (lhsType.builtinType === rhsType.builtinType)
+                    return;
+
+                const lhsNativeType = StModel.nativeTypes.get(lhsType.builtinType);
+                const rhsNativeType = StModel.nativeTypes.get(rhsType.builtinType);
+
+                if (!lhsNativeType || !rhsNativeType)
+                    return;
+
+                switch (lhsNativeType.kind) {
+
+                    case StNativeTypeKind.Logical:
+
+                        if (rhsNativeType.kind === StNativeTypeKind.Logical)
+                            return;
+
+                        break;
+
+                    case StNativeTypeKind.Integer:
+
+                        if (rhsNativeType.kind === StNativeTypeKind.Integer) {
+
+                            if (rhsNativeType.size <= lhsNativeType.size) {
+
+                                if (rhsNativeType.signed && !lhsNativeType.signed) {
+
+                                    const warning = new Diagnostic(
+                                        getContextRange(rhsCtx)!,
+                                        `Implicit conversion from signed type '${StBuiltinType[rhsType.builtinType]}' to unsigned type '${StBuiltinType[lhsType.builtinType]}': Possible change of sign`,
+                                        DiagnosticSeverity.Warning
+                                    );
+
+                                    sourceFile.diagnostics.push(warning);
+                                }
+
+                                else if (!rhsNativeType.signed && lhsNativeType.signed) {
+
+                                    const warning = new Diagnostic(
+                                        getContextRange(rhsCtx)!,
+                                        `Implicit conversion from unsigned type '${StBuiltinType[rhsType.builtinType]}' to signed type '${StBuiltinType[lhsType.builtinType]}': Possible change of sign`,
+                                        DiagnosticSeverity.Warning
+                                    );
+
+                                    sourceFile.diagnostics.push(warning);
+                                }
+
+                                return;
+                            }
+                        }
+
+                        break;
+
+                    case StNativeTypeKind.Float:
+
+                        if (
+                            rhsNativeType.kind === StNativeTypeKind.Float ||
+                            rhsNativeType.kind === StNativeTypeKind.Integer
+                        ) {
+                            if (
+                                (
+                                    rhsNativeType.kind === StNativeTypeKind.Float &&
+                                    rhsNativeType.size > lhsNativeType.size
+                                ) ||
+                                (
+                                    rhsNativeType.kind === StNativeTypeKind.Integer &&
+                                    rhsNativeType.size >= lhsNativeType.size
+                                )
+                            ) {
+                                const warning = new Diagnostic(
+                                    getContextRange(rhsCtx)!,
+                                    `Implicit conversion from '${StBuiltinType[rhsType.builtinType]}' to '${StBuiltinType[lhsType?.builtinType]}': Possible loss of information`,
+                                    DiagnosticSeverity.Warning
+                                );
+
+                                sourceFile.diagnostics.push(warning);
+                            }
+
+                            return;
+                        }
+
+                        break;
+                }
+            }
+
+            // C0032: Cannot convert type '{type}' to type '{type}'
+            const lhsTypeId = lhsType
+                ? lhsType.getId()
+                : getOriginalText(lhsCtx);
+            
+            const rhsTypeId = rhsType
+                ? rhsType.getId()
+                : getOriginalText(rhsCtx);
+
+            const diagnostic = new Diagnostic(
+                getContextRange(rhsCtx)!,
+                `Cannot convert type '${rhsTypeId}' to type '${lhsTypeId}'`,
+                DiagnosticSeverity.Error
+            );
+
+            diagnostic.code = "C0032";
+            sourceFile.diagnostics.push(diagnostic);
+        }
+    }
+
+    // C0001: Constant '{constant}' too large for type '{name}'
+    private C0001(literal: LiteralContext, typeName: string, sourceFile: StSourceFile) {
+        
+        const diagnostic = new Diagnostic(
+            getContextRange(literal)!,
+            `Constant '${getOriginalText(literal)}' too large for type '${typeName}'`,
+            DiagnosticSeverity.Error
+        );
+
+        diagnostic.code = "C0001";
         sourceFile.diagnostics.push(diagnostic);
     }
 

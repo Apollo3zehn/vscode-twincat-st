@@ -40,7 +40,7 @@ FUNCTION_BLOCK ImplicitConversions_Warnings
         _lint:  LINT;
 
         // Floating Point Types
-        _real:  REAL;
+        _real:  REAL := 1e39;
         _lreal: LREAL;
 
         // String Types

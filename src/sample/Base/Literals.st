@@ -41,7 +41,7 @@ FUNCTION_BLOCK Literals
 
         // Floating Point Types
         real_int:           REAL    := 199;
-        real_positive:      REAL    := 1.99;
+        real_positive:      REAL    := REAL#1.99;
         real_negative:      REAL    := -1.99;
         real_scientific:    REAL    := 1e-99;
 

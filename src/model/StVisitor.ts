@@ -1,6 +1,6 @@
 import { ParserRuleContext, Token } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Uri } from "vscode";
-import { StAccessModifier, StBuiltinType, StSourceFile, StSymbol, StSymbolKind, StType, StTypeHierarchyInfo, VariableKind } from "../core.js";
+import { StAccessModifier, StBuiltinType, StSourceFile, StSymbol, StSymbolKind, StType, StTypeHierarchyInfo, StVariableScope } from "../core.js";
 import { AccessModifierContext, EnumMemberContext, ExprOrArrayInitContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StatementContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 import { getContextRange, getOriginalText, getTokenRange } from "../utils.js";
@@ -12,7 +12,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
     private _parent: StSymbol | undefined;
     private _declaration: StSymbol | undefined;
     private _underlyingType: StType | undefined;
-    private _variableKind: VariableKind = VariableKind.None;
+    private _variableKind: StVariableScope = StVariableScope.None;
 
     constructor(sourceFile: StSourceFile, documentUri: Uri) {
         super();
@@ -226,7 +226,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         
         this._parent = symbol;
         this._declaration = symbol;
-        this._variableKind = VariableKind.Global;
+        this._variableKind = StVariableScope.Global;
     }
 
     private createMethod(ctx: MethodContext) {
@@ -403,25 +403,25 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const sectionTypeCtx = ctx.varSectionType();
             
         if (sectionTypeCtx.VAR_INPUT())
-            this._variableKind = VariableKind.Input;
+            this._variableKind = StVariableScope.Input;
             
         else if (sectionTypeCtx.VAR_OUTPUT())
-            this._variableKind = VariableKind.Output;
+            this._variableKind = StVariableScope.Output;
             
         else if (sectionTypeCtx.VAR_IN_OUT())
-            this._variableKind = VariableKind.InOut;
+            this._variableKind = StVariableScope.InOut;
             
         else if (sectionTypeCtx.VAR_EXTERNAL())
-            this._variableKind = VariableKind.Global;
+            this._variableKind = StVariableScope.Global;
 
         else if (sectionTypeCtx.VAR_TEMP())
-            this._variableKind = VariableKind.Local;    
+            this._variableKind = StVariableScope.Local;    
             
         else if (sectionTypeCtx.VAR_INST())
-            this._variableKind = VariableKind.Local;
+            this._variableKind = StVariableScope.Local;
             
         else if (sectionTypeCtx.VAR())
-            this._variableKind = VariableKind.Local;
+            this._variableKind = StVariableScope.Local;
     }
 
     //#endregion

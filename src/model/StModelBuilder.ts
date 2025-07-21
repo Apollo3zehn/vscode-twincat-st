@@ -1,6 +1,6 @@
 import { CharStream, CommonTokenStream, ParserRuleContext } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vscode";
-import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, VariableKind } from "../core.js";
+import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
 import { AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
 import { getContextRange, getOriginalText, getTokenRange, getTypeOfType } from "../utils.js";
@@ -126,12 +126,12 @@ export class SemanticModelBuilder {
                 const lhsCtx = varDeclCtx.type();
                 const lhsTypeUsage = sourceFile.symbolMap.get(lhsCtx);
                 const lhsType = lhsTypeUsage?.type;
-
+                 
                 const rhsCtx = varDeclCtx.exprOrArrayInit()?.expr();
                 let rhsType: StType | undefined;
 
                 if (rhsCtx)
-                    rhsType = this.evaluateExpression(rhsCtx, sourceFile);
+                    rhsType = this.evaluateExpression(rhsCtx, lhsType?.builtinType, sourceFile);
 
                 if (lhsType && rhsType) {
 
@@ -325,7 +325,7 @@ export class SemanticModelBuilder {
         const lhsType = this.evaluateMemberExpression(lhsCtx, sourceFile, true);
 
         const rhsCtx = assignment.expr();
-        const rhsType = this.evaluateExpression(rhsCtx, sourceFile);
+        const rhsType = this.evaluateExpression(rhsCtx, lhsType?.builtinType, sourceFile);
 
         const operatorCtx = assignment.assignmentOperator();
         const operatorText = operatorCtx.getText();
@@ -342,7 +342,11 @@ export class SemanticModelBuilder {
         }
     }
 
-    private evaluateExpression(expression: ExprContext, sourceFile: StSourceFile): StType | undefined {
+    private evaluateExpression(
+        expression: ExprContext,
+        typeHint: StBuiltinType | undefined,
+        sourceFile: StSourceFile
+    ): StType | undefined {
 
         const memberExpression = expression.memberExpression();
 
@@ -352,13 +356,14 @@ export class SemanticModelBuilder {
         const literal = expression.literal();
 
         if (literal)
-            return this.evaluateLiteral(literal, sourceFile);
+            return this.evaluateLiteral(literal, typeHint, sourceFile);
 
         return undefined;
     }
 
     private evaluateLiteral(
         literal: LiteralContext,
+        typeHint: StBuiltinType | undefined,
         sourceFile: StSourceFile
     ): StType | undefined {
 
@@ -371,11 +376,16 @@ export class SemanticModelBuilder {
         //      "Implicit conversion from signed type 'SINT' to unsigned type 'WORD': Possible change of sign"
 
         // literal
-        //     : NUMBER
+        //     : INTEGER_NUMBER
+        //     | REAL_NUMBER
         //     | BOOL
         //     | TIME_LITERAL
         //     | STRING_LITERAL
         //     ;
+
+        const typeHintKind = typeHint
+            ? StModel.nativeTypes.get(typeHint)?.kind
+            : undefined;
 
         if (literal.BOOL()) {
 
@@ -397,7 +407,7 @@ export class SemanticModelBuilder {
 
             const splittedText = text.split('#');
 
-            let requestedBuiltinType: StBuiltinType | undefined;
+            let requestedType: StBuiltinType | undefined;
             let radix: number = 10;
             let value: number;
 
@@ -406,14 +416,14 @@ export class SemanticModelBuilder {
              * to be uppercase, otherwise it is a syntax error.
              */
             if (splittedText.length === 3) {
-                requestedBuiltinType = splittedText[0] as StBuiltinType;
+                requestedType = splittedText[0] as StBuiltinType;
                 radix = parseInt(splittedText[1], 10);
             }
 
             else if (splittedText.length === 2) {
 
                 if (splittedText[0] in StBuiltinType)
-                    requestedBuiltinType = splittedText[0] as StBuiltinType;
+                    requestedType = splittedText[0] as StBuiltinType;
                     
                 else
                     radix = parseInt(splittedText[0], 10);
@@ -421,26 +431,26 @@ export class SemanticModelBuilder {
 
             value = parseInt(splittedText[splittedText.length - 1], radix);
 
-            let requiredBuiltinType: StBuiltinType;
+            let fittingType: StBuiltinType;
 
             if (isNegative) {
 
                 if (-value >= -Math.pow(2, 7))
-                    requiredBuiltinType = StBuiltinType.SINT;         // -2^7 .. 2^7-1
+                    fittingType = StBuiltinType.SINT;   // -2^7 .. 2^7-1
                     
                 else if (-value >= -Math.pow(2, 15))
-                    requiredBuiltinType = StBuiltinType.INT;          // -2^15 .. 2^15-1
+                    fittingType = StBuiltinType.INT;    // -2^15 .. 2^15-1
                     
                 else if (-value >= -Math.pow(2, 31))
-                    requiredBuiltinType = StBuiltinType.DINT;         // -2^31 .. 2^31-1
+                    fittingType = StBuiltinType.DINT;   // -2^31 .. 2^31-1
                     
                 else if (-value >= -Math.pow(2, 63))
-                    requiredBuiltinType = StBuiltinType.LINT;         // -2^63 .. 2^63-1
+                    fittingType = StBuiltinType.LINT;   // -2^63 .. 2^63-1
                     
                 else {
 
-                    if (requestedBuiltinType)
-                        this.C0001(literal, StBuiltinType[requestedBuiltinType], sourceFile);
+                    if (requestedType)
+                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
 
                     else
                         this.C0001(literal, "ANY_INT", sourceFile);
@@ -452,33 +462,33 @@ export class SemanticModelBuilder {
             else {
 
                 if (value <= Math.pow(2, 7) - 1)
-                    requiredBuiltinType = StBuiltinType.SINT;         // -2^7 .. 2^7-1
+                    fittingType = StBuiltinType.SINT;   // -2^7 .. 2^7-1
                     
                 else if (value <= Math.pow(2, 8) - 1)
-                    requiredBuiltinType = StBuiltinType.USINT;        // 0 .. 2^8-1
+                    fittingType = StBuiltinType.USINT;  // 0 .. 2^8-1
                     
                 else if (value <= Math.pow(2, 15) - 1)
-                    requiredBuiltinType = StBuiltinType.INT;          // -2^15 .. 2^15-1
+                    fittingType = StBuiltinType.INT;    // -2^15 .. 2^15-1
                     
                 else if (value <= Math.pow(2, 16) - 1)
-                    requiredBuiltinType = StBuiltinType.UINT;         // 0 .. 2^16-1
+                    fittingType = StBuiltinType.UINT;   // 0 .. 2^16-1
                     
                 else if (value <= Math.pow(2, 31) - 1)
-                    requiredBuiltinType = StBuiltinType.DINT;         // -2^31 .. 2^31-1
+                    fittingType = StBuiltinType.DINT;   // -2^31 .. 2^31-1
                     
                 else if (value <= Math.pow(2, 32) - 1)
-                    requiredBuiltinType = StBuiltinType.UDINT;        // 0 .. 2^32-1
+                    fittingType = StBuiltinType.UDINT;  // 0 .. 2^32-1
                     
                 else if (value <= Math.pow(2, 63) - 1)
-                    requiredBuiltinType = StBuiltinType.LINT;         // -2^63 .. 2^63-1
+                    fittingType = StBuiltinType.LINT;   // -2^63 .. 2^63-1
                     
                 else if (value <= Math.pow(2, 64) - 1)
-                    requiredBuiltinType = StBuiltinType.ULINT;        // 0 .. 2^64-1
+                    fittingType = StBuiltinType.ULINT;  // 0 .. 2^64-1
                     
                 else {
                     
-                    if (requestedBuiltinType)
-                        this.C0001(literal, StBuiltinType[requestedBuiltinType], sourceFile);
+                    if (requestedType)
+                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
 
                     else
                         this.C0001(literal, "ANY_INT", sourceFile);
@@ -487,24 +497,50 @@ export class SemanticModelBuilder {
                 }
             }
 
-            if (requestedBuiltinType) {
+            let choosenType: StBuiltinType | undefined = fittingType;
 
-                const requestedNativeType = StModel.nativeTypes.get(requestedBuiltinType);
-                const requiredNativeType = StModel.nativeTypes.get(requiredBuiltinType);
+            if (requestedType) {
+
+                const requestedTypeDetails = StModel.nativeTypes.get(requestedType);
+                const fittingTypeDetails = StModel.nativeTypes.get(fittingType);
 
                 if (
-                    requestedNativeType &&
-                    requiredNativeType &&
-                    requestedNativeType.max! < requiredNativeType.max!
+                    requestedTypeDetails &&
+                    fittingTypeDetails &&
+                    requestedTypeDetails.max! < fittingTypeDetails.max!
                 ) {
-                    this.C0001(literal, StBuiltinType[requestedBuiltinType], sourceFile);
+                    this.C0001(literal, StBuiltinType[requestedType], sourceFile);
+                    return undefined;
                 }
 
-                return undefined;
+                else {
+                    choosenType = requestedType;
+                }
             }
-            
+
+            switch (typeHintKind) {
+
+                case StNativeTypeKind.Logical:
+
+                    if (!isNegative && (value === 0 || value === 1))
+                        choosenType = typeHint;
+
+                    break;
+                
+                case StNativeTypeKind.Bitfield:
+                case StNativeTypeKind.UnsignedInteger:
+
+                    const choosenTypeDetails = StModel.nativeTypes.get(choosenType);
+                    const typeHintDetails = StModel.nativeTypes.get(typeHint!);
+                    
+                    if (!isNegative && choosenTypeDetails!.size <= typeHintDetails!.size)
+                        choosenType = typeHint;
+
+                    break;
+            }
+        
             const type = new StType();
-            type.builtinType = requestedBuiltinType ?? requiredBuiltinType;
+            type.builtinType = choosenType;
 
             return type;
         }
@@ -521,7 +557,7 @@ export class SemanticModelBuilder {
 
             const splittedText = text.split('#');
 
-            let requestedBuiltinType: StBuiltinType | undefined;
+            let requestedType: StBuiltinType | undefined;
             let value: number;
 
             /* Important: Do not convert type to uppercase
@@ -529,26 +565,23 @@ export class SemanticModelBuilder {
              * to be uppercase, otherwise it is a syntax error.
              */
             if (splittedText.length === 2)
-                requestedBuiltinType = splittedText[0] as StBuiltinType;
+                requestedType = splittedText[0] as StBuiltinType;
 
             value = parseFloat(splittedText[splittedText.length - 1]);
 
-            let requiredBuiltinType: StBuiltinType;
+            let fittingType: StBuiltinType;
 
             // https://infosys.beckhoff.com/english.php?content=../content/1033/tc3_plc_intro/2529405067.html&id=
 
             if (isNegative) {
 
-                if (-value >= -3.402823e+38)
-                    requiredBuiltinType = StBuiltinType.REAL;
-                    
-                else if (-value >= -1.7976931348623158e+308)
-                    requiredBuiltinType = StBuiltinType.LREAL;
+                if (-value >= -1.7976931348623158e+308)
+                    fittingType = StBuiltinType.LREAL;
                     
                 else {
                     
-                    if (requestedBuiltinType)
-                        this.C0001(literal, StBuiltinType[requestedBuiltinType], sourceFile);
+                    if (requestedType)
+                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
 
                     else
                         this.C0001(literal, "ANY_REAL", sourceFile);
@@ -559,16 +592,13 @@ export class SemanticModelBuilder {
 
             else {
 
-                if (value <= 3.402823e+38)
-                    requiredBuiltinType = StBuiltinType.REAL;
-                    
-                else if (value <= 1.7976931348623158e+308)
-                    requiredBuiltinType = StBuiltinType.LREAL;
+                if (value <= 1.7976931348623158e+308)
+                    fittingType = StBuiltinType.LREAL;
                                        
                 else {
                     
-                    if (requestedBuiltinType)
-                        this.C0001(literal, StBuiltinType[requestedBuiltinType], sourceFile);
+                    if (requestedType)
+                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
 
                     else
                         this.C0001(literal, "ANY_REAL", sourceFile);
@@ -577,23 +607,23 @@ export class SemanticModelBuilder {
                 }
             }
 
-            if (requestedBuiltinType) {
+            let acceptTypeHint = false;
+            
+            switch (typeHintKind) {
 
-                const requestedNativeType = StModel.nativeTypes.get(requestedBuiltinType);
-                const requiredNativeType = StModel.nativeTypes.get(requiredBuiltinType);
+                case StNativeTypeKind.Float:
 
-                if (
-                    requestedNativeType &&
-                    requiredNativeType &&
-                    requestedNativeType.max! < requiredNativeType.max!
-                ) {
-                    this.C0001(literal, StBuiltinType[requestedBuiltinType], sourceFile);
-                    return undefined;
-                }
+                    if (value <= 3.402823e+38)
+                        acceptTypeHint = true;
+
+                    break;
             }
 
             const type = new StType();
-            type.builtinType = requestedBuiltinType ?? requiredBuiltinType;
+
+            type.builtinType = acceptTypeHint
+                ? typeHint
+                : requestedType ?? fittingType;
 
             return type;
         }
@@ -673,8 +703,8 @@ export class SemanticModelBuilder {
                 lastMemberDeclaration?.kind === StSymbolKind.VariableDeclaration &&
                 memberAccesses.length > 1 &&
                 !(
-                    lastMemberDeclaration?.variableKind === VariableKind.Input ||
-                    lastMemberDeclaration?.variableKind === VariableKind.InOut
+                    lastMemberDeclaration?.variableKind === StVariableScope.Input ||
+                    lastMemberDeclaration?.variableKind === StVariableScope.InOut
                 )
             )  
             {
@@ -846,9 +876,14 @@ export class SemanticModelBuilder {
 
                 const lhsNativeType = StModel.nativeTypes.get(lhsType.builtinType);
                 const rhsNativeType = StModel.nativeTypes.get(rhsType.builtinType);
-
+                
                 if (!lhsNativeType || !rhsNativeType)
                     return;
+
+                const rhsIsInteger =
+                    rhsNativeType.kind === StNativeTypeKind.Bitfield ||
+                    rhsNativeType.kind === StNativeTypeKind.UnsignedInteger ||
+                    rhsNativeType.kind === StNativeTypeKind.SignedInteger;
 
                 switch (lhsNativeType.kind) {
 
@@ -859,9 +894,11 @@ export class SemanticModelBuilder {
 
                         break;
 
-                    case StNativeTypeKind.Integer:
+                    case StNativeTypeKind.Bitfield:
+                    case StNativeTypeKind.UnsignedInteger:
+                    case StNativeTypeKind.SignedInteger:
 
-                        if (rhsNativeType.kind === StNativeTypeKind.Integer) {
+                        if (rhsIsInteger) {
 
                             if (rhsNativeType.size <= lhsNativeType.size) {
 
@@ -897,7 +934,7 @@ export class SemanticModelBuilder {
 
                         if (
                             rhsNativeType.kind === StNativeTypeKind.Float ||
-                            rhsNativeType.kind === StNativeTypeKind.Integer
+                            rhsIsInteger
                         ) {
                             if (
                                 (
@@ -905,7 +942,7 @@ export class SemanticModelBuilder {
                                     rhsNativeType.size > lhsNativeType.size
                                 ) ||
                                 (
-                                    rhsNativeType.kind === StNativeTypeKind.Integer &&
+                                    rhsIsInteger &&
                                     rhsNativeType.size >= lhsNativeType.size
                                 )
                             ) {
@@ -934,14 +971,7 @@ export class SemanticModelBuilder {
                 ? rhsType.getId()
                 : getOriginalText(rhsCtx);
 
-            const diagnostic = new Diagnostic(
-                getContextRange(rhsCtx)!,
-                `Cannot convert type '${rhsTypeId}' to type '${lhsTypeId}'`,
-                DiagnosticSeverity.Error
-            );
-
-            diagnostic.code = "C0032";
-            sourceFile.diagnostics.push(diagnostic);
+            this.C0032(rhsCtx, rhsTypeId, lhsTypeId, sourceFile);
         }
     }
 
@@ -968,6 +998,23 @@ export class SemanticModelBuilder {
         );
 
         diagnostic.code = "C0018";
+        sourceFile.diagnostics.push(diagnostic);
+    }
+
+    private C0032(
+        rhsCtx: ParserRuleContext,
+        rhsTypeId: string | undefined,
+        lhsTypeId: string | undefined,
+        sourceFile: StSourceFile
+    ) {
+
+        const diagnostic = new Diagnostic(
+            getContextRange(rhsCtx)!,
+            `Cannot convert type '${rhsTypeId}' to type '${lhsTypeId}'`,
+            DiagnosticSeverity.Error
+        );
+
+        diagnostic.code = "C0032";
         sourceFile.diagnostics.push(diagnostic);
     }
 

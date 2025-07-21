@@ -84,7 +84,7 @@ export class StSymbol {
     public references: StSymbol[] | undefined;                          // for many things
 
     public typeUsage: StSymbol | undefined;                             // for variable declarations & properties
-    public variableKind: VariableKind | undefined;                      // for variable declarations
+    public variableKind: StVariableScope | undefined;                      // for variable declarations
     public parent: StSymbol | undefined;                                // for variable declarations
 
     public typeHierarchyInfo: StTypeHierarchyInfo | undefined;          // for type declarations
@@ -153,12 +153,14 @@ export enum StSymbolKind {
 }
 
 export enum StNativeTypeKind {
-    Integer,
+    Bitfield,
+    UnsignedInteger,
+    SignedInteger,
     Float,
     Logical
 }
 
-export enum VariableKind {
+export enum StVariableScope {
     None,
     Local,
     Global,
@@ -220,20 +222,20 @@ export class StModel {
         [StBuiltinType.BOOL,  new StNativeTypeDetails(StNativeTypeKind.Logical, 1, undefined, 0, 1)],
         [StBuiltinType.BIT,   new StNativeTypeDetails(StNativeTypeKind.Logical, 1, undefined, 0, 1)],
 
-        [StBuiltinType.BYTE,  new StNativeTypeDetails(StNativeTypeKind.Integer, 1, false, 0, 0xFF)],
-        [StBuiltinType.WORD,  new StNativeTypeDetails(StNativeTypeKind.Integer, 2, false, 0, 0xFFFF)],
-        [StBuiltinType.DWORD, new StNativeTypeDetails(StNativeTypeKind.Integer, 4, false, 0, 0xFFFFFFFF)],
-        [StBuiltinType.LWORD, new StNativeTypeDetails(StNativeTypeKind.Integer, 8, false, 0, Number.MAX_SAFE_INTEGER)],
+        [StBuiltinType.BYTE,  new StNativeTypeDetails(StNativeTypeKind.Bitfield, 1, false, 0, 0xFF)],
+        [StBuiltinType.WORD,  new StNativeTypeDetails(StNativeTypeKind.Bitfield, 2, false, 0, 0xFFFF)],
+        [StBuiltinType.DWORD, new StNativeTypeDetails(StNativeTypeKind.Bitfield, 4, false, 0, 0xFFFFFFFF)],
+        [StBuiltinType.LWORD, new StNativeTypeDetails(StNativeTypeKind.Bitfield, 8, false, 0, Number.MAX_SAFE_INTEGER)],
 
-        [StBuiltinType.USINT, new StNativeTypeDetails(StNativeTypeKind.Integer, 1, false, 0, 0xFF)],
-        [StBuiltinType.UINT,  new StNativeTypeDetails(StNativeTypeKind.Integer, 2, false, 0, 0xFFFF)],
-        [StBuiltinType.UDINT, new StNativeTypeDetails(StNativeTypeKind.Integer, 4, false, 0, 0xFFFFFFFF)],
-        [StBuiltinType.ULINT, new StNativeTypeDetails(StNativeTypeKind.Integer, 8, false, 0, Number.MAX_SAFE_INTEGER)],
+        [StBuiltinType.USINT, new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 1, false, 0, 0xFF)],
+        [StBuiltinType.UINT,  new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 2, false, 0, 0xFFFF)],
+        [StBuiltinType.UDINT, new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 4, false, 0, 0xFFFFFFFF)],
+        [StBuiltinType.ULINT, new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 8, false, 0, Number.MAX_SAFE_INTEGER)],
 
-        [StBuiltinType.SINT,  new StNativeTypeDetails(StNativeTypeKind.Integer, 1, true, -0x80, 0x7F)],
-        [StBuiltinType.INT,   new StNativeTypeDetails(StNativeTypeKind.Integer, 2, true, -0x8000, 0x7FFF)],
-        [StBuiltinType.DINT,  new StNativeTypeDetails(StNativeTypeKind.Integer, 4, true, -0x80000000, 0x7FFFFFFF)],
-        [StBuiltinType.LINT,  new StNativeTypeDetails(StNativeTypeKind.Integer, 8, true, Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)],
+        [StBuiltinType.SINT,  new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 1, true, -0x80, 0x7F)],
+        [StBuiltinType.INT,   new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 2, true, -0x8000, 0x7FFF)],
+        [StBuiltinType.DINT,  new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 4, true, -0x80000000, 0x7FFFFFFF)],
+        [StBuiltinType.LINT,  new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 8, true, Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)],
 
         [StBuiltinType.REAL,  new StNativeTypeDetails(StNativeTypeKind.Float, 4, undefined, -3.402823e+38, 3.402823e+38)],
         [StBuiltinType.LREAL, new StNativeTypeDetails(StNativeTypeKind.Float, 8, undefined, -1.7976931348623158e+308, 1.7976931348623158e+308)],

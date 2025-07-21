@@ -40,3 +40,4 @@
 - Suggestions / Error tolerant parser
 - test explorer
 - Clean up extension.ts
+- Print out errors and warnings of a specific file and compare that to expected errors and warnings in an automated way

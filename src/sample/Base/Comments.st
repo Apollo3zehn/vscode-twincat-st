@@ -2,7 +2,7 @@
 TYPE ST_Comments :
 STRUCT
     // a
-    a: BOOL;
+    a: BOOL := FALSE; // My Comment
 
     // unused
 

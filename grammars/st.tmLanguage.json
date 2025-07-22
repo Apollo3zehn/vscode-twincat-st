@@ -79,9 +79,9 @@
         { "name": "constant.numeric.integer.st", "match": "\\b\\d+\\b" }
       ]
     },
-    "times": {
+    "date-and-times": {
       "name": "string.unquoted",
-      "match": "T#[0-9]+[a-zA-Z]+"
+      "match": "\\b(DATE|D|DATE_AND_TIME|DT|TIME_OF_DAY|TOD|LDATE|LD|LDATE_AND_TIME|LDT|LTIME_OF_DAY|LTOD|TIME|T)\\#[^\\s;]+"
     },
     "programs": {
       "patterns": [
@@ -357,7 +357,7 @@
       "patterns": [
         {
           "name": "storage.type.st",
-          "match": "\\b(POINTER TO|REFERENCE TO|INT|REAL|BOOL|BIT|STRING|DINT|BYTE|WORD|DWORD|LWORD|SINT|USINT|UINT|UDINT|LINT|ULINT|LREAL|TIME|DATE|TIME_OF_DAY|DATE_AND_TIME)\\b"
+          "match": "\\b(POINTER TO|REFERENCE TO|INT|REAL|BOOL|BIT|STRING|DINT|BYTE|WORD|DWORD|LWORD|SINT|USINT|UINT|UDINT|LINT|ULINT|LREAL|TIME|DATE|TIME_OF_DAY|TOD|DATE_AND_TIME|DT|LDATE|LTIME_OF_DAY|LTOD|LDATE_AND_TIME|LDT)\\b"
         },
         {
           "match": "(ARRAY)\\s*(\\[.*?\\])\\s*(OF)\\s*(.*)",
@@ -424,7 +424,7 @@
             },
             "2": { "patterns": [{ "include": "#types" }] },
             "3": { "patterns": [{ "include": "#operators" }] },
-            "4": { "patterns": [{ "include": "#expression" }] }
+            "4": { "patterns": [{ "include": "#comments" }, { "include": "#expression" }] }
           }
         }
       ]
@@ -462,7 +462,7 @@
     "literals": {
       "patterns": [
         { "include": "#strings" },
-        { "include": "#times" },
+        { "include": "#date-and-times" },
         { "include": "#numbers" }
       ]
     },

@@ -119,7 +119,7 @@ builtinType
     // Floating point types
     | 'REAL' | 'LREAL'
     // Time and date types
-    | 'TIME' | 'DATE' | 'TIME_OF_DAY' | 'DATE_AND_TIME'
+    | 'TIME' | 'DATE' | 'TIME_OF_DAY' | 'TOD' | 'DATE_AND_TIME' | 'DT'| 'LDATE' | 'LTIME_OF_DAY' | 'LTOD' | 'LDATE_AND_TIME' | 'LDT'
     // String types
     | 'STRING'
     ;
@@ -250,6 +250,9 @@ literal
     | REAL_NUMBER
     | BOOL
     | TIME_LITERAL
+    | DATE_LITERAL
+    | DATE_AND_TIME_LITERAL
+    | TIME_OF_DAY_LITERAL
     | STRING_LITERAL
     ;
 
@@ -258,8 +261,8 @@ expr
     | expr op=('+'|'-') expr
     | expr op=('='|'<'|'>'|'<='|'>='|'<>') expr
     | expr op=('AND'|'OR'|'XOR') expr
-    | memberExpression
     | literal
+    | memberExpression
     | '(' expr ')'
     ;
 
@@ -425,6 +428,23 @@ REAL_NUMBER
                     ;
 
 TIME_LITERAL        : 'T#' [0-9]+ ( 'MS' | 'S' | 'M' | 'H' | 'D' ) ;
+
+DATE_LITERAL
+                    : ('DATE' | 'D' | 'LDATE' | 'LD') '#' [0-9]+ '-' [0-9][0-9]? '-' [0-9][0-9]?
+                    ;
+
+DATE_AND_TIME_LITERAL
+                    : ('DATE_AND_TIME' | 'DT' | 'LDATE_AND_TIME' | 'LDT') '#'
+                    [0-9]+ '-' [0-9][0-9]? '-' [0-9][0-9]? '-' [0-9][0-9]? ':' [0-9][0-9]?
+                    (':' [0-9][0-9]? ('.' [0-9]+)? )?
+                    ;
+
+TIME_OF_DAY_LITERAL
+                    : ('TIME_OF_DAY' | 'TOD' | 'LTIME_OF_DAY' | 'LTOD') '#'
+                    [0-9][0-9]? ':' [0-9][0-9]?
+                    (':' [0-9][0-9]? ('.' [0-9]+)? )?
+                    ;
+
 STRING_LITERAL      : '"' (~["\r\n])* '"' | '\'' (~['\r\n])* '\'' ;
 ID                  : [a-zA-Z_][a-zA-Z0-9_]* ;
 

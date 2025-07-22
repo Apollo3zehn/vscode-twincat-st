@@ -367,14 +367,6 @@ export class SemanticModelBuilder {
         sourceFile: StSourceFile
     ): StType | undefined {
 
-        // TODO: LREAL should be returned by default but this causes unnecessary
-        // warnings when assigning the literal to a value of type REAL.
-        // This is relevant for error message in C0032_Initializer_Literals.st, _bool_real: BOOL := 1.0;
-        //
-        // Something similar happens here:
-        //      _word_1: WORD := 1;
-        //      "Implicit conversion from signed type 'SINT' to unsigned type 'WORD': Possible change of sign"
-
         // literal
         //     : INTEGER_NUMBER
         //     | REAL_NUMBER
@@ -575,7 +567,10 @@ export class SemanticModelBuilder {
 
             if (isNegative) {
 
-                if (-value >= -1.7976931348623158e+308)
+                if (-value >= -3.402823e+38)
+                    fittingType = StBuiltinType.REAL;
+
+                else if (-value >= -1.7976931348623158e+308)
                     fittingType = StBuiltinType.LREAL;
                     
                 else {
@@ -592,7 +587,10 @@ export class SemanticModelBuilder {
 
             else {
 
-                if (value <= 1.7976931348623158e+308)
+                if (value <= 3.402823e+38)
+                    fittingType = StBuiltinType.REAL;
+
+                else if (value <= 1.7976931348623158e+308)
                     fittingType = StBuiltinType.LREAL;
                                        
                 else {
@@ -607,23 +605,43 @@ export class SemanticModelBuilder {
                 }
             }
 
-            let acceptTypeHint = false;
+            let choosenType: StBuiltinType | undefined = fittingType;
             
-            switch (typeHintKind) {
+            if (requestedType) {
 
-                case StNativeTypeKind.Float:
+                const requestedTypeDetails = StModel.nativeTypes.get(requestedType);
+                const fittingTypeDetails = StModel.nativeTypes.get(fittingType);
+
+                if (
+                    requestedTypeDetails &&
+                    fittingTypeDetails &&
+                    requestedTypeDetails.max! < fittingTypeDetails.max!
+                ) {
+                    this.C0001(literal, StBuiltinType[requestedType], sourceFile);
+                    return undefined;
+                }
+
+                else {
+                    choosenType = requestedType;
+                }
+            }
+
+            else {
+                choosenType = StBuiltinType.LREAL;
+            }
+
+            switch (typeHint) {
+
+                case StBuiltinType.REAL:
 
                     if (value <= 3.402823e+38)
-                        acceptTypeHint = true;
+                        choosenType = StBuiltinType.REAL;
 
                     break;
             }
 
             const type = new StType();
-
-            type.builtinType = acceptTypeHint
-                ? typeHint
-                : requestedType ?? fittingType;
+            type.builtinType = choosenType;
 
             return type;
         }

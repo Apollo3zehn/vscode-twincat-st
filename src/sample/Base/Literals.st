@@ -48,5 +48,38 @@ FUNCTION_BLOCK Literals
         // String Types
         string_quoted_dbl:  STRING  := "The string";
         string_quoted_sgl:  STRING  := 'The string';
+
+        // Time-Related Types
+
+        // => DATE: Nothing is optional
+        date_min:               DATE            := DATE#1970-01-01;
+        date_max:               DATE            := DATE#2106-02-07;
+        date_min_alt:           DATE            := D#1970-01-01;
+        date_min_invalid:       DATE            := D#1970-01-40;
+
+        // => DATE_AND_TIME: Seconds are optional
+        date_and_time_min:      DATE_AND_TIME   := DATE_AND_TIME#1970-1-1-0:0:0;
+        date_and_time_max:      DATE_AND_TIME   := DATE_AND_TIME#2106-02-07-06:28:15;
+        date_and_time_alt:      DT              := DT#1970-1-1-0:0;
+
+        // => TIME_OF_DAY: Seconds are optional
+        time_of_day_min:        TIME_OF_DAY     := TIME_OF_DAY#0:0:0;
+        time_of_day_max:        TIME_OF_DAY     := TIME_OF_DAY#23:59:59.999;
+        time_of_day_alt:        TOD             := TOD#0:0;
+
+        // => LDATE: Nothing is optional
+        l_date_min:             LDATE           := LDATE#1970-01-01;
+        l_date_max:             LDATE           := LDATE#9999-12-31;
+        l_date_min_alt:         LDATE           := LD#1970-01-01;
+
+        // => LDATE_AND_TIME: Milliseconds and seconds are optional
+        l_date_and_time_min:    LDATE_AND_TIME  := LDATE_AND_TIME#1970-01-01-00:00:00;
+        l_date_and_time_max:    LDATE_AND_TIME  := LDATE_AND_TIME#9999-12-31-23:59:59.999999999;
+        l_date_and_time_alt:    LDT             := LDT#1970-1-1-0:0;
+
+        // => LTIME_OF_DAY: Milliseconds and seconds are optional
+        l_time_of_day_min:      LTIME_OF_DAY    := LTIME_OF_DAY#0:0:0;
+        l_time_of_day_max:      LTIME_OF_DAY    := LTIME_OF_DAY#23:59:59.999999999;
+        l_time_of_day_alt:      LTOD            := LTOD#0:0;
     END_VAR
 END_FUNCTION_BLOCK

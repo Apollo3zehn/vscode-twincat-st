@@ -205,9 +205,22 @@ export enum StBuiltinType {
 
     // Time and date types
     TIME = "TIME",
+
     DATE = "DATE",
-    TIME_OF_DAY = "TIME_OF_DAY",
+
     DATE_AND_TIME = "DATE_AND_TIME",
+    DT = "DT",
+
+    TIME_OF_DAY = "TIME_OF_DAY",
+    TOD = "TOD",
+
+    LDATE = "LDATE",
+
+    LDATE_AND_TIME = "LDATE_AND_TIME",
+    LDT = "LDT",
+
+    LTIME_OF_DAY = "LTIME_OF_DAY",
+    LTOD = "LTOD",
 
     // String types
     STRING = "STRING"

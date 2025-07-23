@@ -1,4 +1,4 @@
-FUNCTION_BLOCK C0032_Initializer_Literals
+FUNCTION_BLOCK C0032_Literals
 
     VAR
 

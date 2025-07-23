@@ -250,10 +250,22 @@ literal
     | REAL_NUMBER
     | BOOL
     | TIME_LITERAL
-    | DATE_LITERAL
-    | DATE_AND_TIME_LITERAL
-    | TIME_OF_DAY_LITERAL
+    | dateLiteral
+    | dateAndTimeLiteral
+    | timeOfDayLiteral
     | STRING_LITERAL
+    ;
+
+dateLiteral
+    : prefix=('DATE' | 'D' | 'LDATE' | 'LD') '#' date=DATE
+    ;
+
+dateAndTimeLiteral
+    : prefix=('DATE_AND_TIME' | 'DT' | 'LDATE_AND_TIME' | 'LDT') '#' datetime=DATETIME
+    ;
+
+timeOfDayLiteral
+    : prefix=('TIME_OF_DAY' | 'TOD' | 'LTIME_OF_DAY' | 'LTOD') '#' time=TIME
     ;
 
 expr
@@ -396,20 +408,20 @@ INTEGER_NUMBER
                             | 'USINT' | 'UINT' | 'UDINT' | 'ULINT'
                             | 'SINT' | 'INT' | 'DINT' | 'LINT'
                         ) '#' (
-                            [0-9]+
-                            | '2#' [01_]+
-                            | '8#' [0-7_]+
-                            | '10#' [0-9_]+
-                            | '16#' [0-9A-Fa-f_]+
+                            DEC_DIGIT+
+                            | '2#' BIN_DIGIT+
+                            | '8#' OCT_DIGIT+
+                            | '10#' DEC_DIGIT+
+                            | '16#' HEX_DIGIT+
                         )
                         | (
-                            [0-9]+
-                            | '2#' [01_]+
-                            | '8#' [0-7_]+
-                            | '10#' [0-9_]+
-                            | '16#' [0-9A-Fa-f_]+
+                            DEC_DIGIT+
+                            | '2#' BIN_DIGIT+
+                            | '8#' OCT_DIGIT+
+                            | '10#' DEC_DIGIT+
+                            | '16#' HEX_DIGIT+
                         )
-                        | [0-9]+
+                        | DEC_DIGIT+
                     )
                     ;
 
@@ -418,37 +430,37 @@ REAL_NUMBER
                         ( 
                             'REAL' | 'LREAL'
                         ) '#' (
-                            [0-9]+ ('.' [0-9]+)? ([eE][+\-]?[0-9]+)?
+                            DEC_DIGIT+ ('.' DEC_DIGIT+)? ([eE][+\-]?DEC_DIGIT+)?
                         )
                         | (
-                            [0-9]+ ('.' [0-9]+)? ([eE][+\-]?[0-9]+)?
+                            DEC_DIGIT+ ('.' DEC_DIGIT+)? ([eE][+\-]?DEC_DIGIT+)?
                         )
-                        | [0-9]+ ('.' [0-9]+)? ([eE][+\-]?[0-9]+)?
+                        | DEC_DIGIT+ ('.' DEC_DIGIT+)? ([eE][+\-]?DEC_DIGIT+)?
                     )
                     ;
 
-TIME_LITERAL        : 'T#' [0-9]+ ( 'MS' | 'S' | 'M' | 'H' | 'D' ) ;
-
-DATE_LITERAL
-                    : ('DATE' | 'D' | 'LDATE' | 'LD') '#' [0-9]+ '-' [0-9][0-9]? '-' [0-9][0-9]?
-                    ;
-
-DATE_AND_TIME_LITERAL
-                    : ('DATE_AND_TIME' | 'DT' | 'LDATE_AND_TIME' | 'LDT') '#'
-                    [0-9]+ '-' [0-9][0-9]? '-' [0-9][0-9]? '-' [0-9][0-9]? ':' [0-9][0-9]?
-                    (':' [0-9][0-9]? ('.' [0-9]+)? )?
-                    ;
-
-TIME_OF_DAY_LITERAL
-                    : ('TIME_OF_DAY' | 'TOD' | 'LTIME_OF_DAY' | 'LTOD') '#'
-                    [0-9][0-9]? ':' [0-9][0-9]?
-                    (':' [0-9][0-9]? ('.' [0-9]+)? )?
-                    ;
+TIME_LITERAL        : 'T#' DEC_DIGIT+ ( 'MS' | 'S' | 'M' | 'H' | 'D' ) ;
 
 STRING_LITERAL      : '"' (~["\r\n])* '"' | '\'' (~['\r\n])* '\'' ;
-ID                  : [a-zA-Z_][a-zA-Z0-9_]* ;
+ID                  : ID_START ID_PART* ;
+
+// Date and time
+DATE_PREFIX         : ('DATE' | 'D' | 'LDATE' | 'LD');
+DATE                : DEC_DIGIT+ '-' DEC_DIGIT+ '-' DEC_DIGIT+ ;
+TIME                : DEC_DIGIT+ ':' DEC_DIGIT+ (':' DEC_DIGIT+ ('.' DEC_DIGIT+)? )? ;
+DATETIME            : DATE '-' TIME ;
 
 // Symbols
 WS                  : [ \t\r\n]+ -> skip ;
 COMMENT             : '//' ~[\r\n]* -> channel(HIDDEN) ;
 COMMENT_BLOCK       : '(*' .*? '*)' -> channel(HIDDEN) ;
+
+// Fragments
+fragment BIN_DIGIT  : [01_] ;
+fragment OCT_DIGIT  : [0-7_] ;
+fragment DEC_DIGIT  : [0-9_] ;
+fragment HEX_DIGIT  : [0-9A-Fa-f_] ;
+
+fragment LETTER     : [a-zA-Z] ;
+fragment ID_START   : LETTER | '_' ;
+fragment ID_PART    : LETTER | DEC_DIGIT | '_' ;

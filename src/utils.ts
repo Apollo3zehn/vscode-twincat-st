@@ -95,3 +95,28 @@ export function getTypeOfType(kind: StSymbolKind): string {
         default: return "UNKNOWN";
     }
 }
+
+export function isDateInRange(
+    year: number, month: number, day: number,
+    year_min: number, month_min: number, day_min: number,
+    year_max: number, month_max: number, day_max: number
+): boolean {
+
+    if (
+        year < year_min ||
+        (year === year_min && month < month_min) ||
+        (year === year_min && month === month_min && day < day_min)
+    ) {
+        return false;
+    }
+
+    if (
+        year > year_max ||
+        (year === year_max && month > month_max) ||
+        (year === year_max && month === month_max && day > day_max)
+    ) {
+        return false;
+    }
+
+    return true;
+}

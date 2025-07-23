@@ -1,9 +1,10 @@
 import { CharStream, CommonTokenStream, ParserRuleContext } from "antlr4ng";
+import { DateTime } from "luxon";
 import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vscode";
 import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
 import { AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
-import { getContextRange, getOriginalText, getTokenRange, getTypeOfType } from "../utils.js";
+import { getContextRange, getOriginalText, getTokenRange, getTypeOfType, isDateInRange } from "../utils.js";
 import { StVisitor } from "./StVisitor.js";
 
 export class SemanticModelBuilder {
@@ -381,7 +382,7 @@ export class SemanticModelBuilder {
 
         if (literal.BOOL()) {
 
-            const type =  new StType();
+            const type = new StType();
             type.builtinType = StBuiltinType.BOOL;
 
             return type;
@@ -638,6 +639,74 @@ export class SemanticModelBuilder {
                         choosenType = StBuiltinType.REAL;
 
                     break;
+            }
+
+            const type = new StType();
+            type.builtinType = choosenType;
+
+            return type;
+        }
+
+        else if (literal.dateLiteral()) {
+
+            const dateLiteral = literal.dateLiteral()!;
+            const requestedType = dateLiteral._prefix?.text as StBuiltinType;
+            const dateParts = dateLiteral._date!.text!.split("-");
+
+            const year = Number.parseInt(dateParts[0]);
+            const month = Number.parseInt(dateParts[1]);
+            const day = Number.parseInt(dateParts[2]);
+            const date = DateTime.fromObject({ year, month, day });
+
+            if (!date.isValid) {
+                this.C0001(literal, StBuiltinType[requestedType], sourceFile);
+                return undefined;
+            }
+
+            let choosenType: StBuiltinType | undefined;
+
+            switch (requestedType) {
+                
+                case StBuiltinType.DATE:
+                case StBuiltinType.D:
+
+                    if (
+                        isDateInRange(
+                            year, month, day,
+                            1970, 1, 1,
+                            2106, 2, 7
+                        )
+                    ) {
+                        choosenType = StBuiltinType.DATE;
+                    }
+
+                    else {
+                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
+                    }
+
+                    break;
+                
+                case StBuiltinType.LDATE:
+                case StBuiltinType.LD:
+
+                    if (
+                        isDateInRange(
+                            year, month, day,
+                            1, 1, 1,
+                            9999, 12, 31
+                        )
+                    ) {
+                        choosenType = StBuiltinType.LDATE;
+                    }
+
+                    else {
+                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
+                    }
+
+                    break;
+                
+                default:
+                    return undefined;
             }
 
             const type = new StType();

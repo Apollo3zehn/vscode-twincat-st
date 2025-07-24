@@ -261,7 +261,7 @@ dateLiteral
     ;
 
 dateAndTimeLiteral
-    : prefix=('DATE_AND_TIME' | 'DT' | 'LDATE_AND_TIME' | 'LDT') '#' datetime=DATETIME
+    : prefix=('DATE_AND_TIME' | 'DT' | 'LDATE_AND_TIME' | 'LDT') '#' dateAndTime=DATETIME
     ;
 
 timeOfDayLiteral

@@ -2844,7 +2844,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 632;
             this.match(StructuredTextParser.T__42);
             this.state = 633;
-            localContext._datetime = this.match(StructuredTextParser.DATETIME);
+            localContext._dateAndTime = this.match(StructuredTextParser.DATETIME);
             }
         }
         catch (re) {
@@ -5331,7 +5331,7 @@ export class DateLiteralContext extends antlr.ParserRuleContext {
 
 export class DateAndTimeLiteralContext extends antlr.ParserRuleContext {
     public _prefix?: Token | null;
-    public _datetime?: Token | null;
+    public _dateAndTime?: Token | null;
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }

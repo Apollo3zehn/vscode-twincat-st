@@ -96,6 +96,7 @@ export function getTypeOfType(kind: StSymbolKind): string {
     }
 }
 
+// TODO: Simplify these methods somehow
 export function isDateInRange(
     year: number, month: number, day: number,
     year_min: number, month_min: number, day_min: number,
@@ -131,6 +132,42 @@ export function isTimeOfDayInRange(
         (hour === hour_max && minute > minute_max) ||
         (hour === hour_max && minute === minute_max && second > second_max) ||
         (hour === hour_max && minute === minute_max && second === second_max && millisecond > millisecond_max)
+    ) {
+        return false;
+    }
+
+    return true;
+}
+
+export function isDateAndTimeInRange(
+    year: number, month: number, day: number,
+    hour: number, minute: number, second: number, millisecond: number,
+    year_min: number, month_min: number, day_min: number,
+    hour_min: number, minute_min: number, second_min: number, millisecond_min: number,
+    year_max: number, month_max: number, day_max: number,
+    hour_max: number, minute_max: number, second_max: number, millisecond_max: number
+): boolean {
+
+    if (
+        year < year_min ||
+        (year === year_min && month < month_min) ||
+        (year === year_min && month === month_min && day < day_min) ||
+        (year === year_min && month === month_min && day === day_min && hour < hour_min) ||
+        (year === year_min && month === month_min && day === day_min && hour === hour_min && minute < minute_min) ||
+        (year === year_min && month === month_min && day === day_min && hour === hour_min && minute === minute_min && second < second_min) ||
+        (year === year_min && month === month_min && day === day_min && hour === hour_min && minute === minute_min && second === second_min && millisecond < millisecond_min)
+    ) {
+        return false;
+    }
+
+    if (
+        year > year_max ||
+        (year === year_max && month > month_max) ||
+        (year === year_max && month === month_max && day > day_max) ||
+        (year === year_max && month === month_max && day === day_max && hour > hour_max) ||
+        (year === year_max && month === month_max && day === day_max && hour === hour_max && minute > minute_max) ||
+        (year === year_max && month === month_max && day === day_max && hour === hour_max && minute === minute_max && second > second_max) ||
+        (year === year_max && month === month_max && day === day_max && hour === hour_max && minute === minute_max && second === second_max && millisecond > millisecond_max)
     ) {
         return false;
     }

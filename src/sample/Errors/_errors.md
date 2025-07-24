@@ -1,4 +1,4 @@
-- C0001: Constant 'USINT#1228' too large for type 'USINT'
+- Use BigInt here: _int2:                  INT             := 18446744073709551616;
 
 - assignment: incompatible types, (inheritance, interfaces)
 

@@ -4,7 +4,7 @@ import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vs
 import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
 import { AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
-import { getContextRange, getOriginalText, getTokenRange, getTypeOfType, isDateInRange, isTimeOfDayInRange } from "../utils.js";
+import { getContextRange, getOriginalText, getTokenRange, getTypeOfType, isDateAndTimeInRange, isDateInRange, isTimeOfDayInRange } from "../utils.js";
 import { StVisitor } from "./StVisitor.js";
 
 export class SemanticModelBuilder {
@@ -725,18 +725,25 @@ export class SemanticModelBuilder {
 
             const hour = Number.parseInt(timeParts[0]);
             const minute = Number.parseInt(timeParts[1]);
-            const secondAndMillisecond = timeParts[2];
-            const secondAndMillisecondParts = (secondAndMillisecond ?? "").split(".");
-            const secondRaw = Number.parseInt(secondAndMillisecondParts[0]);
+            const secondAndMoreParts = (timeParts[2] ?? "").split(".");
+            const secondRaw = Number.parseInt(secondAndMoreParts[0]);
             const second = Number.isNaN(secondRaw) ? 0 : secondRaw;
-            const millisecondRaw = Number.parseInt(secondAndMillisecondParts[1]);
-            const millisecond = Number.isNaN(millisecondRaw) ? 0 : millisecondRaw;
+            const millisecondRaw = Number.parseInt(secondAndMoreParts[1]);
+
+            let millisecond = Number.isNaN(millisecondRaw) ? 0 : millisecondRaw;
+            let millisecond_rounded = millisecond;
+
+            if (millisecond > 999) {
+                // If input is e.g. 999999999 (nanoseconds), convert to 999.999999 ms
+                millisecond = millisecond / Math.pow(10, millisecond.toString().length - 3);
+                millisecond_rounded = 999;
+            }
 
             const dateTime = DateTime.fromObject({
                 hour,
                 minute,
                 second,
-                millisecond
+                millisecond: millisecond_rounded
             });
 
             if (!dateTime.isValid) {
@@ -773,7 +780,106 @@ export class SemanticModelBuilder {
                     if (
                         isTimeOfDayInRange(
                             hour, minute, second, millisecond,
-                            23, 59, 59, 999999999
+                            23, 59, 59, 999.999999
+                        )
+                    ) {
+                        choosenType = StBuiltinType.LTIME_OF_DAY;
+                    }
+
+                    else {
+                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
+                        return undefined;
+                    }
+
+                    break;
+                
+                default:
+                    return undefined;
+            }
+
+            const type = new StType();
+            type.builtinType = choosenType;
+
+            return type;
+        }
+
+        else if (literal.dateAndTimeLiteral()) {
+
+            const dateAndTimeLiteral = literal.dateAndTimeLiteral()!;
+            const requestedType = dateAndTimeLiteral._prefix?.text as StBuiltinType;
+            const dateAndTimeParts = dateAndTimeLiteral._dateAndTime!.text!.split("-");
+
+            const year = Number.parseInt(dateAndTimeParts[0]);
+            const month = Number.parseInt(dateAndTimeParts[1]);
+            const day = Number.parseInt(dateAndTimeParts[2]);
+
+            const hoursAndMoreParts = dateAndTimeParts[3].split(":");
+
+            const hour = Number.parseInt(hoursAndMoreParts[0]);
+            const minute = Number.parseInt(hoursAndMoreParts[1]);
+
+            const secondAndMoreParts = (hoursAndMoreParts[2] ?? "").split(".");
+
+            const secondRaw = Number.parseInt(secondAndMoreParts[0]);
+            const second = Number.isNaN(secondRaw) ? 0 : secondRaw;
+            const millisecondRaw = Number.parseInt(secondAndMoreParts[1]);
+
+            let millisecond = Number.isNaN(millisecondRaw) ? 0 : millisecondRaw;
+            let millisecond_rounded = millisecond;
+
+            if (millisecond > 999) {
+                // If input is e.g. 999999999 (nanoseconds), convert to 999.999999 ms
+                millisecond = millisecond / Math.pow(10, millisecond.toString().length - 3);
+                millisecond_rounded = 999;
+            }
+
+            const dateTime = DateTime.fromObject({
+                day,
+                month,
+                year,
+                hour,
+                minute,
+                second,
+                millisecond: millisecond_rounded
+            });
+
+            if (!dateTime.isValid) {
+                this.C0001(literal, StBuiltinType[requestedType], sourceFile);
+                return undefined;
+            }
+
+            let choosenType: StBuiltinType | undefined;
+
+            switch (requestedType) {
+                
+                case StBuiltinType.DATE_AND_TIME:
+                case StBuiltinType.DT:
+
+                    if (
+                        isDateAndTimeInRange(
+                            year, month, day, hour, minute, second, millisecond,
+                            1970, 1, 1, 0, 0, 0, 0,
+                            2106, 2, 7, 6, 28, 15, 0,
+                        )
+                    ) {
+                        choosenType = StBuiltinType.TIME_OF_DAY;
+                    }
+
+                    else {
+                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
+                        return undefined;
+                    }
+
+                    break;
+                
+                case StBuiltinType.LDATE_AND_TIME:
+                case StBuiltinType.LDT:
+
+                    if (
+                        isDateAndTimeInRange(
+                            year, month, day, hour, minute, second, millisecond,
+                            1, 1, 1, 0, 0, 0, 0,
+                            9999, 12, 31, 23, 59, 59, 999.999999
                         )
                     ) {
                         choosenType = StBuiltinType.LTIME_OF_DAY;

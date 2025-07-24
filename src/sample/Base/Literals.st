@@ -51,6 +51,10 @@ FUNCTION_BLOCK Literals
 
         // Time-Related Types
 
+        // TIME
+        time_max:               TIME            := TIME#49D17H2M47S295MS;
+        time_alt:               TIME            := T#05H10MS;
+
         // => DATE: Nothing is optional
         date_min:               DATE            := DATE#1970-01-01;
         date_max:               DATE            := DATE#2106-02-07;
@@ -66,6 +70,10 @@ FUNCTION_BLOCK Literals
         date_and_time_max:      DATE_AND_TIME   := DATE_AND_TIME#2106-02-07-06:28:15;
         date_and_time_alt:      DT              := DT#1970-1-001-0:0;
 
+        // LTIME
+        l_time_max:             LTIME           := LTIME#213503D23H34M33S709MS551US615NS;
+        l_time_alt:             LTIME           := LTIME#05H10MS;
+
         // => LDATE: Nothing is optional
         l_date_min:             LDATE           := LDATE#1970-01-01;
         l_date_max:             LDATE           := LDATE#2554-7-21;
@@ -80,10 +88,5 @@ FUNCTION_BLOCK Literals
         l_date_and_time_min:    LDATE_AND_TIME  := LDATE_AND_TIME#1970-01-01-00:00:00;
         l_date_and_time_max:    LDATE_AND_TIME  := LDATE_AND_TIME#2554-7-21-23:34:33.709551615;
         l_date_and_time_alt:    LDT             := LDT#1970-1-001-0:0;
-
-        // TIME
-
-        // LTIME
-
     END_VAR
 END_FUNCTION_BLOCK

@@ -119,7 +119,7 @@ builtinType
     // Floating point types
     | 'REAL' | 'LREAL'
     // Time and date types
-    | 'TIME' | 'DATE' | 'TIME_OF_DAY' | 'TOD' | 'DATE_AND_TIME' | 'DT'| 'LDATE' | 'LTIME_OF_DAY' | 'LTOD' | 'LDATE_AND_TIME' | 'LDT'
+    | 'TIME' | 'LTIME' | 'DATE' | 'TIME_OF_DAY' | 'TOD' | 'DATE_AND_TIME' | 'DT'| 'LDATE' | 'LTIME_OF_DAY' | 'LTOD' | 'LDATE_AND_TIME' | 'LDT'
     // String types
     | 'STRING'
     ;
@@ -249,11 +249,15 @@ literal
     : INTEGER_NUMBER
     | REAL_NUMBER
     | BOOL
-    | TIME_LITERAL
+    | timeLiteral
     | dateLiteral
     | dateAndTimeLiteral
     | timeOfDayLiteral
     | STRING_LITERAL
+    ;
+
+timeLiteral
+    : prefix=('TIME' | 'T' | 'LTIME') '#' time=TIME
     ;
 
 dateLiteral
@@ -265,7 +269,7 @@ dateAndTimeLiteral
     ;
 
 timeOfDayLiteral
-    : prefix=('TIME_OF_DAY' | 'TOD' | 'LTIME_OF_DAY' | 'LTOD') '#' time=TIME
+    : prefix=('TIME_OF_DAY' | 'TOD' | 'LTIME_OF_DAY' | 'LTOD') '#' timeOfDay=TIME_OF_DAY
     ;
 
 expr
@@ -439,16 +443,14 @@ REAL_NUMBER
                     )
                     ;
 
-TIME_LITERAL        : 'T#' DEC_DIGIT+ ( 'MS' | 'S' | 'M' | 'H' | 'D' ) ;
-
 STRING_LITERAL      : '"' (~["\r\n])* '"' | '\'' (~['\r\n])* '\'' ;
 ID                  : ID_START ID_PART* ;
 
 // Date and time
-DATE_PREFIX         : ('DATE' | 'D' | 'LDATE' | 'LD');
+TIME                : (DEC_DIGIT+ ( 'NS' | 'US' | 'MS' | 'S' | 'M' | 'H' | 'D' ))+ ;
 DATE                : DEC_DIGIT+ '-' DEC_DIGIT+ '-' DEC_DIGIT+ ;
-TIME                : DEC_DIGIT+ ':' DEC_DIGIT+ (':' DEC_DIGIT+ ('.' DEC_DIGIT+)? )? ;
-DATETIME            : DATE '-' TIME ;
+TIME_OF_DAY         : DEC_DIGIT+ ':' DEC_DIGIT+ (':' DEC_DIGIT+ ('.' DEC_DIGIT+)? )? ;
+DATETIME            : DATE '-' TIME_OF_DAY ;
 
 // Symbols
 WS                  : [ \t\r\n]+ -> skip ;

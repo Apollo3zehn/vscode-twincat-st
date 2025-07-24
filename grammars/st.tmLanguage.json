@@ -76,8 +76,26 @@
         "3": { "name": "constant.numeric.st" }
       }
     },
-    "date-and-times": {
-      "match": "\\b(DATE|D|DATE_AND_TIME|DT|TIME_OF_DAY|TOD|LDATE|LD|LDATE_AND_TIME|LDT|LTIME_OF_DAY|LTOD|TIME|T)(\\#[^\\s;]+)",
+    "time": {
+      "match": "\\b(TIME|T|LTIME)(\\#[^\\s;]+)",
+      "captures": {
+        "1": { "name": "storage.type.st" },
+        "2": { 
+          "patterns": [
+            { 
+              "name": "string.unquoted",
+              "match": "[^0-9]+"
+            },
+            { 
+              "name": "constant.numeric.st",
+              "match": "[0-9]+"
+            }
+          ]
+        }
+      }
+    },
+    "date-and-timeofday": {
+      "match": "\\b(DATE|D|DATE_AND_TIME|DT|TIME_OF_DAY|TOD|LDATE|LD|LDATE_AND_TIME|LDT|LTIME_OF_DAY|LTOD)(\\#[^\\s;]+)",
       "captures": {
         "1": { "name": "storage.type.st" },
         "2": { "name": "constant.numeric.st" }
@@ -357,7 +375,7 @@
       "patterns": [
         {
           "name": "storage.type.st",
-          "match": "\\b(POINTER TO|REFERENCE TO|INT|REAL|BOOL|BIT|STRING|DINT|BYTE|WORD|DWORD|LWORD|SINT|USINT|UINT|UDINT|LINT|ULINT|LREAL|TIME|DATE|TIME_OF_DAY|TOD|DATE_AND_TIME|DT|LDATE|LTIME_OF_DAY|LTOD|LDATE_AND_TIME|LDT)\\b"
+          "match": "\\b(POINTER TO|REFERENCE TO|INT|REAL|BOOL|BIT|STRING|DINT|BYTE|WORD|DWORD|LWORD|SINT|USINT|UINT|UDINT|LINT|ULINT|LREAL|TIME|LTIME|DATE|TIME_OF_DAY|TOD|DATE_AND_TIME|DT|LDATE|LTIME_OF_DAY|LTOD|LDATE_AND_TIME|LDT)\\b"
         },
         {
           "match": "(ARRAY)\\s*(\\[.*?\\])\\s*(OF)\\s*(.*)",
@@ -462,7 +480,8 @@
     "literals": {
       "patterns": [
         { "include": "#strings" },
-        { "include": "#date-and-times" },
+        { "include": "#time" },
+        { "include": "#date-and-timeofday" },
         { "include": "#numbers" }
       ]
     },

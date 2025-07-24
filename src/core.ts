@@ -205,6 +205,7 @@ export enum StBuiltinType {
 
     // Time and date types
     TIME = "TIME",
+    T = "T",
 
     DATE = "DATE",
     D = "D",
@@ -214,6 +215,8 @@ export enum StBuiltinType {
 
     TIME_OF_DAY = "TIME_OF_DAY",
     TOD = "TOD",
+
+    LTIME = "LDATE",
 
     LDATE = "LDATE",
     LD = "LD",

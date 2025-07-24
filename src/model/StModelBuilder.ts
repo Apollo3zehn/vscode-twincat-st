@@ -721,11 +721,11 @@ export class SemanticModelBuilder {
 
             const timeOfDayLiteral = literal.timeOfDayLiteral()!;
             const requestedType = timeOfDayLiteral._prefix?.text as StBuiltinType;
-            const timeParts = timeOfDayLiteral._time!.text!.split(":");
+            const timeOfDayParts = timeOfDayLiteral._timeOfDay!.text!.split(":");
 
-            const hour = Number.parseInt(timeParts[0]);
-            const minute = Number.parseInt(timeParts[1]);
-            const secondAndMoreParts = (timeParts[2] ?? "").split(".");
+            const hour = Number.parseInt(timeOfDayParts[0]);
+            const minute = Number.parseInt(timeOfDayParts[1]);
+            const secondAndMoreParts = (timeOfDayParts[2] ?? "").split(".");
             const secondRaw = Number.parseInt(secondAndMoreParts[0]);
             const second = Number.isNaN(secondRaw) ? 0 : secondRaw;
             const millisecondRaw = Number.parseInt(secondAndMoreParts[1]);

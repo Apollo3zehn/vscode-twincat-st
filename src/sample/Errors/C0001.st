@@ -14,6 +14,8 @@ FUNCTION_BLOCK C0001
         _lreal2:                LREAL           := 1.7976931348623159e+308;
 
         // Time-Related Types
+        time_over:              TIME            := TIME#49D17H2M47S296MS;
+
         date_under:             DATE            := DATE#1969-12-31;
 		date_over:              DATE            := DATE#2106-02-08;
         date_invalid:           DATE            := D#1970-01-40;
@@ -23,6 +25,8 @@ FUNCTION_BLOCK C0001
 
         time_of_day_over:       TIME_OF_DAY     := TIME_OF_DAY#24:00:00.000;
         time_of_day_invalid:    TIME_OF_DAY     := TIME_OF_DAY#23:00:72.000;
+
+        l_time_over:            LTIME           := LTIME#213503D23H34M33S709MS551US616NS;
 
         l_date_under:           LDATE           := LDATE#1969-12-31;
 		l_date_over:            LDATE           := LDATE#2554-07-22;

@@ -5,7 +5,7 @@ FUNCTION_BLOCK C0001
         // Signed Integer Types
         _int:                   INT             := INT#16#8000;
 
-        (* Javascript cannot properly represent 2^64-1 so we get no error here unfortunately. *)
+        (* Javascript cannot properly represent 2^64-1 so we get no correct error here unfortunately. *)
         _int2:                  INT             := 18446744073709551616;
 
         // Floating Point Types

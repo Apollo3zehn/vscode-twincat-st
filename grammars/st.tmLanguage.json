@@ -68,20 +68,20 @@
       ]
     },
     "numbers": {
-      "patterns": [
-        { "name": "constant.numeric.float.scientific.st", "match": "\\b\\d+(?:\\.\\d+)?[eE][\\-+]?\\d+\\b" },
-        { "name": "constant.numeric.hex.st", "match": "\\b(?:16#|(?:BYTE|D?WORD|L?WORD|U?(S|D|L)?INT)#16#)[0-9A-Fa-f_]+\\b" },
-        { "name": "constant.numeric.dec.st", "match": "\\b(?:10#|(?:BYTE|D?WORD|L?WORD|U?(S|D|L)?INT)#10#)[0-9_]+\\b" },
-        { "name": "constant.numeric.octal.st", "match": "\\b(?:8#|(?:BYTE|D?WORD|L?WORD|U?(S|D|L)?INT)#8#)[0-7_]+\\b" },
-        { "name": "constant.numeric.binary.st", "match": "\\b(?:2#|(?:BYTE|D?WORD|L?WORD|U?(S|D|L)?INT)#2#)[01_]+\\b" },
-        { "name": "constant.numeric.typed.st", "match": "\\b(?:BYTE|D?WORD|L?WORD|U?(S|D|L)?INT|REAL|LREAL)#\\d+\\b" },
-        { "name": "constant.numeric.float.st", "match": "\\b\\d+\\.\\d+\\b" },
-        { "name": "constant.numeric.integer.st", "match": "\\b\\d+\\b" }
-      ]
+      "name": "constant.numeric.st",
+      "match": "([\\-+])?\\b(?:(BYTE|D?WORD|L?WORD|U?(?:S|D|L)?INT|REAL|LREAL)#)?((?:(?:16|10|8|2)#)?[0-9A-Fa-f_\\.\\-+]+\\b)",
+      "captures": {
+        "1": { "name": "keyword.operator.arithmetic.st" },
+        "2": { "name": "storage.type.st" },
+        "3": { "name": "constant.numeric.st" }
+      }
     },
     "date-and-times": {
-      "name": "string.unquoted",
-      "match": "\\b(DATE|D|DATE_AND_TIME|DT|TIME_OF_DAY|TOD|LDATE|LD|LDATE_AND_TIME|LDT|LTIME_OF_DAY|LTOD|TIME|T)\\#[^\\s;]+"
+      "match": "\\b(DATE|D|DATE_AND_TIME|DT|TIME_OF_DAY|TOD|LDATE|LD|LDATE_AND_TIME|LDT|LTIME_OF_DAY|LTOD|TIME|T)(\\#[^\\s;]+)",
+      "captures": {
+        "1": { "name": "storage.type.st" },
+        "2": { "name": "constant.numeric.st" }
+      }
     },
     "programs": {
       "patterns": [

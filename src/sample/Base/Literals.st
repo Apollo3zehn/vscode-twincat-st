@@ -61,7 +61,7 @@ FUNCTION_BLOCK Literals
         date_and_time_max:      DATE_AND_TIME   := DATE_AND_TIME#2106-02-07-06:28:15;
         date_and_time_alt:      DT              := DT#1970-1-001-0:0;
 
-        // => TIME_OF_DAY: Seconds are optional
+        // => TIME_OF_DAY: Milliseconds and seconds are optional
         time_of_day_min:        TIME_OF_DAY     := TIME_OF_DAY#0:0:0;
         time_of_day_max:        TIME_OF_DAY     := TIME_OF_DAY#23:59:59.999;
         time_of_day_alt:        TOD             := TOD#0:0;

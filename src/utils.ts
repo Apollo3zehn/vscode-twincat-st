@@ -120,3 +120,20 @@ export function isDateInRange(
 
     return true;
 }
+
+export function isTimeOfDayInRange(
+    hour: number, minute: number, second: number, millisecond: number,
+    hour_max: number, minute_max: number, second_max: number, millisecond_max: number
+): boolean {
+
+    if (
+        hour > hour_max ||
+        (hour === hour_max && minute > minute_max) ||
+        (hour === hour_max && minute === minute_max && second > second_max) ||
+        (hour === hour_max && minute === minute_max && second === second_max && millisecond > millisecond_max)
+    ) {
+        return false;
+    }
+
+    return true;
+}

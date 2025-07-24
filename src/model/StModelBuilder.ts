@@ -4,7 +4,7 @@ import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vs
 import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
 import { AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
-import { getContextRange, getOriginalText, getTokenRange, getTypeOfType, isDateInRange } from "../utils.js";
+import { getContextRange, getOriginalText, getTokenRange, getTypeOfType, isDateInRange, isTimeOfDayInRange } from "../utils.js";
 import { StVisitor } from "./StVisitor.js";
 
 export class SemanticModelBuilder {
@@ -656,9 +656,9 @@ export class SemanticModelBuilder {
             const year = Number.parseInt(dateParts[0]);
             const month = Number.parseInt(dateParts[1]);
             const day = Number.parseInt(dateParts[2]);
-            const date = DateTime.fromObject({ year, month, day });
+            const dateTime = DateTime.fromObject({ year, month, day });
 
-            if (!date.isValid) {
+            if (!dateTime.isValid) {
                 this.C0001(literal, StBuiltinType[requestedType], sourceFile);
                 return undefined;
             }
@@ -682,6 +682,7 @@ export class SemanticModelBuilder {
 
                     else {
                         this.C0001(literal, StBuiltinType[requestedType], sourceFile);
+                        return undefined;
                     }
 
                     break;
@@ -701,6 +702,86 @@ export class SemanticModelBuilder {
 
                     else {
                         this.C0001(literal, StBuiltinType[requestedType], sourceFile);
+                        return undefined;
+                    }
+
+                    break;
+                
+                default:
+                    return undefined;
+            }
+
+            const type = new StType();
+            type.builtinType = choosenType;
+
+            return type;
+        }
+
+        else if (literal.timeOfDayLiteral()) {
+
+            const timeOfDayLiteral = literal.timeOfDayLiteral()!;
+            const requestedType = timeOfDayLiteral._prefix?.text as StBuiltinType;
+            const timeParts = timeOfDayLiteral._time!.text!.split(":");
+
+            const hour = Number.parseInt(timeParts[0]);
+            const minute = Number.parseInt(timeParts[1]);
+            const secondAndMillisecond = timeParts[2];
+            const secondAndMillisecondParts = (secondAndMillisecond ?? "").split(".");
+            const secondRaw = Number.parseInt(secondAndMillisecondParts[0]);
+            const second = Number.isNaN(secondRaw) ? 0 : secondRaw;
+            const millisecondRaw = Number.parseInt(secondAndMillisecondParts[1]);
+            const millisecond = Number.isNaN(millisecondRaw) ? 0 : millisecondRaw;
+
+            const dateTime = DateTime.fromObject({
+                hour,
+                minute,
+                second,
+                millisecond
+            });
+
+            if (!dateTime.isValid) {
+                this.C0001(literal, StBuiltinType[requestedType], sourceFile);
+                return undefined;
+            }
+
+            let choosenType: StBuiltinType | undefined;
+
+            switch (requestedType) {
+                
+                case StBuiltinType.TIME_OF_DAY:
+                case StBuiltinType.TOD:
+
+                    if (
+                        isTimeOfDayInRange(
+                            hour, minute, second, millisecond,
+                            23, 59, 59, 999
+                        )
+                    ) {
+                        choosenType = StBuiltinType.TIME_OF_DAY;
+                    }
+
+                    else {
+                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
+                        return undefined;
+                    }
+
+                    break;
+                
+                case StBuiltinType.LTIME_OF_DAY:
+                case StBuiltinType.LTOD:
+
+                    if (
+                        isTimeOfDayInRange(
+                            hour, minute, second, millisecond,
+                            23, 59, 59, 999999999
+                        )
+                    ) {
+                        choosenType = StBuiltinType.LTIME_OF_DAY;
+                    }
+
+                    else {
+                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
+                        return undefined;
                     }
 
                     break;

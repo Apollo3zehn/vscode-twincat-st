@@ -693,8 +693,8 @@ export class SemanticModelBuilder {
                     if (
                         isDateInRange(
                             year, month, day,
-                            1, 1, 1,
-                            9999, 12, 31
+                            1970, 1, 1,
+                            2554, 7, 21
                         )
                     ) {
                         choosenType = StBuiltinType.LDATE;
@@ -878,8 +878,8 @@ export class SemanticModelBuilder {
                     if (
                         isDateAndTimeInRange(
                             year, month, day, hour, minute, second, millisecond,
-                            1, 1, 1, 0, 0, 0, 0,
-                            9999, 12, 31, 23, 59, 59, 999.999999
+                            1970, 1, 1, 0, 0, 0, 0,
+                            2554, 7, 21, 23, 34, 33, 709.551615
                         )
                     ) {
                         choosenType = StBuiltinType.LTIME_OF_DAY;

@@ -989,6 +989,56 @@ export class SemanticModelBuilder {
             return type;
         }
 
+        else if (literal.STRING_LITERAL()) {
+
+            const stringLiteral = literal.STRING_LITERAL()!;
+            const text = stringLiteral.getText().slice(1, -1);
+
+            const isLatin1 = /^[\u0000-\u00FF]*$/.test(text);
+
+            if (!isLatin1) {
+
+                const warning = new Diagnostic(
+                    getContextRange(literal)!,
+                    `The string '${text}' contains non-representable characters`,
+                    DiagnosticSeverity.Warning
+                );
+
+                sourceFile.diagnostics.push(warning);
+            }
+
+            const type = new StType();
+            type.builtinType = StBuiltinType.STRING;
+            type.stringLength = text.length;
+
+            return type;
+        }
+
+        else if (literal.WSTRING_LITERAL()) {
+
+            const stringLiteral = literal.WSTRING_LITERAL()!;
+            const text = stringLiteral.getText().slice(1, -1);
+
+            const isUcs2 = /^[\u0000-\uD7FF\uE000-\uFFFF]*$/.test(text);
+
+            if (!isUcs2) {
+
+                const warning = new Diagnostic(
+                    getContextRange(literal)!,
+                    `The string '${text}' contains non-representable characters`,
+                    DiagnosticSeverity.Warning
+                );
+
+                sourceFile.diagnostics.push(warning);
+            }
+
+            const type = new StType();
+            type.builtinType = StBuiltinType.WSTRING;
+            type.stringLength = text.length;
+
+            return type;
+        }
+
         this.CannotEvaluateExpression(literal, sourceFile);
     }
 
@@ -1232,8 +1282,27 @@ export class SemanticModelBuilder {
             
             if (lhsType.builtinType && rhsType.builtinType) {
 
-                if (lhsType.builtinType === rhsType.builtinType)
+                if (lhsType.builtinType === rhsType.builtinType) {
+
+                    if (
+                        (
+                            lhsType.builtinType === StBuiltinType.STRING ||
+                            lhsType.builtinType === StBuiltinType.WSTRING
+                        ) &&
+                        lhsType.stringLength! < rhsType.stringLength!
+                    ) {
+
+                        const warning = new Diagnostic(
+                            getContextRange(rhsCtx)!,
+                            `String type '${StBuiltinType[rhsType.builtinType]}(${rhsType.stringLength})' too long for string type '${StBuiltinType[lhsType.builtinType]}(${lhsType.stringLength})': The string will be truncated`,
+                            DiagnosticSeverity.Warning
+                        );
+
+                        sourceFile.diagnostics.push(warning);
+                    }
+
                     return;
+                }
 
                 const lhsNativeType = StModel.nativeTypes.get(lhsType.builtinType);
                 const rhsNativeType = StModel.nativeTypes.get(rhsType.builtinType);

@@ -46,8 +46,10 @@ FUNCTION_BLOCK Literals
         real_scientific:    REAL    := 1e-99;
 
         // String Types
-        string_quoted_dbl:  STRING  := "The string";
-        string_quoted_sgl:  STRING  := 'The string';
+        string_narrow:          STRING          := 'A';
+        string_narrow2:         STRING(1)       := 'A';
+        string_wide:            WSTRING         := "Ā";
+        string_wide2:           WSTRING(1)      := "Ā";
 
         // Time-Related Types
 

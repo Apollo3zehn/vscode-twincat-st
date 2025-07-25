@@ -104,7 +104,7 @@ type
 
 baseType
     : ID
-    | builtinType
+    | builtinType TYPE_PARAM?
     ;
 
 builtinType
@@ -121,7 +121,7 @@ builtinType
     // Time and date types
     | 'TIME' | 'LTIME' | 'DATE' | 'TIME_OF_DAY' | 'TOD' | 'DATE_AND_TIME' | 'DT'| 'LDATE' | 'LTIME_OF_DAY' | 'LTOD' | 'LDATE_AND_TIME' | 'LDT'
     // String types
-    | 'STRING'
+    | 'STRING' | 'WSTRING'
     ;
 
 // =======================
@@ -255,6 +255,7 @@ literal
     | dateAndTimeLiteral
     | timeOfDayLiteral
     | STRING_LITERAL
+    | WSTRING_LITERAL
     ;
 
 dateLiteral
@@ -399,6 +400,9 @@ CARET               : '^' ;
 REFERENCE_TO        : 'REFERENCE TO' ;
 POINTER_TO          : 'POINTER TO' ;
 
+// Types
+TYPE_PARAM          : '(' [0-9]+ ')' ;
+
 // Literals and identifiers
 BOOL                : 'TRUE' | 'FALSE' ;
 
@@ -440,7 +444,8 @@ REAL_NUMBER
                     )
                     ;
 
-STRING_LITERAL      : '"' (~["\r\n])* '"' | '\'' (~['\r\n])* '\'' ;
+STRING_LITERAL      : '\'' (~['\r\n])* '\'' ;
+WSTRING_LITERAL     : '"' (~["\r\n])* '"' ;
 ID                  : ID_START ID_PART* ;
 
 // Date and time

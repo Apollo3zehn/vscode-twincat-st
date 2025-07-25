@@ -32,7 +32,8 @@
         Variable types - attribute keywords
 
 - Properly subscribe and unsubscribe events (`context.subscriptions.push`)
-- attribute
+- attribute (e.g. {attribute 'TcEncoding':='UTF-8'})
+- UTF-8 string support (see attribute point right above)
 - call arguments
 - C-Style mode is optional
 - Virtual file system

@@ -327,8 +327,21 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
                 const typeText = builtinType.getText().toUpperCase();
 
-                if (typeText in StBuiltinType)
+                if (typeText in StBuiltinType) {
+
                     type.builtinType = typeText as StBuiltinType;
+
+                    if (
+                        type.builtinType === StBuiltinType.STRING ||
+                        type.builtinType === StBuiltinType.WSTRING
+                    ) {
+                        const typeParam = baseType.TYPE_PARAM()?.getText();
+
+                        type.stringLength = typeParam
+                            ? Number.parseInt(typeParam.slice(1, -1))
+                            : 80;
+                    }
+                }
             }
         }
 

@@ -20,12 +20,6 @@ FUNCTION_BLOCK C0032_Literals
         // Signed Integer Types
         _int:           INT     := 16#FFFFFFFF;
         _int2:          INT     := 18446744073709551615;
-
-        // String Types
-
-        // Character Types
-
-        // Time-Related Types
     END_VAR
 
     // Logical Types
@@ -46,10 +40,4 @@ FUNCTION_BLOCK C0032_Literals
     // Signed Integer Types
     _int        := 16#FFFFFFFF;
     _int2       := 18446744073709551615;
-
-    // String Types
-
-    // Character Types
-
-    // Time-Related Types
 END_FUNCTION_BLOCK

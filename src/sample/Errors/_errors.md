@@ -31,6 +31,9 @@
 
     Syntax: {attribute 'strict'}
 
+- C0436: String length '(1 + inty)' is no constant value
+  inty: INT := 1;
+  sVarB : STRING(1+inty) := 'AB';
 
 - Copilot generated list of known error codes and descriptons:
 

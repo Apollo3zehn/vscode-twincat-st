@@ -29,6 +29,8 @@ export class StType {
 
     public underlyingType: StType | undefined;          // arrays, references, pointers, enums, aliases
 
+    public stringLength: number | undefined             // strings
+
     public context: TypeContext | undefined;
 
     public get isArray(): boolean {
@@ -228,7 +230,8 @@ export enum StBuiltinType {
     LTOD = "LTOD",
 
     // String types
-    STRING = "STRING"
+    STRING = "STRING",
+    WSTRING = "WSTRING"
 }
 
 export class StModel {

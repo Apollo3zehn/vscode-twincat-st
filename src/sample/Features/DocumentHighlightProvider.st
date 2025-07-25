@@ -1,3 +1,4 @@
+// Goal: Highlight only semantically related tokens
 FUNCTION_BLOCK FB_Highlight
 
     VAR

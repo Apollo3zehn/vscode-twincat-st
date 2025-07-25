@@ -4,6 +4,8 @@
 
 - M_B()[0]; => Warning "The code has no effect. Is this the intent?"
 
+- Fix C0032.st (there are no diagnostics)
+
 - C0089: Interface of overridden method 'RESET' of interface 'I_PLANTCOMPONENTFIXTURE' doesn't match declaration
 
 - C0538: The number of inputs/outputs of the method 'RESET' does not correspond to the interface 'I_PLANTCOMPONENTFIXTURE'.
@@ -16,7 +18,6 @@
 - c: WORD;
   c := E_AnalyticsOpMode.Analyze; => Warning: Implicit conversion from signed type 'E_AnalyticsOpMode' to unsigned type 'WORD' ...
 	
-
 - _a := M_C(); where M_C() is a method which has no return value: C0032: Cannot convert type 'Unknown type: 'M_C()'' to type 'INT'
 
 

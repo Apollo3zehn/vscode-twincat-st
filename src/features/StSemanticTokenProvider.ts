@@ -34,11 +34,13 @@ export class StSemanticTokenProvider implements DocumentSemanticTokensProvider {
 
             if (symbol.kind === StSymbolKind.VariableUsage) {
 
-                // Colorize GVL and Enum names as function block (token type 0)
+                // Colorize tyües as class (token type 0)
                 if (
                     (
+                        symbol.declaration?.kind === StSymbolKind.FunctionBlock ||
                         symbol.declaration?.kind === StSymbolKind.Gvl ||
-                        symbol.declaration?.kind === StSymbolKind.Enum
+                        symbol.declaration?.kind === StSymbolKind.Enum ||
+                        symbol.declaration?.kind === StSymbolKind.Struct
                     )
                 ) {
                     builder.push(

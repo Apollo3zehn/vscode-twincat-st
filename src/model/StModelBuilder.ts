@@ -4,7 +4,7 @@ import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vs
 import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
 import { AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
-import { getContextRange, getOriginalText, getTokenRange, getTypeOfType, isDateAndTimeInRange, isDateInRange, isTimeOfDayInRange } from "../utils.js";
+import { findOverflowComponent, getContextRange, getOriginalText, getTokenRange, getTypeOfType, isDateAndTimeInRange, isDateInRange, isTimeInRange, isTimeOfDayInRange, TIME_COMPONENTS } from "../utils.js";
 import { StVisitor } from "./StVisitor.js";
 
 export class SemanticModelBuilder {
@@ -645,6 +645,93 @@ export class SemanticModelBuilder {
             type.builtinType = choosenType;
 
             return type;
+        }
+            
+        else if (literal.TIME_LITERAL()) {
+
+            const timeLiteral = literal.TIME_LITERAL()!;
+            const timeText = timeLiteral.getText().split('#')[1];
+
+            // Regex to extract D, H, M, S, MS values
+            const timeRegex = /(?:([0-9_]+)D)?(?:([0-9_]+)H)?(?:([0-9_]+)M)?(?:([0-9_]+)S)?(?:([0-9_]+)MS)?/;
+            const match = timeText.match(timeRegex)!;
+
+            for (let i = 0; i < 5; ++i) {
+                TIME_COMPONENTS[i].value = match[i + 1] ? Number.parseInt(match[i + 1]) : 0;
+            }
+
+            TIME_COMPONENTS[5].value = 0; // microseconds
+            TIME_COMPONENTS[6].value = 0; // nanoseconds
+
+            // Find index of first overflowing component
+            const index = match.slice(1).findIndex(x => x);
+            const hasOverflow = findOverflowComponent(index)
+
+            // Validate
+            if (
+                !hasOverflow &&
+                isTimeInRange(
+                    TIME_COMPONENTS[0].value,
+                    TIME_COMPONENTS[1].value,
+                    TIME_COMPONENTS[2].value,
+                    TIME_COMPONENTS[3].value,
+                    TIME_COMPONENTS[4].value,
+                    TIME_COMPONENTS[5].value,
+                    TIME_COMPONENTS[6].value,
+                    49, 17, 2, 47, 295, 0, 0
+                )
+            ) {
+                const type = new StType();
+                type.builtinType = StBuiltinType.TIME;
+                return type;
+            }
+            
+            else {
+                this.C0001(literal, StBuiltinType.TIME, sourceFile);
+                return undefined;
+            }
+        }
+            
+        else if (literal.LTIME_LITERAL()) {
+
+            const ltimeLiteral = literal.LTIME_LITERAL()!;
+            const ltimeText = ltimeLiteral.getText().split('#')[1];
+
+            // Regex to extract D, H, M, S, MS, US, NS values
+            const ltimeRegex = /(?:([0-9_]+)D)?(?:([0-9_]+)H)?(?:([0-9_]+)M)?(?:([0-9_]+)S)?(?:([0-9_]+)MS)?(?:([0-9_]+)US)?(?:([0-9_]+)NS)?/;
+            const match = ltimeText.match(ltimeRegex)!;
+
+            for (let i = 0; i < 7; ++i) {
+                TIME_COMPONENTS[i].value = match[i + 1] ? Number.parseInt(match[i + 1]) : 0;
+            }
+
+            // Find index of first overflowing component
+            const index = match.slice(1).findIndex(x => x);
+            const hasOverflow = findOverflowComponent(index)
+
+            // Validate
+            if (
+                !hasOverflow &&
+                isTimeInRange(
+                    TIME_COMPONENTS[0].value,
+                    TIME_COMPONENTS[1].value,
+                    TIME_COMPONENTS[2].value,
+                    TIME_COMPONENTS[3].value,
+                    TIME_COMPONENTS[4].value,
+                    TIME_COMPONENTS[5].value,
+                    TIME_COMPONENTS[6].value,
+                    213503, 23, 34, 33, 709, 551, 615
+                )
+            ) {
+                const type = new StType();
+                type.builtinType = StBuiltinType.TIME;
+                return type;
+            }
+            
+            else {
+                this.C0001(literal, StBuiltinType.TIME, sourceFile);
+                return undefined;
+            }
         }
 
         else if (literal.dateLiteral()) {

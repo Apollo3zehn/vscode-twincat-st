@@ -51,7 +51,6 @@ import { DereferenceContext } from "./StructuredTextParser.js";
 import { ArrayIndexContext } from "./StructuredTextParser.js";
 import { CallContext } from "./StructuredTextParser.js";
 import { LiteralContext } from "./StructuredTextParser.js";
-import { TimeLiteralContext } from "./StructuredTextParser.js";
 import { DateLiteralContext } from "./StructuredTextParser.js";
 import { DateAndTimeLiteralContext } from "./StructuredTextParser.js";
 import { TimeOfDayLiteralContext } from "./StructuredTextParser.js";
@@ -362,12 +361,6 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      * @return the visitor result
      */
     visitLiteral?: (ctx: LiteralContext) => Result;
-    /**
-     * Visit a parse tree produced by `StructuredTextParser.timeLiteral`.
-     * @param ctx the parse tree
-     * @return the visitor result
-     */
-    visitTimeLiteral?: (ctx: TimeLiteralContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.dateLiteral`.
      * @param ctx the parse tree

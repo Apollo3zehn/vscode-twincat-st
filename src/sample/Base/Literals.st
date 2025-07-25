@@ -53,6 +53,7 @@ FUNCTION_BLOCK Literals
 
         // TIME
         time_max:               TIME            := TIME#49D17H2M47S295MS;
+        time_firstover:         TIME            := TIME#90H10MS;
         time_alt:               TIME            := T#05H10MS;
 
         // => DATE: Nothing is optional
@@ -72,6 +73,7 @@ FUNCTION_BLOCK Literals
 
         // LTIME
         l_time_max:             LTIME           := LTIME#213503D23H34M33S709MS551US615NS;
+        l_time_firstover:       LTIME           := LTIME#90H10MS;
         l_time_alt:             LTIME           := LTIME#05H10MS;
 
         // => LDATE: Nothing is optional

@@ -1,7 +1,16 @@
-import { ParserRuleContext, Token, Interval } from "antlr4ng";
+import { Interval, ParserRuleContext, Token } from "antlr4ng";
 import { Position, Range } from "vscode";
-import { StBuiltinType, StSourceFile, StSymbol, StSymbolKind, StType } from "./core.js";
-import { AssignmentContext, ExprContext } from "./generated/StructuredTextParser.js";
+import { StSymbolKind } from "./core.js";
+
+export const TIME_COMPONENTS = [
+    { value: 0, max: undefined },   // days
+    { value: 0, max: 23 },          // hours
+    { value: 0, max: 59 },          // minutes
+    { value: 0, max: 59 },          // seconds
+    { value: 0, max: 999 },         // milliseconds
+    { value: 0, max: 999 },         // microseconds
+    { value: 0, max: 999 }          // nanoseconds
+];
 
 export function isInRange(range: Range | undefined, position: Position): boolean {
     
@@ -97,6 +106,22 @@ export function getTypeOfType(kind: StSymbolKind): string {
 }
 
 // TODO: Simplify these methods somehow
+export function isTimeInRange(
+    days: number, hours: number, minutes: number, seconds: number,
+    milliseconds: number, microseconds: number, nanoseconds: number,
+    maxDays: number, maxHours: number, maxMinutes: number, maxSeconds: number,
+    maxMilliseconds: number, maxMicroseconds: number, maxNanoseconds: number
+): boolean {
+    if (days > maxDays) return false;
+    if (days === maxDays && hours > maxHours) return false;
+    if (days === maxDays && hours === maxHours && minutes > maxMinutes) return false;
+    if (days === maxDays && hours === maxHours && minutes === maxMinutes && seconds > maxSeconds) return false;
+    if (days === maxDays && hours === maxHours && minutes === maxMinutes && seconds === maxSeconds && milliseconds > maxMilliseconds) return false;
+    if (days === maxDays && hours === maxHours && minutes === maxMinutes && seconds === maxSeconds && milliseconds === maxMilliseconds && microseconds > maxMicroseconds) return false;
+    if (days === maxDays && hours === maxHours && minutes === maxMinutes && seconds === maxSeconds && milliseconds === maxMilliseconds && microseconds === maxMicroseconds && nanoseconds > maxNanoseconds) return false;
+    return true;
+}
+
 export function isDateInRange(
     year: number, month: number, day: number,
     year_min: number, month_min: number, day_min: number,
@@ -173,4 +198,17 @@ export function isDateAndTimeInRange(
     }
 
     return true;
+}
+
+export function findOverflowComponent(startIdx: number): boolean {
+
+    for (let i = startIdx + 1; i < TIME_COMPONENTS.length; ++i) {
+
+        const component = TIME_COMPONENTS[i];
+
+        if (component.value > component.max!)
+            return true;
+    }
+
+    return false;
 }

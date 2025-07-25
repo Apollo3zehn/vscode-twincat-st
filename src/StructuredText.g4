@@ -249,15 +249,12 @@ literal
     : INTEGER_NUMBER
     | REAL_NUMBER
     | BOOL
-    | timeLiteral
+    | TIME_LITERAL
+    | LTIME_LITERAL
     | dateLiteral
     | dateAndTimeLiteral
     | timeOfDayLiteral
     | STRING_LITERAL
-    ;
-
-timeLiteral
-    : prefix=('TIME' | 'T' | 'LTIME') '#' time=TIME
     ;
 
 dateLiteral
@@ -447,7 +444,32 @@ STRING_LITERAL      : '"' (~["\r\n])* '"' | '\'' (~['\r\n])* '\'' ;
 ID                  : ID_START ID_PART* ;
 
 // Date and time
-TIME                : (DEC_DIGIT+ ( 'NS' | 'US' | 'MS' | 'S' | 'M' | 'H' | 'D' ))+ ;
+TIME_LITERAL
+                    : 
+                    ('TIME' | 'T') '#'
+                    (
+                          DAY HOUR? MIN? SEC? MS?
+                        | HOUR MIN? SEC? MS?
+                        | MIN SEC? MS?
+                        | SEC MS?
+                        | MS
+                    )
+                    ;
+
+LTIME_LITERAL
+                    : 
+                    'LTIME#'
+                    (
+                          DAY HOUR? MIN? SEC? MS? US? NS?
+                        | HOUR MIN? SEC? MS? US? NS?
+                        | MIN SEC? MS? US? NS?
+                        | SEC MS? US? NS?
+                        | MS US? NS?
+                        | US NS?
+                        | NS
+                    )
+                    ;
+
 DATE                : DEC_DIGIT+ '-' DEC_DIGIT+ '-' DEC_DIGIT+ ;
 TIME_OF_DAY         : DEC_DIGIT+ ':' DEC_DIGIT+ (':' DEC_DIGIT+ ('.' DEC_DIGIT+)? )? ;
 DATETIME            : DATE '-' TIME_OF_DAY ;
@@ -466,3 +488,11 @@ fragment HEX_DIGIT  : [0-9A-Fa-f_] ;
 fragment LETTER     : [a-zA-Z] ;
 fragment ID_START   : LETTER | '_' ;
 fragment ID_PART    : LETTER | DEC_DIGIT | '_' ;
+
+fragment DAY        : DEC_DIGIT+ 'D' ;
+fragment HOUR       : DEC_DIGIT+ 'H' ;
+fragment MIN        : DEC_DIGIT+ 'M' ;
+fragment SEC        : DEC_DIGIT+ 'S' ;
+fragment MS         : DEC_DIGIT+ 'MS' ;
+fragment US         : DEC_DIGIT+ 'US' ;
+fragment NS         : DEC_DIGIT+ 'NS' ;

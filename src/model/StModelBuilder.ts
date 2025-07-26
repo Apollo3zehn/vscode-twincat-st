@@ -1100,26 +1100,37 @@ export class SemanticModelBuilder {
 
             const lastMemberDeclaration = lastMember?.declaration;
 
-            if (lastMemberDeclaration?.kind === StSymbolKind.Property) {
+            if (lastMemberDeclaration) {
 
-                const propertyCtx = lastMemberDeclaration.context as PropertyContext;
-                const propertyBodyCtx = propertyCtx.propertyBody();
-                const setter = propertyBodyCtx.setter();
+                switch (lastMemberDeclaration.kind) {
 
-                if (!setter)
-                    this.C0018(lastMember, sourceFile);
-            }
+                    case StSymbolKind.VariableDeclaration:
 
-            if (
-                lastMemberDeclaration?.kind === StSymbolKind.VariableDeclaration &&
-                memberAccesses.length > 1 &&
-                !(
-                    lastMemberDeclaration?.variableKind === StVariableScope.Input ||
-                    lastMemberDeclaration?.variableKind === StVariableScope.InOut
-                )
-            )  
-            {
-                this.C0037(lastMember, sourceFile);
+                        if (memberAccesses.length > 1 &&
+                            !(
+                                lastMemberDeclaration?.variableKind === StVariableScope.Input ||
+                                lastMemberDeclaration?.variableKind === StVariableScope.InOut
+                            )
+                        ) {
+                            this.C0037(lastMember, sourceFile);
+                        }
+
+                        break;
+                        
+                    case StSymbolKind.Property:
+
+                        const propertyCtx = lastMemberDeclaration.context as PropertyContext;
+                        const propertyBodyCtx = propertyCtx.propertyBody();
+                        const setter = propertyBodyCtx.setter();
+
+                        if (!setter)
+                            this.C0018(lastMember, sourceFile);
+
+                        break;
+                    
+                    default:
+                        this.C0018(lastMember, sourceFile);
+                }
             }
         }
 

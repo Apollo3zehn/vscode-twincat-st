@@ -37,6 +37,7 @@ export class StSemanticTokenProvider implements DocumentSemanticTokensProvider {
                 // Colorize tyües as class (token type 0)
                 if (
                     (
+                        symbol.id !== "THIS" &&
                         symbol.declaration?.kind === StSymbolKind.FunctionBlock ||
                         symbol.declaration?.kind === StSymbolKind.Gvl ||
                         symbol.declaration?.kind === StSymbolKind.Enum ||

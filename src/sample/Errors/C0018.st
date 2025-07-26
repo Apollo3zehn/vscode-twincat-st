@@ -7,5 +7,10 @@ FUNCTION_BLOCK C0018
         END_GET
     END_PROPERTY
 
+    METHOD B
+        //
+    END_METHOD
+
     A := 1;
+    B := 1;
 END_FUNCTION_BLOCK

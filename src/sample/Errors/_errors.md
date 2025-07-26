@@ -12,6 +12,12 @@
 
 - finish native data type support
 
+- Warning: "No initial value for constant variable '{name}'"
+
+VAR CONSTANT
+	_a: USINT (1..2);
+END_VAR
+
 - M_A_1().A; => C0061 Bit access on function call is not allowed (M_A_1() => INT)
 - C0050: Bit access requires literal or symbolic integer constant
 

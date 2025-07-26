@@ -1,7 +1,7 @@
-import { ParserRuleContext, Token } from "antlr4ng";
+import { ParserRuleContext, TerminalNode, Token } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Uri } from "vscode";
-import { StAccessModifier, StBuiltinType, StSourceFile, StSymbol, StSymbolKind, StType, StTypeHierarchyInfo, StVariableScope } from "../core.js";
-import { AccessModifierContext, EnumMemberContext, ExprOrArrayInitContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StatementContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { StAccessModifier, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StTypeHierarchyInfo, StVariableScope } from "../core.js";
+import { AccessModifierContext, BuiltinTypeContext, EnumMemberContext, ExprOrArrayInitContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StatementContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 import { getContextRange, getOriginalText, getTokenRange } from "../utils.js";
 
@@ -325,21 +325,67 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
             if (builtinType) {
 
-                const typeText = builtinType.getText().toUpperCase();
+                const typeText = builtinType.start!.text!.toUpperCase();
 
                 if (typeText in StBuiltinType) {
 
                     type.builtinType = typeText as StBuiltinType;
 
-                    if (
-                        type.builtinType === StBuiltinType.STRING ||
-                        type.builtinType === StBuiltinType.WSTRING
-                    ) {
-                        const typeParam = baseType.TYPE_PARAM()?.getText();
+                    const nativeTypeDetails = type.builtinType
+                        ? StModel.nativeTypes.get(type.builtinType)
+                        : undefined;
 
-                        type.stringLength = typeParam
-                            ? Number.parseInt(typeParam.slice(1, -1))
-                            : 80;
+                    const builtinTypeKind = nativeTypeDetails?.kind;
+
+                    switch (builtinTypeKind) {
+
+                        case StNativeTypeKind.String:
+
+                            const stringLengthParam = builtinType
+                                .STRING_LEN_PARAM()?.getText();
+
+                            type.stringLength = stringLengthParam
+                                ? Number.parseInt(stringLengthParam.slice(1, -1))
+                                : 80;
+                            
+                            break;
+                        
+                        case StNativeTypeKind.Bitfield:
+                        case StNativeTypeKind.UnsignedInteger:
+                        case StNativeTypeKind.SignedInteger:
+
+                            const subRangeParamToken = builtinType.SUBRANGE_PARAM();
+                            const subRangeParam = subRangeParamToken?.getText();
+                            const subRangeParts = subRangeParam?.split('..');
+                            
+                            if (subRangeParts) {
+
+                                type.subRangeStart = Number.parseInt(subRangeParts[0].slice(1));
+                                type.subRangeStop = Number.parseInt(subRangeParts[1].slice(0, -1));
+                                type.isFullRange = false;
+
+                                const min = nativeTypeDetails!.min!;
+                                const max = nativeTypeDetails!.max!;
+
+                                if (
+                                    type.subRangeStart !== undefined &&
+                                    type.subRangeStop !== undefined &&
+                                    (
+                                        !(min <= type.subRangeStart && type.subRangeStart <= max) ||
+                                        !(min <= type.subRangeStop && type.subRangeStop <= max)
+                                    )
+                                ) {
+                                    this.M0001(symbol, subRangeParamToken!);
+                                }
+                            }
+
+                            else {
+                                type.subRangeStart = nativeTypeDetails!.min;
+                                type.subRangeStop = nativeTypeDetails!.max;
+                                type.isFullRange = true;
+                            }
+
+                            break;
                     }
                 }
             }
@@ -465,21 +511,11 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
     private addGlobalObject(symbol: StSymbol) {
 
-        if (this._sourceFile.globalObjects.has(symbol.id)) {
-
-            const diagnostic = new Diagnostic(
-                symbol.selectionRange ?? symbol.range,
-                `Object name '${symbol.id}' already used in this application`,
-                DiagnosticSeverity.Error
-            );
-
-            diagnostic.code = "SA0027";
-            this._sourceFile.diagnostics.push(diagnostic);
-        }
+        if (this._sourceFile.globalObjects.has(symbol.id))
+            this.SA0027(symbol);
         
-        else {
+        else
             this._sourceFile.globalObjects.set(symbol.id, symbol);
-        }
     }
 
     public addLocalObject<K extends 'variablesAndProperties' | 'methods'>(
@@ -491,22 +527,50 @@ export class StVisitor extends StructuredTextVisitor<void> {
         if (!parent[key])
             parent[key] = new Map<string, StSymbol>();
 
-        if (parent[key].has(symbol.id)) {
+        if (parent[key].has(symbol.id))
+            this.C0142(symbol);
 
-            // C0142: A local variable named 'name' is already defined in 'scope'
-            const diagnostic = new Diagnostic(
-                symbol.selectionRange ?? symbol.range,
-                `A local variable named '${symbol.id}' is already defined in '${symbol.parent?.id}'`,
-                DiagnosticSeverity.Error
-            );
-
-            diagnostic.code = "C0142";
-            this._sourceFile.diagnostics.push(diagnostic);
-        }
-        
-        else {
+        else
             parent[key].set(symbol.id, symbol);
-        }
+    }
+
+    // C0142: A local variable named 'name' is already defined in 'scope'
+    private C0142(symbol: StSymbol) {
+
+        const diagnostic = new Diagnostic(
+            symbol.selectionRange ?? symbol.range,
+            `A local variable named '${symbol.id}' is already defined in '${symbol.parent?.id}'`,
+            DiagnosticSeverity.Error
+        );
+
+        diagnostic.code = "C0142";
+        this._sourceFile.diagnostics.push(diagnostic);
+    }
+
+    // M0001: The subrange parameters are not within the valid range
+    private M0001(symbol: StSymbol, subRangeToken: TerminalNode) {
+
+        const diagnostic = new Diagnostic(
+            getTokenRange(subRangeToken.symbol)!,
+            `The subrange parameters are not within the valid range`,
+            DiagnosticSeverity.Error
+        );
+
+        diagnostic.code = "M0001";
+        this._sourceFile.diagnostics.push(diagnostic);
+    }
+
+    // SA0027: Object name '{name}' already used in this application
+    private SA0027(symbol: StSymbol) {
+
+        const diagnostic = new Diagnostic(
+            symbol.selectionRange ?? symbol.range,
+            `Object name '${symbol.id}' already used in this application`,
+            DiagnosticSeverity.Error
+        );
+
+        diagnostic.code = "SA0027";
+        this._sourceFile.diagnostics.push(diagnostic);
     }
 
     //#endregion

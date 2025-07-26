@@ -534,6 +534,8 @@ export class SemanticModelBuilder {
         
             const type = new StType();
             type.builtinType = choosenType;
+            type.subRangeStart = value;
+            type.subRangeStop = value;
 
             return type;
         }
@@ -1293,13 +1295,16 @@ export class SemanticModelBuilder {
             
             if (lhsType.builtinType && rhsType.builtinType) {
 
+                const lhsNativeType = StModel.nativeTypes.get(lhsType.builtinType);
+                const rhsNativeType = StModel.nativeTypes.get(rhsType.builtinType);
+                
+                if (!lhsNativeType || !rhsNativeType)
+                    return;
+
                 if (lhsType.builtinType === rhsType.builtinType) {
 
                     if (
-                        (
-                            lhsType.builtinType === StBuiltinType.STRING ||
-                            lhsType.builtinType === StBuiltinType.WSTRING
-                        ) &&
+                        rhsNativeType.kind === StNativeTypeKind.String &&
                         lhsType.stringLength! < rhsType.stringLength!
                     ) {
 
@@ -1314,12 +1319,6 @@ export class SemanticModelBuilder {
 
                     return;
                 }
-
-                const lhsNativeType = StModel.nativeTypes.get(lhsType.builtinType);
-                const rhsNativeType = StModel.nativeTypes.get(rhsType.builtinType);
-                
-                if (!lhsNativeType || !rhsNativeType)
-                    return;
 
                 const rhsIsInteger =
                     rhsNativeType.kind === StNativeTypeKind.Bitfield ||
@@ -1343,29 +1342,57 @@ export class SemanticModelBuilder {
 
                             if (rhsNativeType.size <= lhsNativeType.size) {
 
-                                if (rhsNativeType.signed && !lhsNativeType.signed) {
+                                let subRangeIsOK = lhsType.isFullRange && rhsType.isFullRange;
 
-                                    const warning = new Diagnostic(
-                                        getContextRange(rhsCtx)!,
-                                        `Implicit conversion from signed type '${StBuiltinType[rhsType.builtinType]}' to unsigned type '${StBuiltinType[lhsType.builtinType]}': Possible change of sign`,
-                                        DiagnosticSeverity.Warning
-                                    );
+                                if (!subRangeIsOK) {
 
-                                    sourceFile.diagnostics.push(warning);
+                                    const lhsStart = lhsType.subRangeStart! < lhsType.subRangeStop!
+                                        ? lhsType.subRangeStart!
+                                        : lhsType.subRangeStop!;
+                                    
+                                    const lhsStop = lhsType.subRangeStart! < lhsType.subRangeStop!
+                                        ? lhsType.subRangeStop!
+                                        : lhsType.subRangeStart!;
+                                    
+                                    const rhsStart = rhsType.subRangeStart! < rhsType.subRangeStop!
+                                        ? rhsType.subRangeStart!
+                                        : rhsType.subRangeStop!;
+                                    
+                                    const rhsStop = rhsType.subRangeStart! < rhsType.subRangeStop!
+                                        ? rhsType.subRangeStop!
+                                        : rhsType.subRangeStart!;
+
+                                    subRangeIsOK =
+                                        lhsStart <= rhsStart && rhsStart <= lhsStop &&
+                                        lhsStart <= rhsStop && rhsStop <= lhsStop;
                                 }
 
-                                else if (!rhsNativeType.signed && lhsNativeType.signed) {
+                                if (subRangeIsOK) {
 
-                                    const warning = new Diagnostic(
-                                        getContextRange(rhsCtx)!,
-                                        `Implicit conversion from unsigned type '${StBuiltinType[rhsType.builtinType]}' to signed type '${StBuiltinType[lhsType.builtinType]}': Possible change of sign`,
-                                        DiagnosticSeverity.Warning
-                                    );
+                                    if (rhsNativeType.signed && !lhsNativeType.signed) {
 
-                                    sourceFile.diagnostics.push(warning);
+                                        const warning = new Diagnostic(
+                                            getContextRange(rhsCtx)!,
+                                            `Implicit conversion from signed type '${StBuiltinType[rhsType.builtinType]}' to unsigned type '${StBuiltinType[lhsType.builtinType]}': Possible change of sign`,
+                                            DiagnosticSeverity.Warning
+                                        );
+
+                                        sourceFile.diagnostics.push(warning);
+                                    }
+
+                                    else if (!rhsNativeType.signed && lhsNativeType.signed) {
+
+                                        const warning = new Diagnostic(
+                                            getContextRange(rhsCtx)!,
+                                            `Implicit conversion from unsigned type '${StBuiltinType[rhsType.builtinType]}' to signed type '${StBuiltinType[lhsType.builtinType]}': Possible change of sign`,
+                                            DiagnosticSeverity.Warning
+                                        );
+
+                                        sourceFile.diagnostics.push(warning);
+                                    }
+
+                                    return;
                                 }
-
-                                return;
                             }
                         }
 

@@ -31,6 +31,10 @@ export class StType {
 
     public stringLength: number | undefined             // strings
 
+    public subRangeStart: number | undefined            // unsigned and signed integers
+    public subRangeStop: number | undefined             // unsigned and signed integers
+    public isFullRange: boolean | undefined             // unsigned and signed integers
+
     public context: TypeContext | undefined;
 
     public get isArray(): boolean {
@@ -59,14 +63,23 @@ export class StType {
 
     public getId(): string {
 
-        if (this.builtinType)
-            return StBuiltinType[this.builtinType];
+        if (this.builtinType) {
+            const typeString = StBuiltinType[this.builtinType];
 
-        else if (this.declaration)
+            if (!this.isFullRange && this.subRangeStart && this.subRangeStop)
+                return typeString + `(${this.subRangeStart}..${this.subRangeStop})`;
+
+            else
+                return typeString;
+        }
+            
+        else if (this.declaration) {
             return this.declaration.id
+        }
                 
-        else
+        else {
             return "Unknown type";
+        }
     }
 }
 
@@ -159,7 +172,8 @@ export enum StNativeTypeKind {
     UnsignedInteger,
     SignedInteger,
     Float,
-    Logical
+    Logical,
+    String
 }
 
 export enum StVariableScope {
@@ -260,5 +274,8 @@ export class StModel {
 
         [StBuiltinType.REAL,  new StNativeTypeDetails(StNativeTypeKind.Float, 4, undefined, -3.402823e+38, 3.402823e+38)],
         [StBuiltinType.LREAL, new StNativeTypeDetails(StNativeTypeKind.Float, 8, undefined, -1.7976931348623158e+308, 1.7976931348623158e+308)],
+
+        [StBuiltinType.STRING,  new StNativeTypeDetails(StNativeTypeKind.String, -1, undefined, undefined, undefined)],
+        [StBuiltinType.WSTRING, new StNativeTypeDetails(StNativeTypeKind.String, -1, undefined, undefined, undefined)],
     ]);
 }

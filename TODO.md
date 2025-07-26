@@ -8,6 +8,7 @@
 
 - native types
     - https://infosys.beckhoff.com/english.php?content=../content/1033/tf5100_tc3_nc_i/4188351883.html&id=
+    - support constant value expression in String length and subrange parameters (e.g. STRING(1+1), INT(0..2/1))
 
 - statements (for loop, while loop, ...)
 

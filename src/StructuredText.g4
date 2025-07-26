@@ -103,25 +103,25 @@ type
     ;
 
 baseType
-    : ID
-    | builtinType TYPE_PARAM?
+    : builtinType
+    | ID
     ;
 
 builtinType
     // Logical types
     : 'BOOL' | 'BIT'
     // Bitstring types
-    | 'BYTE' | 'WORD' | 'DWORD' | 'LWORD'
+    | ( ( 'BYTE' | 'WORD' | 'DWORD' | 'LWORD' ) SUBRANGE_PARAM? )
     // Unsigned integer types
-    | 'USINT' | 'UINT' | 'UDINT' | 'ULINT'
+    | ( ( 'USINT' | 'UINT' | 'UDINT' | 'ULINT' ) SUBRANGE_PARAM? )
     // Signed integer types
-    | 'SINT' | 'INT' | 'DINT' | 'LINT'
+    | ( ( 'SINT' | 'INT' | 'DINT' | 'LINT' ) SUBRANGE_PARAM? )
     // Floating point types
     | 'REAL' | 'LREAL'
     // Time and date types
     | 'TIME' | 'LTIME' | 'DATE' | 'TIME_OF_DAY' | 'TOD' | 'DATE_AND_TIME' | 'DT'| 'LDATE' | 'LTIME_OF_DAY' | 'LTOD' | 'LDATE_AND_TIME' | 'LDT'
     // String types
-    | 'STRING' | 'WSTRING'
+    | ( ( 'STRING' | 'WSTRING' ) STRING_LEN_PARAM? )
     ;
 
 // =======================
@@ -401,7 +401,8 @@ REFERENCE_TO        : 'REFERENCE TO' ;
 POINTER_TO          : 'POINTER TO' ;
 
 // Types
-TYPE_PARAM          : '(' [0-9]+ ')' ;
+SUBRANGE_PARAM      : '(' '-'? [0-9]+ '..' '-'? [0-9]+ ')' ;
+STRING_LEN_PARAM    : '(' [0-9]+ ')' ;
 
 // Literals and identifiers
 BOOL                : 'TRUE' | 'FALSE' ;

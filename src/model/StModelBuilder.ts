@@ -1,11 +1,21 @@
 import { CharStream, CommonTokenStream, ParserRuleContext } from "antlr4ng";
-import { DateTime } from "luxon";
 import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vscode";
 import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
 import { AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
-import { findOverflowComponent, getContextRange, getOriginalText, getTokenRange, getTypeOfType, isDateAndTimeInRange, isDateInRange, isTimeInRange, isTimeOfDayInRange, TIME_COMPONENTS } from "../utils.js";
+import { getContextRange, getOriginalText } from "../utils.js";
 import { StVisitor } from "./StVisitor.js";
+import { C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0077, C0080, C0143, C0185, C0261 } from "./diagnostics.js";
+import { evaluateBoolLiteral } from "./literals/evaluateBoolLiteral.js";
+import { evaluateDateAndTimeLiteral } from "./literals/evaluateDateAndTimeLiteral.js";
+import { evaluateDateLiteral } from "./literals/evaluateDateLiteral.js";
+import { evaluateIntegerNumber } from "./literals/evaluateIntegerNumber.js";
+import { evaluateLTimeLiteral } from "./literals/evaluateLTimeLiteral.js";
+import { evaluateRealNumber } from "./literals/evaluateRealNumber.js";
+import { evaluateStringLiteral } from "./literals/evaluateStringLiteral.js";
+import { evaluateTimeLiteral } from "./literals/evaluateTimeLiteral.js";
+import { evaluateTimeOfDayLiteral } from "./literals/evaluateTimeOfDayLiteral.js";
+import { evaluateWStringLiteral } from "./literals/evaluateWStringLiteral.js";
 
 export class SemanticModelBuilder {
 
@@ -52,7 +62,7 @@ export class SemanticModelBuilder {
                     const underlyingType = type.underlyingType;
 
                     if (underlyingType.isReference)
-                        this.C0261(symbol, sourceFile);
+                        C0261(symbol, sourceFile);
                 }
 
                 if (!(type.builtinType || isArrayOrPointerOrReference)) {
@@ -108,7 +118,7 @@ export class SemanticModelBuilder {
                     }
 
                     else {
-                        this.C0077(symbol, sourceFile);
+                        C0077(symbol, sourceFile);
                     }
                 }
             }
@@ -368,678 +378,35 @@ export class SemanticModelBuilder {
         sourceFile: StSourceFile
     ): StType | undefined {
 
-        // literal
-        //     : INTEGER_NUMBER
-        //     | REAL_NUMBER
-        //     | BOOL
-        //     | TIME_LITERAL
-        //     | STRING_LITERAL
-        //     ;
+        if (literal.BOOL())
+            return evaluateBoolLiteral();
 
-        const typeHintKind = typeHint
-            ? StModel.nativeTypes.get(typeHint)?.kind
-            : undefined;
+        else if (literal.INTEGER_NUMBER())
+            return evaluateIntegerNumber(literal, sourceFile, typeHint);
 
-        if (literal.BOOL()) {
-
-            const type = new StType();
-            type.builtinType = StBuiltinType.BOOL;
-
-            return type;
-        }
-
-        else if (literal.INTEGER_NUMBER()) {
-
-            const integerNumber = literal.INTEGER_NUMBER()!;
-            let text = integerNumber.getText();
-
-            const isNegative = text.startsWith("-");
-
-            if (isNegative)
-                text = text.substring(1);
-
-            const splittedText = text.split('#');
-
-            let requestedType: StBuiltinType | undefined;
-            let radix: number = 10;
-            let value: number;
-
-            /* Important: Do not convert type to uppercase
-             * first because TwinCAT requires the input string 
-             * to be uppercase, otherwise it is a syntax error.
-             */
-            if (splittedText.length === 3) {
-                requestedType = splittedText[0] as StBuiltinType;
-                radix = parseInt(splittedText[1], 10);
-            }
-
-            else if (splittedText.length === 2) {
-
-                if (splittedText[0] in StBuiltinType)
-                    requestedType = splittedText[0] as StBuiltinType;
-                    
-                else
-                    radix = parseInt(splittedText[0], 10);
-            }
-
-            value = parseInt(splittedText[splittedText.length - 1], radix);
-
-            let fittingType: StBuiltinType;
-
-            if (isNegative) {
-
-                if (-value >= -Math.pow(2, 7))
-                    fittingType = StBuiltinType.SINT;   // -2^7 .. 2^7-1
-                    
-                else if (-value >= -Math.pow(2, 15))
-                    fittingType = StBuiltinType.INT;    // -2^15 .. 2^15-1
-                    
-                else if (-value >= -Math.pow(2, 31))
-                    fittingType = StBuiltinType.DINT;   // -2^31 .. 2^31-1
-                    
-                else if (-value >= -Math.pow(2, 63))
-                    fittingType = StBuiltinType.LINT;   // -2^63 .. 2^63-1
-                    
-                else {
-
-                    if (requestedType)
-                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
-
-                    else
-                        this.C0001(literal, "ANY_INT", sourceFile);
-
-                    return undefined;
-                }
-            }
-
-            else {
-
-                if (value <= Math.pow(2, 7) - 1)
-                    fittingType = StBuiltinType.SINT;   // -2^7 .. 2^7-1
-                    
-                else if (value <= Math.pow(2, 8) - 1)
-                    fittingType = StBuiltinType.USINT;  // 0 .. 2^8-1
-                    
-                else if (value <= Math.pow(2, 15) - 1)
-                    fittingType = StBuiltinType.INT;    // -2^15 .. 2^15-1
-                    
-                else if (value <= Math.pow(2, 16) - 1)
-                    fittingType = StBuiltinType.UINT;   // 0 .. 2^16-1
-                    
-                else if (value <= Math.pow(2, 31) - 1)
-                    fittingType = StBuiltinType.DINT;   // -2^31 .. 2^31-1
-                    
-                else if (value <= Math.pow(2, 32) - 1)
-                    fittingType = StBuiltinType.UDINT;  // 0 .. 2^32-1
-                    
-                else if (value <= Math.pow(2, 63) - 1)
-                    fittingType = StBuiltinType.LINT;   // -2^63 .. 2^63-1
-                    
-                else if (value <= Math.pow(2, 64) - 1)
-                    fittingType = StBuiltinType.ULINT;  // 0 .. 2^64-1
-                    
-                else {
-                    
-                    if (requestedType)
-                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
-
-                    else
-                        this.C0001(literal, "ANY_INT", sourceFile);
-
-                    return undefined;
-                }
-            }
-
-            let choosenType: StBuiltinType | undefined = fittingType;
-
-            if (requestedType) {
-
-                const requestedTypeDetails = StModel.nativeTypes.get(requestedType);
-                const fittingTypeDetails = StModel.nativeTypes.get(fittingType);
-
-                if (
-                    requestedTypeDetails &&
-                    fittingTypeDetails &&
-                    requestedTypeDetails.max! < fittingTypeDetails.max!
-                ) {
-                    this.C0001(literal, StBuiltinType[requestedType], sourceFile);
-                    return undefined;
-                }
-
-                else {
-                    choosenType = requestedType;
-                }
-            }
-
-            switch (typeHintKind) {
-
-                case StNativeTypeKind.Logical:
-
-                    if (!isNegative && (value === 0 || value === 1))
-                        choosenType = typeHint;
-
-                    break;
-                
-                case StNativeTypeKind.Bitfield:
-                case StNativeTypeKind.UnsignedInteger:
-
-                    const choosenTypeDetails = StModel.nativeTypes.get(choosenType);
-                    const typeHintDetails = StModel.nativeTypes.get(typeHint!);
-                    
-                    if (!isNegative && choosenTypeDetails!.size <= typeHintDetails!.size)
-                        choosenType = typeHint;
-
-                    break;
-            }
-        
-            const type = new StType();
-            type.builtinType = choosenType;
-            type.subRangeStart = value;
-            type.subRangeStop = value;
-
-            return type;
-        }
-
-        else if (literal.REAL_NUMBER()) {
-
-            const realNumber = literal.REAL_NUMBER()!;
-            let text = realNumber.getText();
-
-            const isNegative = text.startsWith("-");
-
-            if (isNegative)
-                text = text.substring(1);
-
-            const splittedText = text.split('#');
-
-            let requestedType: StBuiltinType | undefined;
-            let value: number;
-
-            /* Important: Do not convert type to uppercase
-             * first because TwinCAT requires the input string 
-             * to be uppercase, otherwise it is a syntax error.
-             */
-            if (splittedText.length === 2)
-                requestedType = splittedText[0] as StBuiltinType;
-
-            value = parseFloat(splittedText[splittedText.length - 1]);
-
-            let fittingType: StBuiltinType;
-
-            // https://infosys.beckhoff.com/english.php?content=../content/1033/tc3_plc_intro/2529405067.html&id=
-
-            if (isNegative) {
-
-                if (-value >= -3.402823e+38)
-                    fittingType = StBuiltinType.REAL;
-
-                else if (-value >= -1.7976931348623158e+308)
-                    fittingType = StBuiltinType.LREAL;
-                    
-                else {
-                    
-                    if (requestedType)
-                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
-
-                    else
-                        this.C0001(literal, "ANY_REAL", sourceFile);
-
-                    return undefined;
-                }
-            }
-
-            else {
-
-                if (value <= 3.402823e+38)
-                    fittingType = StBuiltinType.REAL;
-
-                else if (value <= 1.7976931348623158e+308)
-                    fittingType = StBuiltinType.LREAL;
-                                       
-                else {
-                    
-                    if (requestedType)
-                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
-
-                    else
-                        this.C0001(literal, "ANY_REAL", sourceFile);
-
-                    return undefined;
-                }
-            }
-
-            let choosenType: StBuiltinType | undefined = fittingType;
+        else if (literal.REAL_NUMBER())
+            return evaluateRealNumber(literal, sourceFile, typeHint);
             
-            if (requestedType) {
-
-                const requestedTypeDetails = StModel.nativeTypes.get(requestedType);
-                const fittingTypeDetails = StModel.nativeTypes.get(fittingType);
-
-                if (
-                    requestedTypeDetails &&
-                    fittingTypeDetails &&
-                    requestedTypeDetails.max! < fittingTypeDetails.max!
-                ) {
-                    this.C0001(literal, StBuiltinType[requestedType], sourceFile);
-                    return undefined;
-                }
-
-                else {
-                    choosenType = requestedType;
-                }
-            }
-
-            else {
-                choosenType = StBuiltinType.LREAL;
-            }
-
-            switch (typeHint) {
-
-                case StBuiltinType.REAL:
-
-                    if (value <= 3.402823e+38)
-                        choosenType = StBuiltinType.REAL;
-
-                    break;
-            }
-
-            const type = new StType();
-            type.builtinType = choosenType;
-
-            return type;
-        }
+        else if (literal.TIME_LITERAL())
+            return evaluateTimeLiteral(literal, sourceFile);
             
-        else if (literal.TIME_LITERAL()) {
+        else if (literal.LTIME_LITERAL())
+            return evaluateLTimeLiteral(literal, sourceFile);
 
-            const timeLiteral = literal.TIME_LITERAL()!;
-            const timeText = timeLiteral.getText().split('#')[1];
+        else if (literal.dateLiteral())
+            return evaluateDateLiteral(literal, sourceFile);
 
-            // Regex to extract D, H, M, S, MS values
-            const timeRegex = /(?:([0-9_]+)D)?(?:([0-9_]+)H)?(?:([0-9_]+)M)?(?:([0-9_]+)S)?(?:([0-9_]+)MS)?/;
-            const match = timeText.match(timeRegex)!;
+        else if (literal.timeOfDayLiteral())
+            return evaluateTimeOfDayLiteral(literal, sourceFile);
 
-            for (let i = 0; i < 5; ++i) {
-                TIME_COMPONENTS[i].value = match[i + 1] ? Number.parseInt(match[i + 1]) : 0;
-            }
+        else if (literal.dateAndTimeLiteral())
+            return evaluateDateAndTimeLiteral(literal, sourceFile);
 
-            TIME_COMPONENTS[5].value = 0; // microseconds
-            TIME_COMPONENTS[6].value = 0; // nanoseconds
+        else if (literal.STRING_LITERAL())
+            return evaluateStringLiteral(literal, sourceFile);
 
-            // Find index of first overflowing component
-            const index = match.slice(1).findIndex(x => x);
-            const hasOverflow = findOverflowComponent(index)
-
-            // Validate
-            if (
-                !hasOverflow &&
-                isTimeInRange(
-                    TIME_COMPONENTS[0].value,
-                    TIME_COMPONENTS[1].value,
-                    TIME_COMPONENTS[2].value,
-                    TIME_COMPONENTS[3].value,
-                    TIME_COMPONENTS[4].value,
-                    TIME_COMPONENTS[5].value,
-                    TIME_COMPONENTS[6].value,
-                    49, 17, 2, 47, 295, 0, 0
-                )
-            ) {
-                const type = new StType();
-                type.builtinType = StBuiltinType.TIME;
-                return type;
-            }
-            
-            else {
-                this.C0001(literal, StBuiltinType.TIME, sourceFile);
-                return undefined;
-            }
-        }
-            
-        else if (literal.LTIME_LITERAL()) {
-
-            const ltimeLiteral = literal.LTIME_LITERAL()!;
-            const ltimeText = ltimeLiteral.getText().split('#')[1];
-
-            // Regex to extract D, H, M, S, MS, US, NS values
-            const ltimeRegex = /(?:([0-9_]+)D)?(?:([0-9_]+)H)?(?:([0-9_]+)M)?(?:([0-9_]+)S)?(?:([0-9_]+)MS)?(?:([0-9_]+)US)?(?:([0-9_]+)NS)?/;
-            const match = ltimeText.match(ltimeRegex)!;
-
-            for (let i = 0; i < 7; ++i) {
-                TIME_COMPONENTS[i].value = match[i + 1] ? Number.parseInt(match[i + 1]) : 0;
-            }
-
-            // Find index of first overflowing component
-            const index = match.slice(1).findIndex(x => x);
-            const hasOverflow = findOverflowComponent(index)
-
-            // Validate
-            if (
-                !hasOverflow &&
-                isTimeInRange(
-                    TIME_COMPONENTS[0].value,
-                    TIME_COMPONENTS[1].value,
-                    TIME_COMPONENTS[2].value,
-                    TIME_COMPONENTS[3].value,
-                    TIME_COMPONENTS[4].value,
-                    TIME_COMPONENTS[5].value,
-                    TIME_COMPONENTS[6].value,
-                    213503, 23, 34, 33, 709, 551, 615
-                )
-            ) {
-                const type = new StType();
-                type.builtinType = StBuiltinType.TIME;
-                return type;
-            }
-            
-            else {
-                this.C0001(literal, StBuiltinType.TIME, sourceFile);
-                return undefined;
-            }
-        }
-
-        else if (literal.dateLiteral()) {
-
-            const dateLiteral = literal.dateLiteral()!;
-            const requestedType = dateLiteral._prefix?.text as StBuiltinType;
-            const dateParts = dateLiteral._date!.text!.split("-");
-
-            const year = Number.parseInt(dateParts[0]);
-            const month = Number.parseInt(dateParts[1]);
-            const day = Number.parseInt(dateParts[2]);
-            const dateTime = DateTime.fromObject({ year, month, day });
-
-            if (!dateTime.isValid) {
-                this.C0001(literal, StBuiltinType[requestedType], sourceFile);
-                return undefined;
-            }
-
-            let choosenType: StBuiltinType | undefined;
-
-            switch (requestedType) {
-                
-                case StBuiltinType.DATE:
-                case StBuiltinType.D:
-
-                    if (
-                        isDateInRange(
-                            year, month, day,
-                            1970, 1, 1,
-                            2106, 2, 7
-                        )
-                    ) {
-                        choosenType = StBuiltinType.DATE;
-                    }
-
-                    else {
-                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
-                        return undefined;
-                    }
-
-                    break;
-                
-                case StBuiltinType.LDATE:
-                case StBuiltinType.LD:
-
-                    if (
-                        isDateInRange(
-                            year, month, day,
-                            1970, 1, 1,
-                            2554, 7, 21
-                        )
-                    ) {
-                        choosenType = StBuiltinType.LDATE;
-                    }
-
-                    else {
-                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
-                        return undefined;
-                    }
-
-                    break;
-                
-                default:
-                    return undefined;
-            }
-
-            const type = new StType();
-            type.builtinType = choosenType;
-
-            return type;
-        }
-
-        else if (literal.timeOfDayLiteral()) {
-
-            const timeOfDayLiteral = literal.timeOfDayLiteral()!;
-            const requestedType = timeOfDayLiteral._prefix?.text as StBuiltinType;
-            const timeOfDayParts = timeOfDayLiteral._timeOfDay!.text!.split(":");
-
-            const hour = Number.parseInt(timeOfDayParts[0]);
-            const minute = Number.parseInt(timeOfDayParts[1]);
-            const secondAndMoreParts = (timeOfDayParts[2] ?? "").split(".");
-            const secondRaw = Number.parseInt(secondAndMoreParts[0]);
-            const second = Number.isNaN(secondRaw) ? 0 : secondRaw;
-            const millisecondRaw = Number.parseInt(secondAndMoreParts[1]);
-
-            let millisecond = Number.isNaN(millisecondRaw) ? 0 : millisecondRaw;
-            let millisecond_rounded = millisecond;
-
-            if (millisecond > 999) {
-                // If input is e.g. 999999999 (nanoseconds), convert to 999.999999 ms
-                millisecond = millisecond / Math.pow(10, millisecond.toString().length - 3);
-                millisecond_rounded = 999;
-            }
-
-            const dateTime = DateTime.fromObject({
-                hour,
-                minute,
-                second,
-                millisecond: millisecond_rounded
-            });
-
-            if (!dateTime.isValid) {
-                this.C0001(literal, StBuiltinType[requestedType], sourceFile);
-                return undefined;
-            }
-
-            let choosenType: StBuiltinType | undefined;
-
-            switch (requestedType) {
-                
-                case StBuiltinType.TIME_OF_DAY:
-                case StBuiltinType.TOD:
-
-                    if (
-                        isTimeOfDayInRange(
-                            hour, minute, second, millisecond,
-                            23, 59, 59, 999
-                        )
-                    ) {
-                        choosenType = StBuiltinType.TIME_OF_DAY;
-                    }
-
-                    else {
-                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
-                        return undefined;
-                    }
-
-                    break;
-                
-                case StBuiltinType.LTIME_OF_DAY:
-                case StBuiltinType.LTOD:
-
-                    if (
-                        isTimeOfDayInRange(
-                            hour, minute, second, millisecond,
-                            23, 59, 59, 999.999999
-                        )
-                    ) {
-                        choosenType = StBuiltinType.LTIME_OF_DAY;
-                    }
-
-                    else {
-                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
-                        return undefined;
-                    }
-
-                    break;
-                
-                default:
-                    return undefined;
-            }
-
-            const type = new StType();
-            type.builtinType = choosenType;
-
-            return type;
-        }
-
-        else if (literal.dateAndTimeLiteral()) {
-
-            const dateAndTimeLiteral = literal.dateAndTimeLiteral()!;
-            const requestedType = dateAndTimeLiteral._prefix?.text as StBuiltinType;
-            const dateAndTimeParts = dateAndTimeLiteral._dateAndTime!.text!.split("-");
-
-            const year = Number.parseInt(dateAndTimeParts[0]);
-            const month = Number.parseInt(dateAndTimeParts[1]);
-            const day = Number.parseInt(dateAndTimeParts[2]);
-
-            const hoursAndMoreParts = dateAndTimeParts[3].split(":");
-
-            const hour = Number.parseInt(hoursAndMoreParts[0]);
-            const minute = Number.parseInt(hoursAndMoreParts[1]);
-
-            const secondAndMoreParts = (hoursAndMoreParts[2] ?? "").split(".");
-
-            const secondRaw = Number.parseInt(secondAndMoreParts[0]);
-            const second = Number.isNaN(secondRaw) ? 0 : secondRaw;
-            const millisecondRaw = Number.parseInt(secondAndMoreParts[1]);
-
-            let millisecond = Number.isNaN(millisecondRaw) ? 0 : millisecondRaw;
-            let millisecond_rounded = millisecond;
-
-            if (millisecond > 999) {
-                // If input is e.g. 999999999 (nanoseconds), convert to 999.999999 ms
-                millisecond = millisecond / Math.pow(10, millisecond.toString().length - 3);
-                millisecond_rounded = 999;
-            }
-
-            const dateTime = DateTime.fromObject({
-                day,
-                month,
-                year,
-                hour,
-                minute,
-                second,
-                millisecond: millisecond_rounded
-            });
-
-            if (!dateTime.isValid) {
-                this.C0001(literal, StBuiltinType[requestedType], sourceFile);
-                return undefined;
-            }
-
-            let choosenType: StBuiltinType | undefined;
-
-            switch (requestedType) {
-                
-                case StBuiltinType.DATE_AND_TIME:
-                case StBuiltinType.DT:
-
-                    if (
-                        isDateAndTimeInRange(
-                            year, month, day, hour, minute, second, millisecond,
-                            1970, 1, 1, 0, 0, 0, 0,
-                            2106, 2, 7, 6, 28, 15, 0,
-                        )
-                    ) {
-                        choosenType = StBuiltinType.TIME_OF_DAY;
-                    }
-
-                    else {
-                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
-                        return undefined;
-                    }
-
-                    break;
-                
-                case StBuiltinType.LDATE_AND_TIME:
-                case StBuiltinType.LDT:
-
-                    if (
-                        isDateAndTimeInRange(
-                            year, month, day, hour, minute, second, millisecond,
-                            1970, 1, 1, 0, 0, 0, 0,
-                            2554, 7, 21, 23, 34, 33, 709.551615
-                        )
-                    ) {
-                        choosenType = StBuiltinType.LTIME_OF_DAY;
-                    }
-
-                    else {
-                        this.C0001(literal, StBuiltinType[requestedType], sourceFile);
-                        return undefined;
-                    }
-
-                    break;
-                
-                default:
-                    return undefined;
-            }
-
-            const type = new StType();
-            type.builtinType = choosenType;
-
-            return type;
-        }
-
-        else if (literal.STRING_LITERAL()) {
-
-            const stringLiteral = literal.STRING_LITERAL()!;
-            const text = stringLiteral.getText().slice(1, -1);
-
-            const isLatin1 = /^[\u0000-\u00FF]*$/.test(text);
-
-            if (!isLatin1) {
-
-                const warning = new Diagnostic(
-                    getContextRange(literal)!,
-                    `The string '${text}' contains non-representable characters`,
-                    DiagnosticSeverity.Warning
-                );
-
-                sourceFile.diagnostics.push(warning);
-            }
-
-            const type = new StType();
-            type.builtinType = StBuiltinType.STRING;
-            type.stringLength = text.length;
-
-            return type;
-        }
-
-        else if (literal.WSTRING_LITERAL()) {
-
-            const stringLiteral = literal.WSTRING_LITERAL()!;
-            const text = stringLiteral.getText().slice(1, -1);
-
-            const isUcs2 = /^[\u0000-\uD7FF\uE000-\uFFFF]*$/.test(text);
-
-            if (!isUcs2) {
-
-                const warning = new Diagnostic(
-                    getContextRange(literal)!,
-                    `The string '${text}' contains non-representable characters`,
-                    DiagnosticSeverity.Warning
-                );
-
-                sourceFile.diagnostics.push(warning);
-            }
-
-            const type = new StType();
-            type.builtinType = StBuiltinType.WSTRING;
-            type.stringLength = text.length;
-
-            return type;
-        }
+        else if (literal.WSTRING_LITERAL())
+            return evaluateWStringLiteral(literal, sourceFile);
 
         this.CannotEvaluateExpression(literal, sourceFile);
     }
@@ -1078,7 +445,7 @@ export class SemanticModelBuilder {
                         const getter = propertyBodyCtx.getter();
 
                         if (!getter)                           
-                            this.C0143(currentMember, sourceFile);
+                            C0143(currentMember, sourceFile);
                     }
                 }
 
@@ -1090,7 +457,7 @@ export class SemanticModelBuilder {
             }
 
             else {
-                this.C0046(currentMember, sourceFile);
+                C0046(currentMember, sourceFile);
             }
 
             currentQualifier = currentMember;
@@ -1114,7 +481,7 @@ export class SemanticModelBuilder {
                                 lastMemberDeclaration?.variableKind === StVariableScope.InOut
                             )
                         ) {
-                            this.C0037(lastMember, sourceFile);
+                            C0037(lastMember, sourceFile);
                         }
 
                         break;
@@ -1126,12 +493,12 @@ export class SemanticModelBuilder {
                         const setter = propertyBodyCtx.setter();
 
                         if (!setter)
-                            this.C0018(lastMember, sourceFile);
+                            C0018(lastMember, sourceFile);
 
                         break;
                     
                     default:
-                        this.C0018(lastMember, sourceFile);
+                        C0018(lastMember, sourceFile);
                 }
             }
         }
@@ -1157,7 +524,7 @@ export class SemanticModelBuilder {
         for (const postfixOp of postfixOps) {
 
             if (noMoreOpsAllowed) {
-                this.C0185(member, sourceFile);
+                C0185(member, sourceFile);
                 return undefined;
             }
 
@@ -1170,7 +537,7 @@ export class SemanticModelBuilder {
                 else {
 
                     if (!currentType?.isPointer) {
-                        this.C0064(postfixOp, member, sourceFile);
+                        C0064(postfixOp, member, sourceFile);
                         return undefined;
                     }
 
@@ -1186,7 +553,7 @@ export class SemanticModelBuilder {
                         ? currentType.getId()
                         : memberDeclaration.id;
 
-                    this.C0047(postfixOp, member, id, sourceFile);
+                    C0047(postfixOp, member, id, sourceFile);
 
                     return undefined;
                 }
@@ -1213,7 +580,7 @@ export class SemanticModelBuilder {
                         continue;
                     }
 
-                    this.C0035(member, sourceFile);
+                    C0035(member, sourceFile);
                 }
 
                 // Member declaration is something else
@@ -1235,15 +602,15 @@ export class SemanticModelBuilder {
                             break;
                             
                         case StSymbolKind.FunctionBlock:
-                            this.C0080(member, sourceFile);
+                            C0080(member, sourceFile);
                             return undefined;
 
                         case StSymbolKind.EnumMember:
-                            this.C0035(member, sourceFile);
+                            C0035(member, sourceFile);
                             return undefined;
                         
                         default:
-                            this.C0036(member, memberDeclaration, sourceFile);
+                            C0036(member, memberDeclaration, sourceFile);
                             return undefined;
                     }
                 }
@@ -1430,7 +797,6 @@ export class SemanticModelBuilder {
                 }
             }
 
-            // C0032: Cannot convert type '{type}' to type '{type}'
             const lhsTypeId = lhsType
                 ? lhsType.getId()
                 : getOriginalText(lhsCtx);
@@ -1439,194 +805,8 @@ export class SemanticModelBuilder {
                 ? rhsType.getId()
                 : getOriginalText(rhsCtx);
 
-            this.C0032(rhsCtx, rhsTypeId, lhsTypeId, sourceFile);
+            C0032(rhsCtx, rhsTypeId, lhsTypeId, sourceFile);
         }
-    }
-
-    // C0001: Constant '{constant}' too large for type '{name}'
-    private C0001(literal: LiteralContext, typeName: string, sourceFile: StSourceFile) {
-        
-        const diagnostic = new Diagnostic(
-            getContextRange(literal)!,
-            `Constant '${getOriginalText(literal)}' too large for type '${typeName}'`,
-            DiagnosticSeverity.Error
-        );
-
-        diagnostic.code = "C0001";
-        sourceFile.diagnostics.push(diagnostic);
-    }
-
-    // C0018 '{name}' is no valid assignment target
-    private C0018(lastMember: StSymbol, sourceFile: StSourceFile) {
-        
-        const diagnostic = new Diagnostic(
-            lastMember.selectionRange ?? lastMember.range,
-            `'${lastMember.id}' is no valid assignment target`,
-            DiagnosticSeverity.Error
-        );
-
-        diagnostic.code = "C0018";
-        sourceFile.diagnostics.push(diagnostic);
-    }
-
-    private C0032(
-        rhsCtx: ParserRuleContext,
-        rhsTypeId: string | undefined,
-        lhsTypeId: string | undefined,
-        sourceFile: StSourceFile
-    ) {
-
-        const diagnostic = new Diagnostic(
-            getContextRange(rhsCtx)!,
-            `Cannot convert type '${rhsTypeId}' to type '${lhsTypeId}'`,
-            DiagnosticSeverity.Error
-        );
-
-        diagnostic.code = "C0032";
-        sourceFile.diagnostics.push(diagnostic);
-    }
-
-    // C0035: Program name, function or function block instance expected instead of '{name}'
-    private C0035(member: StSymbol, sourceFile: StSourceFile) {
-
-        const diagnostic = new Diagnostic(
-            member.selectionRange ?? member.range,
-            `Program name, function or function block instance expected instead of '${member.id}'`,
-            DiagnosticSeverity.Error
-        );
-
-        diagnostic.code = "C0035";
-        sourceFile.diagnostics.push(diagnostic);
-    }
-
-    // C0036: Cannot call object of type '{name}'
-    private C0036(member: StSymbol, declaration: StSymbol, sourceFile: StSourceFile) {
-
-        const diagnostic = new Diagnostic(
-            member.selectionRange ?? member.range,
-            `Cannot call object of type '${getTypeOfType(declaration.kind)}'`,
-            DiagnosticSeverity.Error
-        );
-
-        diagnostic.code = "C0036";
-        sourceFile.diagnostics.push(diagnostic);
-    }
-
-    // C0037: '{name}' is no input of '{name}'
-    private C0037(member: StSymbol, sourceFile: StSourceFile) {
-
-        const diagnostic = new Diagnostic(
-            member.selectionRange ?? member.range,
-            `'${member.id}' is no input of '${member.declaration?.parent?.id}'`,
-            DiagnosticSeverity.Error
-        );
-
-        diagnostic.code = "C0037";
-        sourceFile.diagnostics.push(diagnostic);
-    }
-
-    // C0046: Identifier '{id}' not defined
-    private C0046(currentMember: StSymbol, sourceFile: StSourceFile) {
-        
-        const diagnostic = new Diagnostic(
-            currentMember.selectionRange ?? currentMember.range,
-            `Identifier '${currentMember.id}' not defined`,
-            DiagnosticSeverity.Error
-        );
-
-        diagnostic.code = "C0046";
-        sourceFile.diagnostics.push(diagnostic);
-    }
-
-    // C0047: Cannot apply indexing with [] to an expression of type '{type}'
-    private C0047(postfixOp: PostfixOpContext, member: StSymbol, typeId: string, sourceFile: StSourceFile) {
-
-        const diagnostic = new Diagnostic(
-            getContextRange(postfixOp.arrayIndex()) ?? member.selectionRange ?? member.range,
-            `Cannot apply indexing with [] to an expression of type '${typeId}'`,
-            DiagnosticSeverity.Error
-        );
-
-        diagnostic.code = "C0047";
-        sourceFile.diagnostics.push(diagnostic);
-    }
-
-    // C0064: Dereference requires a pointer
-    private C0064(postfixOp: PostfixOpContext, member: StSymbol, sourceFile: StSourceFile) {
-
-        const diagnostic = new Diagnostic(
-            getTokenRange(postfixOp.dereference()?.CARET().symbol) ?? member.selectionRange ?? member.range,
-            `Dereference requires a pointer`,
-            DiagnosticSeverity.Error
-        );
-
-        diagnostic.code = "C0064";
-        sourceFile.diagnostics.push(diagnostic);
-    }
-
-    // C0077: Unknown type: '{type}'
-    private C0077(symbol: StSymbol, sourceFile: StSourceFile) {
-        
-        const diagnostic = new Diagnostic(
-            symbol.selectionRange ?? symbol.range,
-            `Unknown type: '${symbol.id ?? "?"}'`,
-            DiagnosticSeverity.Error
-        );
-
-        diagnostic.code = "C0077";
-        sourceFile.diagnostics.push(diagnostic);
-    }
-
-    // C0080: Function block '{name}' must be instantiated to be accessed
-    private C0080(member: StSymbol, sourceFile: StSourceFile) {
-
-        const diagnostic = new Diagnostic(
-            member.selectionRange ?? member.range,
-            `Function block '${member.id}' must be instantiated to be accessed`,
-            DiagnosticSeverity.Error
-        );
-
-        diagnostic.code = "C0080";
-        sourceFile.diagnostics.push(diagnostic);
-    }
-
-    // C0143: The property '{name}' cannot be used in this context because it lacks the get accessor
-    private C0143(member: StSymbol, sourceFile: StSourceFile) {
-        
-        const diagnostic = new Diagnostic(
-            member.selectionRange ?? member.range,
-            `The property '${member.id}' cannot be used in this context because it lacks the get accessor`,
-            DiagnosticSeverity.Error
-        );
-
-        diagnostic.code = "C0143";
-        sourceFile.diagnostics.push(diagnostic);
-    }
-
-    // C0185: It is not possible to perform component access '.', index access '[]' or call '()' on result of function call. Assign result to help variable first.
-    private C0185(member: StSymbol, sourceFile: StSourceFile) {
-
-        const diagnostic = new Diagnostic(
-            member.selectionRange ?? member.range,
-            "It is not possible to perform component access '.', index access '[]' or call '()' on result of function call. Assign result to help variable first.",
-            DiagnosticSeverity.Error
-        );
-
-        diagnostic.code = "C0143";
-        sourceFile.diagnostics.push(diagnostic);
-    }
-
-    // C0261: A reference type is not allowed as base type of an array, pointer, or reference
-    private C0261(symbol: StSymbol, sourceFile: StSourceFile) {
-        
-        const diagnostic = new Diagnostic(
-            symbol.selectionRange ?? symbol.range,
-            "A reference type is not allowed as base type of an array, pointer, or reference",
-            DiagnosticSeverity.Error
-        );
-
-        diagnostic.code = "C0261";
-        sourceFile.diagnostics.push(diagnostic);
     }
 
     //#endregion

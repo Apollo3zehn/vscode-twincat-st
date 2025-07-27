@@ -313,7 +313,7 @@ varDecl
 exprOrArrayInit
 arrayInit
 type
-baseType
+typeId
 builtinType
 statementSection
 statement

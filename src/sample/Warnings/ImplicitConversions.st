@@ -42,12 +42,6 @@ FUNCTION_BLOCK ImplicitConversions_Warnings
         // Floating Point Types
         _real:  REAL := 1e39;
         _lreal: LREAL;
-
-        // String Types
-
-        // Character Types
-
-        // Time-Related Types
     END_VAR
 
     _byte := _sint;

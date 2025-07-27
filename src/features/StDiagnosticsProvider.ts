@@ -1,6 +1,6 @@
 import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, TextDocument } from "vscode";
 import { StAccessModifier, StModel, StSymbolKind } from "../core.js";
-import { getTypeOfType } from "../utils.js";
+import { getNestedTypeOrSelf, getTypeOfType } from "../utils.js";
 
 export class StDiagnosticsProvider {
 
@@ -52,30 +52,39 @@ export class StDiagnosticsProvider {
 
         for (const symbol of sourceFile.symbolMap.values()) {
 
-            if (
-                symbol.kind === StSymbolKind.VariableDeclaration &&
-                symbol.typeUsage?.type?.declaration
-            ) {
-                const typeUsage = symbol.typeUsage;
-                const typeKind = typeUsage.type!.declaration!.kind;
+            if (symbol.kind === StSymbolKind.VariableDeclaration) {
 
-                if (!
-                    (
-                        typeKind === StSymbolKind.Interface ||
-                        typeKind === StSymbolKind.FunctionBlock ||
-                        typeKind === StSymbolKind.Enum ||
-                        typeKind === StSymbolKind.Struct
-                    )
-                ) {
-                    // C0177: '{name}' is of type {name} and cannot be instantiated
-                    const diagnostic = new Diagnostic(
-                        typeUsage.selectionRange ?? typeUsage.range,
-                        `'${typeUsage.id}' is of type '${getTypeOfType(typeKind)}' and cannot be instantiated`,
-                        DiagnosticSeverity.Error
-                    );
+                const typeUsage = symbol.typeUsage;
+
+                const nestedTypeOrSelf = typeUsage?.type
+                    ? getNestedTypeOrSelf(typeUsage?.type)
+                    : undefined;
+
+                if (typeUsage && nestedTypeOrSelf && nestedTypeOrSelf.declaration) {
                     
-                    diagnostic.code = "C0177";
-                    diagnostics.push(diagnostic);
+                    const typeKind = nestedTypeOrSelf.declaration!.kind;
+
+                    if (!
+                        (
+                            typeKind === StSymbolKind.Interface ||
+                            typeKind === StSymbolKind.FunctionBlock ||
+                            typeKind === StSymbolKind.Struct || 
+                            // Only relevant for enums with default type because then
+                            // there is no typeUsage and getNestedTypeOrSelf
+                            // only returns the enum type usage itself.
+                            typeKind === StSymbolKind.Enum
+                        )
+                    ) {
+                        // C0177: '{name}' is of type {name} and cannot be instantiated
+                        const diagnostic = new Diagnostic(
+                            typeUsage.selectionRange ?? typeUsage.range,
+                            `'${typeUsage.id}' is of type '${getTypeOfType(typeKind)}' and cannot be instantiated`,
+                            DiagnosticSeverity.Error
+                        );
+                        
+                        diagnostic.code = "C0177";
+                        diagnostics.push(diagnostic);
+                    }
                 }
             }
 

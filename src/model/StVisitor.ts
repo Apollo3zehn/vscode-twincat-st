@@ -11,7 +11,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
     private _documentUri: Uri;
     private _parent: StSymbol | undefined;
     private _declaration: StSymbol | undefined;
-    private _underlyingType: StType | undefined;
+    private _type: StType | undefined;
     private _variableKind: StVariableScope = StVariableScope.None;
 
     constructor(sourceFile: StSourceFile, documentUri: Uri) {
@@ -29,23 +29,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
     public override visitTypeDecl = (ctx: TypeDeclContext): void => {
 
-        this._underlyingType = undefined;
+        this._type = undefined;
 
-        const symbol = this.createType(ctx);
+        this.createType(ctx);
         this.visitChildren(ctx);
-
-        if (this._underlyingType) {
-            if (symbol?.type)
-                symbol.type = this._underlyingType;
-        }
-
-        else {
-            if (symbol?.kind === StSymbolKind.Enum) {
-                const defaultType = new StType();
-                defaultType.builtinType = StBuiltinType.INT;
-                symbol.type = defaultType;
-            }
-        }
     };
 
     public override visitEnumMember = (ctx: EnumMemberContext): void => {
@@ -127,7 +114,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this.visitChildren(ctx);
 
         const symbol = this.createTypeUsage(ctx);
-        this._underlyingType = symbol.type;
+        this._type = symbol.type;
     }
 
     //#endregion
@@ -170,7 +157,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this._parent = symbol;
     }
 
-    private createType(ctx: TypeDeclContext): StSymbol | undefined {
+    private createType(ctx: TypeDeclContext) {
 
         const structDeclCtx = ctx.structDecl();
         const enumDeclCtx = ctx.enumDecl();
@@ -188,7 +175,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
             symbolKind = StSymbolKind.Struct;
 
         else
-            return undefined;
+            return;
 
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, symbolKind);
@@ -199,8 +186,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         this._parent = symbol;
         this._declaration = symbol;
-
-        return symbol;
     }
 
     private createFunction(ctx: FunctionContext) {
@@ -317,11 +302,11 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const type = new StType();
         type.context = ctx;
 
-        const baseType = ctx.baseType();
+        const typeId = ctx.typeId();
 
-        if (baseType) {
+        if (typeId) {
 
-            const builtinType = baseType?.builtinType();
+            const builtinType = typeId?.builtinType();
 
             if (builtinType) {
 
@@ -332,7 +317,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
                     type.builtinType = typeText as StBuiltinType;
 
                     const nativeTypeDetails = type.builtinType
-                        ? StModel.nativeTypes.get(type.builtinType)
+                        ? StModel.nativeTypesDetails.get(type.builtinType)
                         : undefined;
 
                     const builtinTypeKind = nativeTypeDetails?.kind;
@@ -391,12 +376,13 @@ export class StVisitor extends StructuredTextVisitor<void> {
             }
         }
 
-        // If this is not a base type, it must get a base type assigned
+        // If this is not a type ID, it must get an underlying type assigned
         else {
-            type.underlyingType = this._underlyingType;
+            type.underlyingType = this._type;
         }
 
         if (this._declaration) {
+
             if (
                 this._declaration.kind === StSymbolKind.Method ||
                 this._declaration.kind === StSymbolKind.Function

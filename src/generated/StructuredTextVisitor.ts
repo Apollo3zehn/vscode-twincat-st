@@ -25,7 +25,7 @@ import { VarDeclContext } from "./StructuredTextParser.js";
 import { ExprOrArrayInitContext } from "./StructuredTextParser.js";
 import { ArrayInitContext } from "./StructuredTextParser.js";
 import { TypeContext } from "./StructuredTextParser.js";
-import { BaseTypeContext } from "./StructuredTextParser.js";
+import { TypeIdContext } from "./StructuredTextParser.js";
 import { BuiltinTypeContext } from "./StructuredTextParser.js";
 import { StatementSectionContext } from "./StructuredTextParser.js";
 import { StatementContext } from "./StructuredTextParser.js";
@@ -206,11 +206,11 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      */
     visitType?: (ctx: TypeContext) => Result;
     /**
-     * Visit a parse tree produced by `StructuredTextParser.baseType`.
+     * Visit a parse tree produced by `StructuredTextParser.typeId`.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    visitBaseType?: (ctx: BaseTypeContext) => Result;
+    visitTypeId?: (ctx: TypeIdContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.builtinType`.
      * @param ctx the parse tree

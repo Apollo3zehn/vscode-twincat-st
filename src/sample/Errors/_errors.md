@@ -1,6 +1,10 @@
 - Use BigInt here: _int2:                  INT             := 18446744073709551616;
 
+- C0018: When trying to assign to a const variable
+
 - assignment: incompatible types, (inheritance, interfaces)
+
+- Colorization single line: TYPE InnerAlias : UDINT; END_TYPE
 
 - M_B()[0]; => Warning "The code has no effect. Is this the intent?"
 

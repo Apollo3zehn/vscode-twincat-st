@@ -17,13 +17,38 @@
 //     }
 // }
 
+TYPE E_ImplicitConversions_Default :
+(
+    A
+);
+END_TYPE
+
+TYPE E_ImplicitConversions_USINT :
+(
+    A
+) SINT;
+END_TYPE
+
+TYPE InnerAlias : E_ImplicitConversions_USINT;
+END_TYPE
+
+TYPE OuterAlias : InnerAlias;
+END_TYPE
+
 FUNCTION_BLOCK ImplicitConversions
 
     VAR
 
+        _enum_default:  E_ImplicitConversions_Default   := 1;
+        _enum_usint:    E_ImplicitConversions_USINT     := 1;
+        _alias:         OuterAlias                      := 1;
+        _assign_from_x: INT                             := E_ImplicitConversions_Default.A;
+
+        // Logical Types
+        _bool:  BOOL;
+        _bit:   BIT;
+
         // Bitstring Types
-        _bool:  BOOL;   // Contrary to the documentation, bool cannot be implicitly converted to other bitstring types
-        _bit:   BIT;    // BIT is not even mentioned in the documentation but it exists in TwinCAT ...
         _byte:  BYTE;
         _word:  WORD;
         _dword: DWORD;
@@ -44,13 +69,14 @@ FUNCTION_BLOCK ImplicitConversions
         // Floating Point Types
         _real:  REAL;
         _lreal: LREAL;
-
-        // String Types
-
-        // Character Types
-
-        // Time-Related Types
     END_VAR
+
+    _enum_default   := 1;
+    _enum_usint     := 1;
+    _alias          := 1;
+    _assign_from_x  := E_ImplicitConversions_Default.A;
+    _assign_from_x  := _enum_default;
+    _assign_from_x  := _alias;
 
     _bool := _bool;
     _bool := _bit;

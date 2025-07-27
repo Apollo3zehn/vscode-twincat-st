@@ -1,6 +1,6 @@
 import { Interval, ParserRuleContext, Token } from "antlr4ng";
 import { Position, Range } from "vscode";
-import { StSymbolKind } from "./core.js";
+import { StSymbolKind, StType } from "./core.js";
 
 export const TIME_COMPONENTS = [
     { value: 0, max: undefined },   // days
@@ -23,6 +23,19 @@ export function isInRange(range: Range | undefined, position: Position): boolean
     );
 
     return !isOutOfRange;
+}
+
+export function getNestedTypeOrSelf(
+    type: StType
+): StType {
+
+    let current: StType = type;
+
+    while (current?.declaration?.typeUsage?.type) {
+        current = current.declaration.typeUsage.type;
+    }
+
+    return current;
 }
 
 export function findContextAtPosition(ctx: ParserRuleContext, position: Position): ParserRuleContext | undefined {

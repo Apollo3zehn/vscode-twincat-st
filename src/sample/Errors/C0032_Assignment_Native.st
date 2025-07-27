@@ -23,7 +23,7 @@ FUNCTION_BLOCK C0032_Assignment_Native
 
     VAR
 
-        // Boolean Types
+        // Logical Types
         _bool:  BOOL;
         _bit:   BIT;
 

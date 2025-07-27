@@ -3,7 +3,7 @@ import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vs
 import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
 import { AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
-import { getContextRange, getOriginalText } from "../utils.js";
+import { getContextRange, getNestedTypeOrSelf, getOriginalText } from "../utils.js";
 import { StVisitor } from "./StVisitor.js";
 import { C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0077, C0080, C0143, C0185, C0261 } from "./diagnostics.js";
 import { evaluateBoolLiteral } from "./literals/evaluateBoolLiteral.js";
@@ -137,17 +137,22 @@ export class SemanticModelBuilder {
                 const lhsCtx = varDeclCtx.type();
                 const lhsTypeUsage = sourceFile.symbolMap.get(lhsCtx);
                 const lhsType = lhsTypeUsage?.type;
-                 
+
+                let nestedLhsType = lhsType
+                    ? getNestedTypeOrSelf(lhsType)
+                    : undefined;
+                           
                 const rhsCtx = varDeclCtx.exprOrArrayInit()?.expr();
+
                 let rhsType: StType | undefined;
 
                 if (rhsCtx)
-                    rhsType = this.evaluateExpression(rhsCtx, lhsType?.builtinType, sourceFile);
+                    rhsType = this.evaluateExpression(rhsCtx, nestedLhsType?.builtinType, sourceFile);
 
-                if (lhsType && rhsType) {
+                if (nestedLhsType && rhsType) {
 
                     this.CheckTypes(
-                        lhsType, lhsCtx,
+                        nestedLhsType, lhsCtx,
                         rhsType, rhsCtx!,
                         false,
                         sourceFile
@@ -334,7 +339,7 @@ export class SemanticModelBuilder {
         
         const lhsCtx = assignment.memberExpression();
         const lhsType = this.evaluateMemberExpression(lhsCtx, sourceFile, true);
-
+                
         const rhsCtx = assignment.expr();
         const rhsType = this.evaluateExpression(rhsCtx, lhsType?.builtinType, sourceFile);
 
@@ -464,10 +469,9 @@ export class SemanticModelBuilder {
         }
 
         const lastMember = currentMember!;
+        const lastMemberDeclaration = lastMember?.declaration;
 
         if (isAssignment) {
-
-            const lastMemberDeclaration = lastMember?.declaration;
 
             if (lastMemberDeclaration) {
 
@@ -517,10 +521,40 @@ export class SemanticModelBuilder {
 
         let noMoreOpsAllowed = false;
 
+        # TODO: Find a nice way to provide Enum default values. Not only here, search for getNestedTypeOrSelf
+        # Maybe create a general defaultType field and use that as fallback. It is always zero except for Enums with default type
+        // // Ensure default enum type
+        // if (
+        //     lastMemberDeclaration?.kind === StSymbolKind.EnumMember &&
+        //     !lastMemberDeclaration?.parent?.typeUsage
+        // ) {
+        //     currentType = StModel.defaultIntType;
+        // }
+
+        // else if (lastMemberDeclaration?.kind === StSymbolKind.VariableDeclaration) {
+
+        //     const declarationType = lastMemberDeclaration.typeUsage?.type;
+
+        //     if (declarationType) {
+
+        //         const nestedDeclarationType = getNestedTypeOrSelf(declarationType);
+
+        //         if (
+        //             nestedDeclarationType.declaration?.kind === StSymbolKind.Enum &&
+        //             !nestedDeclarationType.declaration?.parent?.typeUsage
+        //         ) {
+        //             currentType = StModel.defaultIntType;
+        //         }
+        //     }
+        // }
+
         let currentType = memberDeclaration.kind === StSymbolKind.EnumMember
-            ? memberDeclaration.parent?.type
+            ? memberDeclaration.parent?.typeUsage?.type
             : memberDeclaration.typeUsage?.type;
 
+        if (currentType)
+            currentType = getNestedTypeOrSelf(currentType);
+        
         for (const postfixOp of postfixOps) {
 
             if (noMoreOpsAllowed) {
@@ -615,6 +649,9 @@ export class SemanticModelBuilder {
                     }
                 }
             }
+
+            if (currentType)
+                currentType = getNestedTypeOrSelf(currentType);
         }
 
         return currentType;
@@ -662,8 +699,8 @@ export class SemanticModelBuilder {
             
             if (lhsType.builtinType && rhsType.builtinType) {
 
-                const lhsNativeType = StModel.nativeTypes.get(lhsType.builtinType);
-                const rhsNativeType = StModel.nativeTypes.get(rhsType.builtinType);
+                const lhsNativeType = StModel.nativeTypesDetails.get(lhsType.builtinType);
+                const rhsNativeType = StModel.nativeTypesDetails.get(rhsType.builtinType);
                 
                 if (!lhsNativeType || !rhsNativeType)
                     return;

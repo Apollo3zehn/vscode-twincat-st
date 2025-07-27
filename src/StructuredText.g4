@@ -96,13 +96,13 @@ arrayInit
 // Types
 // =======================
 type
-    : baseType
+    : typeId
     | ARRAY '[' INTEGER_NUMBER '..' INTEGER_NUMBER ']' OF type
     | POINTER_TO type
     | REFERENCE_TO type
     ;
 
-baseType
+typeId
     : builtinType
     | ID
     ;

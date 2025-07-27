@@ -9,7 +9,7 @@ export function evaluateIntegerNumber(
 ): StType | undefined {
     
     const typeHintKind = typeHint
-        ? StModel.nativeTypes.get(typeHint)?.kind
+        ? StModel.nativeTypesDetails.get(typeHint)?.kind
         : undefined;
 
     const integerNumber = literal.INTEGER_NUMBER()!;
@@ -116,8 +116,8 @@ export function evaluateIntegerNumber(
 
     if (requestedType) {
 
-        const requestedTypeDetails = StModel.nativeTypes.get(requestedType);
-        const fittingTypeDetails = StModel.nativeTypes.get(fittingType);
+        const requestedTypeDetails = StModel.nativeTypesDetails.get(requestedType);
+        const fittingTypeDetails = StModel.nativeTypesDetails.get(fittingType);
 
         if (
             requestedTypeDetails &&
@@ -145,8 +145,8 @@ export function evaluateIntegerNumber(
         case StNativeTypeKind.Bitfield:
         case StNativeTypeKind.UnsignedInteger:
 
-            const choosenTypeDetails = StModel.nativeTypes.get(choosenType);
-            const typeHintDetails = StModel.nativeTypes.get(typeHint!);
+            const choosenTypeDetails = StModel.nativeTypesDetails.get(choosenType);
+            const typeHintDetails = StModel.nativeTypesDetails.get(typeHint!);
             
             if (!isNegative && choosenTypeDetails!.size <= typeHintDetails!.size)
                 choosenType = typeHint;

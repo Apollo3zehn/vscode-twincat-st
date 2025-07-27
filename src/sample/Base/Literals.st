@@ -53,7 +53,7 @@ FUNCTION_BLOCK Literals
 
         // Time-Related Types
 
-        // TIME
+        // => TIME
         time_max:               TIME            := TIME#49D17H2M47S295MS;
         time_firstover:         TIME            := TIME#90H10MS;
         time_alt:               TIME            := T#05H10MS;
@@ -73,7 +73,7 @@ FUNCTION_BLOCK Literals
         date_and_time_max:      DATE_AND_TIME   := DATE_AND_TIME#2106-02-07-06:28:15;
         date_and_time_alt:      DT              := DT#1970-1-001-0:0;
 
-        // LTIME
+        // => LTIME
         l_time_max:             LTIME           := LTIME#213503D23H34M33S709MS551US615NS;
         l_time_firstover:       LTIME           := LTIME#90H10MS;
         l_time_alt:             LTIME           := LTIME#05H10MS;

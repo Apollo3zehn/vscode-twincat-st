@@ -78,8 +78,8 @@ export function evaluateRealNumber(
     
     if (requestedType) {
 
-        const requestedTypeDetails = StModel.nativeTypes.get(requestedType);
-        const fittingTypeDetails = StModel.nativeTypes.get(fittingType);
+        const requestedTypeDetails = StModel.nativeTypesDetails.get(requestedType);
+        const fittingTypeDetails = StModel.nativeTypesDetails.get(fittingType);
 
         if (
             requestedTypeDetails &&

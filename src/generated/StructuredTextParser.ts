@@ -176,7 +176,7 @@ export class StructuredTextParser extends antlr.Parser {
     public static readonly RULE_exprOrArrayInit = 19;
     public static readonly RULE_arrayInit = 20;
     public static readonly RULE_type = 21;
-    public static readonly RULE_baseType = 22;
+    public static readonly RULE_typeId = 22;
     public static readonly RULE_builtinType = 23;
     public static readonly RULE_statementSection = 24;
     public static readonly RULE_statement = 25;
@@ -266,7 +266,7 @@ export class StructuredTextParser extends antlr.Parser {
         "functionBlock", "interface", "varGlobalSection", "typeDecl", "enumDecl", 
         "enumMember", "initialValue", "structDecl", "implementsClause", 
         "extendsClause", "member", "varDeclSection", "varSectionType", "varDecl", 
-        "exprOrArrayInit", "arrayInit", "type", "baseType", "builtinType", 
+        "exprOrArrayInit", "arrayInit", "type", "typeId", "builtinType", 
         "statementSection", "statement", "assignment", "assignmentOperator", 
         "callStatement", "argumentList", "argument", "ifStatement", "caseStatement", 
         "caseElement", "caseValue", "whileStatement", "repeatStatement", 
@@ -1645,7 +1645,7 @@ export class StructuredTextParser extends antlr.Parser {
                 this.enterOuterAlt(localContext, 1);
                 {
                 this.state = 439;
-                this.baseType();
+                this.typeId();
                 }
                 break;
             case StructuredTextParser.ARRAY:
@@ -1704,9 +1704,9 @@ export class StructuredTextParser extends antlr.Parser {
         }
         return localContext;
     }
-    public baseType(): BaseTypeContext {
-        let localContext = new BaseTypeContext(this.context, this.state);
-        this.enterRule(localContext, 44, StructuredTextParser.RULE_baseType);
+    public typeId(): TypeIdContext {
+        let localContext = new TypeIdContext(this.context, this.state);
+        this.enterRule(localContext, 44, StructuredTextParser.RULE_typeId);
         try {
             this.state = 456;
             this.errorHandler.sync(this);
@@ -4792,8 +4792,8 @@ export class TypeContext extends antlr.ParserRuleContext {
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }
-    public baseType(): BaseTypeContext | null {
-        return this.getRuleContext(0, BaseTypeContext);
+    public typeId(): TypeIdContext | null {
+        return this.getRuleContext(0, TypeIdContext);
     }
     public ARRAY(): antlr.TerminalNode | null {
         return this.getToken(StructuredTextParser.ARRAY, 0);
@@ -4832,7 +4832,7 @@ export class TypeContext extends antlr.ParserRuleContext {
 }
 
 
-export class BaseTypeContext extends antlr.ParserRuleContext {
+export class TypeIdContext extends antlr.ParserRuleContext {
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }
@@ -4843,11 +4843,11 @@ export class BaseTypeContext extends antlr.ParserRuleContext {
         return this.getToken(StructuredTextParser.ID, 0);
     }
     public override get ruleIndex(): number {
-        return StructuredTextParser.RULE_baseType;
+        return StructuredTextParser.RULE_typeId;
     }
     public override accept<Result>(visitor: StructuredTextVisitor<Result>): Result | null {
-        if (visitor.visitBaseType) {
-            return visitor.visitBaseType(this);
+        if (visitor.visitTypeId) {
+            return visitor.visitTypeId(this);
         } else {
             return visitor.visitChildren(this);
         }

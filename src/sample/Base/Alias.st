@@ -1,2 +1,2 @@
-TYPE MyAlias : UDINT;
+TYPE MyAlias : USINT;
 END_TYPE

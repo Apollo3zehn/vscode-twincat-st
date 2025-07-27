@@ -252,7 +252,7 @@ export class StModel {
     
     public readonly sourceFileMap = new Map<string, StSourceFile>();
 
-    public static readonly nativeTypes = new Map<StBuiltinType, StNativeTypeDetails>([
+    public static readonly nativeTypesDetails = new Map<StBuiltinType, StNativeTypeDetails>([
         
         [StBuiltinType.BOOL,  new StNativeTypeDetails(StNativeTypeKind.Logical, 1, undefined, 0, 1)],
         [StBuiltinType.BIT,   new StNativeTypeDetails(StNativeTypeKind.Logical, 1, undefined, 0, 1)],
@@ -278,4 +278,18 @@ export class StModel {
         [StBuiltinType.STRING,  new StNativeTypeDetails(StNativeTypeKind.String, -1, undefined, undefined, undefined)],
         [StBuiltinType.WSTRING, new StNativeTypeDetails(StNativeTypeKind.String, -1, undefined, undefined, undefined)],
     ]);
+
+    // Required for enums with default type
+    public static readonly defaultIntType: StType = new StType();
+
+    static {
+        
+        // Prepare StModel.defaultIntType
+        const nativeTypeDetails = StModel.nativeTypesDetails.get(StBuiltinType.INT);
+
+        StModel.defaultIntType.builtinType = StBuiltinType.INT;
+        StModel.defaultIntType.isFullRange = true;
+        StModel.defaultIntType.subRangeStart = nativeTypeDetails?.min;
+        StModel.defaultIntType.subRangeStop = nativeTypeDetails?.max;
+    }
 }

@@ -25,6 +25,7 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
             x.kind === StSymbolKind.Program ||
             x.kind === StSymbolKind.FunctionBlock ||
             x.kind === StSymbolKind.Struct ||
+            x.kind === StSymbolKind.Union ||
             x.kind === StSymbolKind.Enum ||
             x.kind === StSymbolKind.Function ||
             x.kind === StSymbolKind.Interface ||
@@ -58,6 +59,9 @@ export class StDocumentSymbolProvider implements DocumentSymbolProvider {
                 symbolKind = SymbolKind.Class; break;
             
             case StSymbolKind.Struct:
+                symbolKind = SymbolKind.Struct; break;
+            
+             case StSymbolKind.Union:
                 symbolKind = SymbolKind.Struct; break;
             
             case StSymbolKind.Enum:

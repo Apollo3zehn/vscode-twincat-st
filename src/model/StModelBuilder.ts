@@ -3,7 +3,7 @@ import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vs
 import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
 import { AssignmentContext, CallStatementContext, EnumMemberContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
-import { getContextRange, getNestedTypeOrSelf } from "../utils.js";
+import { ConnectDeclaringSymbols, getContextRange, getNestedTypeOrSelf } from "../utils.js";
 import { StVisitor } from "./StVisitor.js";
 import { C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0077, C0080, C0143, C0185, C0261 } from "./diagnostics.js";
 import { evaluateBoolLiteral } from "./literals/evaluateBoolLiteral.js";
@@ -305,7 +305,7 @@ export class SemanticModelBuilder {
             : this.resolveDeclaration(scope, member.id);
 
         if (declaration)
-            this.ConnectDeclaringSymbols(member, declaration);
+            ConnectDeclaringSymbols(member, declaration);
     }
 
     private resolveDeclaration(
@@ -829,22 +829,8 @@ export class SemanticModelBuilder {
                 }
             }
 
-            C0032(rhsCtx, lhsType.getId(), rhsType.getId(), sourceFile);
+            C0032(rhsCtx, rhsType.getId(), lhsType.getId(), sourceFile);
         }
-    }
-
-    //#endregion
-
-    //#region Utils
-
-    private ConnectDeclaringSymbols(symbol: StSymbol, declaringSymbol: StSymbol) {
-
-        symbol.declaration = declaringSymbol;
-
-        if (!declaringSymbol.references)
-            declaringSymbol.references = [];
-
-        declaringSymbol.references.push(symbol);
     }
 
     //#endregion

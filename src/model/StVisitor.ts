@@ -1,7 +1,7 @@
 import { ParserRuleContext, TerminalNode, Token } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Uri } from "vscode";
 import { StAccessModifier, StBuiltinType, StModel, StNativeTypeDetails, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StTypeDeclarationDetails, StVariableScope } from "../core.js";
-import { AccessModifierContext, EnumMemberContext, EnumTypeContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StatementContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { AccessModifierContext, DutDeclContext, EnumMemberContext, EnumTypeContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StatementContext, TypeContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 import { getContextRange, getOriginalText, getTokenRange } from "../utils.js";
 
@@ -27,11 +27,11 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this.visitChildren(ctx);
     };
 
-    public override visitTypeDecl = (ctx: TypeDeclContext): void => {
+    public override visitDutDecl = (ctx: DutDeclContext): void => {
 
         this._type = undefined;
 
-        const symbol = this.createType(ctx);
+        const symbol = this.createDut(ctx);
         this.visitChildren(ctx);
 
         if (symbol?.typeDeclarationDetails) {
@@ -174,11 +174,12 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this._parent = symbol;
     }
 
-    private createType(ctx: TypeDeclContext): StSymbol | undefined {
+    private createDut(ctx: DutDeclContext): StSymbol | undefined {
 
-        const structDeclCtx = ctx.structDecl();
-        const enumDeclCtx = ctx.enumDecl();
         const typeCtx = ctx.type();
+        const enumDeclCtx = ctx.enumDecl();
+        const structDeclCtx = ctx.structDecl();
+        const unionDeclCtx = ctx.unionDecl();
 
         let symbolKind: StSymbolKind;
 
@@ -191,6 +192,9 @@ export class StVisitor extends StructuredTextVisitor<void> {
         else if (structDeclCtx)
             symbolKind = StSymbolKind.Struct;
 
+        else if (unionDeclCtx)
+            symbolKind = StSymbolKind.Union;
+            
         else
             return undefined;
 

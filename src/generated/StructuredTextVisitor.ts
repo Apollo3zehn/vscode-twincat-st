@@ -11,11 +11,12 @@ import { PropertyContext } from "./StructuredTextParser.js";
 import { FunctionBlockContext } from "./StructuredTextParser.js";
 import { InterfaceContext } from "./StructuredTextParser.js";
 import { VarGlobalSectionContext } from "./StructuredTextParser.js";
-import { TypeDeclContext } from "./StructuredTextParser.js";
+import { DutDeclContext } from "./StructuredTextParser.js";
 import { EnumDeclContext } from "./StructuredTextParser.js";
 import { EnumMemberContext } from "./StructuredTextParser.js";
 import { InitialValueContext } from "./StructuredTextParser.js";
 import { StructDeclContext } from "./StructuredTextParser.js";
+import { UnionDeclContext } from "./StructuredTextParser.js";
 import { ImplementsClauseContext } from "./StructuredTextParser.js";
 import { ExtendsClauseContext } from "./StructuredTextParser.js";
 import { MemberContext } from "./StructuredTextParser.js";
@@ -125,11 +126,11 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      */
     visitVarGlobalSection?: (ctx: VarGlobalSectionContext) => Result;
     /**
-     * Visit a parse tree produced by `StructuredTextParser.typeDecl`.
+     * Visit a parse tree produced by `StructuredTextParser.dutDecl`.
      * @param ctx the parse tree
      * @return the visitor result
      */
-    visitTypeDecl?: (ctx: TypeDeclContext) => Result;
+    visitDutDecl?: (ctx: DutDeclContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.enumDecl`.
      * @param ctx the parse tree
@@ -154,6 +155,12 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      * @return the visitor result
      */
     visitStructDecl?: (ctx: StructDeclContext) => Result;
+    /**
+     * Visit a parse tree produced by `StructuredTextParser.unionDecl`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitUnionDecl?: (ctx: UnionDeclContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.implementsClause`.
      * @param ctx the parse tree

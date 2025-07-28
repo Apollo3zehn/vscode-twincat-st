@@ -55,7 +55,7 @@
       "patterns": [
         {
           "name": "storage.type.class.st",
-          "match": "\\b(PROGRAM|END_PROGRAM|FUNCTION_BLOCK|END_FUNCTION_BLOCK|FUNCTION|END_FUNCTION|PROPERTY|END_PROPERTY|METHOD|END_METHOD|INTERFACE|END_INTERFACE|ENUM|ALIAS|STRUCT|END_STRUCT|TYPE|END_TYPE|VAR|VAR_INPUT|VAR_OUTPUT|VAR_IN_OUT|VAR_TEMP|VAR_EXTERNAL|VAR_GLOBAL|VAR_INST|VAR_STAT|END_VAR|GET|END_GET|SET|END_SET|IMPLEMENTS|EXTENDS|MOD|ABSTRACT|FINAL|CONSTANT|PUBLIC|PRIVATE|PROTECTED|INTERNAL)\\b"
+          "match": "\\b(PROGRAM|END_PROGRAM|FUNCTION_BLOCK|END_FUNCTION_BLOCK|FUNCTION|END_FUNCTION|PROPERTY|END_PROPERTY|METHOD|END_METHOD|INTERFACE|END_INTERFACE|ENUM|ALIAS|STRUCT|END_STRUCT|UNION|END_UNION|TYPE|END_TYPE|VAR|VAR_INPUT|VAR_OUTPUT|VAR_IN_OUT|VAR_TEMP|VAR_EXTERNAL|VAR_GLOBAL|VAR_INST|VAR_STAT|END_VAR|GET|END_GET|SET|END_SET|IMPLEMENTS|EXTENDS|MOD|ABSTRACT|FINAL|CONSTANT|PUBLIC|PRIVATE|PROTECTED|INTERNAL)\\b"
         },
         {
           "name": "keyword.control.st",
@@ -291,7 +291,8 @@
           "patterns": [
             { "include": "#comments" },
             { "include": "#enums" },
-            { "include": "#structs" }
+            { "include": "#structs" },
+            { "include": "#unions" }
           ]
         }
       ]
@@ -337,6 +338,24 @@
             "0": { "name": "keyword.other.st" }
           },
           "end": "^\\s*END_STRUCT",
+          "endCaptures": {
+            "0": { "name": "keyword.other.st" }
+          },
+          "patterns": [
+            { "include": "#comments" },
+            { "include": "#declarations" }
+          ]
+        }
+      ]
+    },
+    "unions": {
+      "patterns": [
+        {
+          "begin": "^\\s*UNION",
+          "beginCaptures": {
+            "0": { "name": "keyword.other.st" }
+          },
+          "end": "^\\s*END_UNION",
           "endCaptures": {
             "0": { "name": "keyword.other.st" }
           },

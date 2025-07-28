@@ -167,6 +167,7 @@ export enum StSymbolKind {
     Gvl,
     Alias,
     Struct,
+    Union,
     Enum,
     EnumMember
 }

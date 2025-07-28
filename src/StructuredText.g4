@@ -9,7 +9,7 @@ compilationUnit
     | function
     | interface
     | varGlobalSection
-    | typeDecl
+    | dutDecl
     )*
     ;
 
@@ -25,11 +25,12 @@ interface           : attribute? INTERFACE      accessModifier?             ID  
 varGlobalSection    : attribute? VAR_GLOBAL     accessModifier? modifier*   ID              varDecl+                                                        END_VAR ;
 
 // =======================
-// Type declarations
+// DUT declarations
 // =======================
-typeDecl
+dutDecl
     : attribute* TYPE accessModifier? ID ':' enumDecl END_TYPE
     | attribute* TYPE accessModifier? ID ':' structDecl END_TYPE
+    | attribute* TYPE accessModifier? ID ':' unionDecl END_TYPE
     | attribute* TYPE accessModifier? ID ':' type ';' END_TYPE
     ;
 
@@ -47,6 +48,10 @@ initialValue
 
 structDecl
     : STRUCT varDecl* END_STRUCT
+    ;
+
+unionDecl
+    : UNION varDecl* END_UNION
     ;
 
 // =======================
@@ -403,6 +408,8 @@ INTERFACE           : 'INTERFACE' ;
 END_INTERFACE       : 'END_INTERFACE' ;
 STRUCT              : 'STRUCT' ;
 END_STRUCT          : 'END_STRUCT' ;
+UNION               : 'UNION' ;
+END_UNION           : 'END_UNION' ;
 ENUM                : 'ENUM' ;
 END_ENUM            : 'END_ENUM' ;
 ABSTRACT            : 'ABSTRACT' ;

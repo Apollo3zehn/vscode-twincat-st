@@ -1,6 +1,6 @@
 import { Hover, HoverProvider, MarkdownString, Position, ProviderResult, TextDocument } from "vscode";
 import { StAccessModifier, StModel, StSymbol, StSymbolKind } from "../core.js";
-import { EnumMemberContext, StructDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { EnumMemberContext, StructDeclContext, UnionDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { isInRange } from "../utils.js";
 
 export class StHoverProvider implements HoverProvider {
@@ -92,6 +92,9 @@ export class StHoverProvider implements HoverProvider {
                 if (context.parent instanceof StructDeclContext)
                     qualifier = `${symbol.parent?.id ?? "??"}.`;
                     
+                else if (context.parent instanceof UnionDeclContext)
+                    qualifier = `${symbol.parent?.id ?? "??"}.`;
+                    
                 else if (context.parent instanceof VarGlobalSectionContext) {
                     prefix = "VAR_GLOBAL ";
                     qualifier = `${symbol.parent?.id ?? "??"}.`;
@@ -162,6 +165,9 @@ export class StHoverProvider implements HoverProvider {
             
             case StSymbolKind.Struct:
                 return `STRUCT ${accessModifier}${symbol.id}`;
+            
+            case StSymbolKind.Union:
+                return `UNION ${accessModifier}${symbol.id}`;
             
             case StSymbolKind.Enum:
                 return `ENUM ${accessModifier}${symbol.id} : ${symbol.typeDeclarationDetails?.underlyingType?.getId()}`;

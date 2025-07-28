@@ -1,6 +1,6 @@
 import { Interval, ParserRuleContext, Token } from "antlr4ng";
 import { Position, Range } from "vscode";
-import { StSymbolKind, StType } from "./core.js";
+import { StSymbol, StSymbolKind, StType } from "./core.js";
 
 export const TIME_COMPONENTS = [
     { value: 0, max: undefined },   // days
@@ -107,6 +107,7 @@ export function getTypeOfType(kind: StSymbolKind): string {
         case StSymbolKind.Gvl: return "VAR_GLOBAL";
         case StSymbolKind.Enum: return "ENUM";
         case StSymbolKind.Struct: return "STRUCT";
+        case StSymbolKind.Union: return "UNION";
         case StSymbolKind.Program: return "PROGRAM";
         case StSymbolKind.Alias: return "ALIAS";
         case StSymbolKind.Function: return "FUNCTION";
@@ -114,7 +115,7 @@ export function getTypeOfType(kind: StSymbolKind): string {
         case StSymbolKind.Property: return "PROPERTY";
         case StSymbolKind.VariableDeclaration: return "VARIABLE";
         case StSymbolKind.EnumMember: return "ENUM_MEMBER";
-        default: return "UNKNOWN";
+        default: return "Unknown";
     }
 }
 
@@ -224,4 +225,14 @@ export function findOverflowComponent(startIdx: number): boolean {
     }
 
     return false;
+}
+
+export function ConnectDeclaringSymbols(symbol: StSymbol, declaringSymbol: StSymbol) {
+
+    symbol.declaration = declaringSymbol;
+
+    if (!declaringSymbol.references)
+        declaringSymbol.references = [];
+
+    declaringSymbol.references.push(symbol);
 }

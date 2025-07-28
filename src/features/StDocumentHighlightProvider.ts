@@ -1,6 +1,6 @@
 import { CancellationToken, DocumentHighlight, DocumentHighlightKind, DocumentHighlightProvider, Position, ProviderResult, TextDocument } from "vscode";
-import { StModel } from "../core.js";
-import { isInRange } from "../utils.js";
+import { StModel } from "../core/types.js";
+import { isInRange } from "../core/utils.js";
 
 export class StDocumentHighlightProvider implements DocumentHighlightProvider {
     constructor(private model: StModel) {}

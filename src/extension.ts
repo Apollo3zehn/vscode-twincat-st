@@ -1,5 +1,5 @@
 import { commands, ExtensionContext, languages, SemanticTokensLegend, window, workspace } from 'vscode';
-import { documentSelector } from './core.js';
+import { documentSelector } from './core/types.js';
 import { StCStyleDecorationProvider } from './features/StCStyleDecorationProvider.js';
 import { StDefinitionProvider } from './features/StDefinitionProvider.js';
 import { StDiagnosticsProvider } from './features/StDiagnosticsProvider.js';

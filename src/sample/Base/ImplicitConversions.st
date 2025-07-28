@@ -36,18 +36,21 @@ FUNCTION_BLOCK ImplicitConversions
         _word:  WORD;
         _dword: DWORD;
         _lword: LWORD;
+        _xword: XWORD;
 
         // Unsigned Integer Types
         _usint: USINT;
         _uint:  UINT;
         _udint: UDINT;
         _ulint: ULINT;
+        _uxint: UXINT;
 
         // Signed Integer Types
         _sint:  SINT;
         _int:   INT;
         _dint:  DINT;
         _lint:  LINT;
+        _xint:  XINT;
 
         // Floating Point Types
         _real:  REAL;
@@ -78,17 +81,30 @@ FUNCTION_BLOCK ImplicitConversions
     _dword := _byte;
     _dword := _word;
     _dword := _dword;
+    _dword := _xword;
     _dword := _usint;
     _dword := _uint;
     _dword := _udint;
+    _dword := _uxint;
+
+    _xword := _byte;
+    _xword := _word;
+    _xword := _dword;
+    _xword := _xword;
+    _xword := _usint;
+    _xword := _uint;
+    _xword := _udint;
+    _xword := _uxint;
 
     _lword := _byte;
     _lword := _word;
     _lword := _dword;
+    _lword := _xword;
     _lword := _lword;
     _lword := _usint;
     _lword := _uint;
     _lword := _udint;
+    _lword := _uxint;
     _lword := _ulint;
 
     _usint := _byte;
@@ -102,17 +118,30 @@ FUNCTION_BLOCK ImplicitConversions
     _udint := _byte;
     _udint := _word;
     _udint := _dword;
+    _udint := _xword;
     _udint := _usint;
     _udint := _uint;
     _udint := _udint;
+    _udint := _uxint;
+
+    _uxint := _byte;
+    _uxint := _word;
+    _uxint := _dword;
+    _uxint := _xword;
+    _uxint := _usint;
+    _uxint := _uint;
+    _uxint := _udint;
+    _uxint := _uxint;
 
     _ulint := _byte;
     _ulint := _word;
     _ulint := _dword;
+    _ulint := _xword;
     _ulint := _lword;
     _ulint := _usint;
     _ulint := _uint;
     _ulint := _udint;
+    _ulint := _uxint;
     _ulint := _ulint;
 
     _int := _sint;
@@ -121,10 +150,17 @@ FUNCTION_BLOCK ImplicitConversions
     _dint := _sint;
     _dint := _int;
     _dint := _dint;
+    _dint := _xint;
+
+    _xint := _sint;
+    _xint := _int;
+    _xint := _dint;
+    _xint := _xint;
 
     _lint := _sint;
     _lint := _int;
     _lint := _dint;
+    _lint := _xint;
     _lint := _lint;
 
     _real := _byte;
@@ -138,12 +174,15 @@ FUNCTION_BLOCK ImplicitConversions
     _lreal := _byte;
     _lreal := _word;
     _lreal := _dword;
+    _lreal := _xword;
     _lreal := _usint;
     _lreal := _uint;
     _lreal := _udint;
+    _lreal := _uxint;
     _lreal := _sint;
     _lreal := _int;
     _lreal := _dint;
+    _lreal := _xint;
     _lreal := _real;
     _lreal := _real;
 END_FUNCTION_BLOCK

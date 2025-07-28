@@ -1,6 +1,8 @@
 import { Interval, ParserRuleContext, Token } from "antlr4ng";
-import { Position, Range } from "vscode";
-import { StSymbol, StSymbolKind, StType } from "./core.js";
+import * as fs from "fs";
+import path from "path";
+import { Position, Range, workspace } from "vscode";
+import { Architecture, StSymbol, StSymbolKind, StType, TcConfig } from "./types.js";
 
 export const TIME_COMPONENTS = [
     { value: 0, max: undefined },   // days
@@ -235,4 +237,64 @@ export function ConnectDeclaringSymbols(symbol: StSymbol, declaringSymbol: StSym
         declaringSymbol.references = [];
 
     declaringSymbol.references.push(symbol);
+}
+
+let config: TcConfig | undefined;
+
+export function getTcConfig(): TcConfig | undefined {
+
+    if (config)
+        return config;
+
+    const folder = workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!folder)
+        return undefined;
+
+    const configPath = path.join(folder, "twincat-st.json");
+    if (!fs.existsSync(configPath))
+        return undefined;
+
+    try {
+        const raw = fs.readFileSync(configPath, "utf8");
+        const parsed = JSON.parse(raw);
+
+        let arch = parsed.architecture in Architecture
+            ? parsed.architecture as Architecture
+            : undefined;
+
+        config = new TcConfig(arch);
+        return config;
+    } catch {
+        return undefined;
+    }
+}
+
+export function convertTypeText(typeText: string, arch: Architecture) {
+
+    switch (typeText) {
+
+        case "XWORD":
+        case "__XWORD":
+
+            return arch === Architecture.x64
+                ? "LWORD"
+                : "DWORD";
+
+        case "UXINT":
+        case "__UXINT":
+            
+            return arch === Architecture.x64
+                ? "ULINT"
+                : "UDINT";
+
+        case "XINT":
+        case "__XINT":
+            
+            return arch === Architecture.x64
+                ? "LINT"
+                : "DINT";
+        
+        default:
+            return typeText;
+    }
 }

@@ -1,7 +1,7 @@
 import { Hover, HoverProvider, MarkdownString, Position, ProviderResult, TextDocument } from "vscode";
-import { StAccessModifier, StModel, StSymbol, StSymbolKind } from "../core.js";
+import { StAccessModifier, StModel, StSymbol, StSymbolKind } from "../core/types.js";
 import { EnumMemberContext, StructDeclContext, UnionDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
-import { isInRange } from "../utils.js";
+import { isInRange } from "../core/utils.js";
 
 export class StHoverProvider implements HoverProvider {
 

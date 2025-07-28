@@ -1,6 +1,6 @@
 import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, TextDocument } from "vscode";
-import { StAccessModifier, StModel, StSymbolKind } from "../core.js";
-import { getNestedTypeOrSelf, getTypeOfType } from "../utils.js";
+import { StAccessModifier, StModel, StSymbolKind } from "../core/types.js";
+import { getNestedTypeOrSelf, getTypeOfType } from "../core/utils.js";
 
 export class StDiagnosticsProvider {
 

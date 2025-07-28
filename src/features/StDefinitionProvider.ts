@@ -1,6 +1,6 @@
 import { CancellationToken, Definition, DefinitionProvider, Location, Position, ProviderResult, TextDocument } from "vscode";
-import { StModel, StSymbolKind } from "../core.js";
-import { isInRange } from "../utils.js";
+import { StModel, StSymbolKind } from "../core/types.js";
+import { isInRange } from "../core/utils.js";
 
 export class StDefinitionProvider implements DefinitionProvider {
 

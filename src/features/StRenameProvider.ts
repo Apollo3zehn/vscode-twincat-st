@@ -1,6 +1,6 @@
 import { Position, ProviderResult, Range, RenameProvider, TextDocument, WorkspaceEdit } from "vscode";
-import { StModel } from "../core.js";
-import { isInRange } from "../utils.js";
+import { StModel } from "../core/types.js";
+import { isInRange } from "../core/utils.js";
 
 export class StRenameProvider implements RenameProvider {
 

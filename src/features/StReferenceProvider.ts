@@ -1,6 +1,6 @@
 import { CancellationToken, Location, Position, ProviderResult, ReferenceContext, ReferenceProvider, TextDocument } from "vscode";
-import { StModel } from "../core.js";
-import { isInRange } from "../utils.js";
+import { StModel } from "../core/types.js";
+import { isInRange } from "../core/utils.js";
 
 export class StReferenceProvider implements ReferenceProvider {
 

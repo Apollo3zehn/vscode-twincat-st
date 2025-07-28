@@ -1,9 +1,20 @@
-import { CommonTokenStream, ParserRuleContext, Token } from "antlr4ng";
+import { CommonTokenStream, ParserRuleContext } from "antlr4ng";
 import { Diagnostic, Range, Uri, window } from "vscode";
-import { StatementContext, TypeContext } from "./generated/StructuredTextParser.js";
-import { getOriginalText } from "./utils.js";
+import { StatementContext, TypeContext } from "../generated/StructuredTextParser.js";
+import { getOriginalText, getTcConfig } from "./utils.js";
 
 export const logger = window.createOutputChannel("TwinCAT Structured Text");
+
+export enum Architecture {
+    x64 = "x64",
+    x86 = "x86"
+}
+
+export class TcConfig {
+    constructor(
+        public architecture: Architecture = Architecture.x64
+    ) {}
+}
 
 export const documentSelector = [
     { language: "st", pattern: "**/*.st" }
@@ -256,6 +267,7 @@ export enum StBuiltinType {
 
 export class StModel {
     
+    public readonly tcConfig: TcConfig;
     public readonly sourceFileMap = new Map<string, StSourceFile>();
 
     public static readonly nativeTypesDetails = new Map<StBuiltinType, StNativeTypeDetails>([
@@ -287,6 +299,10 @@ export class StModel {
 
     // Required for enums with default type
     public static readonly defaultIntType: StType = new StType();
+
+    constructor() {
+        this.tcConfig = getTcConfig() ?? new TcConfig();
+    }
 
     static {
         

@@ -1,4 +1,4 @@
-import { StBuiltinType, StType } from "../../core.js";
+import { StBuiltinType, StType } from "../../core/types.js";
 
 export function evaluateBoolLiteral(): StType | undefined {
     

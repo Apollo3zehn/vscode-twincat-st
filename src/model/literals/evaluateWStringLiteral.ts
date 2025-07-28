@@ -1,7 +1,7 @@
 import { Diagnostic, DiagnosticSeverity } from "vscode";
-import { StBuiltinType, StSourceFile, StType } from "../../core.js";
+import { StBuiltinType, StSourceFile, StType } from "../../core/types.js";
 import { LiteralContext } from "../../generated/StructuredTextParser.js";
-import { getContextRange } from "../../utils.js";
+import { getContextRange } from "../../core/utils.js";
 
 export function evaluateWStringLiteral(
     literal: LiteralContext,

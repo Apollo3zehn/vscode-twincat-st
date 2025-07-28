@@ -1,5 +1,5 @@
 import { CodeLens, CodeLensProvider, Location, TextDocument } from 'vscode';
-import { StAccessModifier, StModel, StSymbolKind, StVariableScope } from '../core.js';
+import { StAccessModifier, StModel, StSymbolKind, StVariableScope } from '../core/types.js';
 
 export class StReferencesCodeLensProvider implements CodeLensProvider {
     

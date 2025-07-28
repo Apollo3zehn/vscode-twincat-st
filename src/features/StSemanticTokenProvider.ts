@@ -6,7 +6,7 @@ import {
     SemanticTokensBuilder,
     TextDocument
 } from "vscode";
-import { StModel, StSymbolKind } from "../core.js";
+import { StModel, StSymbolKind } from "../core/types.js";
 
 export class StSemanticTokenProvider implements DocumentSemanticTokensProvider {
 

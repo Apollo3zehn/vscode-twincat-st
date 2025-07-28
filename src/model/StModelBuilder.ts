@@ -1,9 +1,9 @@
 import { CharStream, CommonTokenStream, ParserRuleContext } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vscode";
-import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core.js";
+import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
 import { AssignmentContext, CallStatementContext, EnumMemberContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
-import { ConnectDeclaringSymbols, getContextRange, getNestedTypeOrSelf } from "../utils.js";
+import { ConnectDeclaringSymbols, getContextRange, getNestedTypeOrSelf } from "../core/utils.js";
 import { StVisitor } from "./StVisitor.js";
 import { C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0077, C0080, C0143, C0185, C0261 } from "./diagnostics.js";
 import { evaluateBoolLiteral } from "./literals/evaluateBoolLiteral.js";
@@ -216,7 +216,7 @@ export class SemanticModelBuilder {
         const parser = new StructuredTextParser(tokenStream);
         const tree = parser.compilationUnit();
         const sourceFile = this.getOrCreateSourceFile(uri, tokenStream);
-        const visitor = new StVisitor(sourceFile, uri);
+        const visitor = new StVisitor(sourceFile, uri, this._model.tcConfig.architecture);
 
         tree.accept(visitor);
     }

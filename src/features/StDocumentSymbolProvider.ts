@@ -1,5 +1,5 @@
 import { CancellationToken, DocumentSymbol, DocumentSymbolProvider, ProviderResult, SymbolInformation, SymbolKind, TextDocument } from 'vscode';
-import { StModel, StSymbol, StSymbolKind } from '../core.js';
+import { StModel, StSymbol, StSymbolKind } from '../core/types.js';
 
 export class StDocumentSymbolProvider implements DocumentSymbolProvider {
 

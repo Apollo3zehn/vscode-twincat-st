@@ -1,4 +1,4 @@
-import { StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StType } from "../../core.js";
+import { StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StType } from "../../core/types.js";
 import { LiteralContext } from "../../generated/StructuredTextParser.js";
 import { C0001 } from "../diagnostics.js";
 

@@ -1,23 +1,25 @@
 import { ParserRuleContext, TerminalNode, Token } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Uri } from "vscode";
-import { StAccessModifier, StBuiltinType, StModel, StNativeTypeDetails, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StTypeDeclarationDetails, StVariableScope } from "../core.js";
+import { Architecture, StAccessModifier, StBuiltinType, StModel, StNativeTypeDetails, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StTypeDeclarationDetails, StVariableScope } from "../core/types.js";
 import { AccessModifierContext, DutDeclContext, EnumMemberContext, EnumTypeContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StatementContext, TypeContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
-import { getContextRange, getOriginalText, getTokenRange } from "../utils.js";
+import { convertTypeText, getContextRange, getOriginalText, getTokenRange } from "../core/utils.js";
 
 export class StVisitor extends StructuredTextVisitor<void> {
 
     private _sourceFile: StSourceFile;
     private _documentUri: Uri;
+    private _arch: Architecture;
     private _parent: StSymbol | undefined;
     private _declaration: StSymbol | undefined;
     private _type: StType | undefined;
     private _variableKind: StVariableScope = StVariableScope.None;
 
-    constructor(sourceFile: StSourceFile, documentUri: Uri) {
+    constructor(sourceFile: StSourceFile, documentUri: Uri, arch: Architecture) {
         super();
         this._sourceFile = sourceFile;
         this._documentUri = documentUri;
+        this._arch = arch;
     }
 
     //#region Visit
@@ -335,10 +337,11 @@ export class StVisitor extends StructuredTextVisitor<void> {
             if (builtinType) {
 
                 const typeText = builtinType.start!.text!.toUpperCase();
+                const convertedTypeText = convertTypeText(typeText, this._arch);
 
-                if (typeText in StBuiltinType) {
+                if (convertedTypeText in StBuiltinType) {
 
-                    type.builtinType = typeText as StBuiltinType;
+                    type.builtinType = convertedTypeText as StBuiltinType;
 
                     const nativeTypeDetails = type.builtinType
                         ? StModel.nativeTypesDetails.get(type.builtinType)
@@ -412,10 +415,14 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         const type = new StType();
         const typeText = ctx._enumTypeId?.text;
+        
+        const convertedTypeText = typeText
+            ? convertTypeText(typeText, this._arch)
+            : undefined;
 
-        if (typeText && typeText in StBuiltinType) {
+        if (convertedTypeText && convertedTypeText in StBuiltinType) {
 
-            type.builtinType = typeText as StBuiltinType;
+            type.builtinType = convertedTypeText as StBuiltinType;
 
             const nativeTypeDetails = type.builtinType
                 ? StModel.nativeTypesDetails.get(type.builtinType)

@@ -40,6 +40,14 @@
         "label": "TwinCAT Structured Text Icons",
         "path": "./fileicons/st_icon_theme.json"
       }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          "/twincat-st.json"
+        ],
+        "url": "./schemas/twincat-st.schema.json"
+      }
     ]
   },
   "scripts": {

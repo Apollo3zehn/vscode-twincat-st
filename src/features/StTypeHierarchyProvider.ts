@@ -7,8 +7,8 @@ import {
     TypeHierarchyItem,
     TypeHierarchyProvider
 } from "vscode";
-import { StModel, StSymbol, StSymbolKind } from "../core.js";
-import { isInRange } from "../utils.js";
+import { StModel, StSymbol, StSymbolKind } from "../core/types.js";
+import { isInRange } from "../core/utils.js";
 
 export class StTypeHierarchyProvider implements TypeHierarchyProvider {
     

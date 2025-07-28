@@ -1,8 +1,8 @@
 import { ParserRuleContext } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity } from "vscode";
-import { StSourceFile, StSymbol } from "../core.js";
+import { StSourceFile, StSymbol } from "../core/types.js";
 import { LiteralContext, PostfixOpContext } from "../generated/StructuredTextParser.js";
-import { getContextRange, getOriginalText, getTokenRange, getTypeOfType } from "../utils.js";
+import { getContextRange, getOriginalText, getTokenRange, getTypeOfType } from "../core/utils.js";
 
 // C0001: Constant '{constant}' too large for type '{name}'
 export function C0001(literal: LiteralContext, typeName: string, sourceFile: StSourceFile) {

@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
-import { StBuiltinType, StSourceFile, StType } from "../../core.js";
+import { StBuiltinType, StSourceFile, StType } from "../../core/types.js";
 import { LiteralContext } from "../../generated/StructuredTextParser.js";
-import { isDateInRange } from "../../utils.js";
+import { isDateInRange } from "../../core/utils.js";
 import { C0001 } from "../diagnostics.js";
 
 export function evaluateDateLiteral(

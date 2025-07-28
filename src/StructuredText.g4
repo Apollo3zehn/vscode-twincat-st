@@ -116,11 +116,11 @@ builtinType
     // Logical types
     : 'BOOL' | 'BIT'
     // Bitstring types
-    | ( ( 'BYTE' | 'WORD' | 'DWORD' | 'LWORD' ) SUBRANGE_PARAM? )
+    | ( ( 'BYTE' | 'WORD' | 'DWORD' | 'LWORD' | 'XWORD' | '__XWORD' ) SUBRANGE_PARAM? )
     // Unsigned integer types
-    | ( ( 'USINT' | 'UINT' | 'UDINT' | 'ULINT' ) SUBRANGE_PARAM? )
+    | ( ( 'USINT' | 'UINT' | 'UDINT' | 'ULINT' | 'UXINT' | '__UXINT' ) SUBRANGE_PARAM? )
     // Signed integer types
-    | ( ( 'SINT' | 'INT' | 'DINT' | 'LINT' ) SUBRANGE_PARAM? )
+    | ( ( 'SINT' | 'INT' | 'DINT' | 'LINT' | 'XINT' | '__XINT' ) SUBRANGE_PARAM? )
     // Floating point types
     | 'REAL' | 'LREAL'
     // Time and date types
@@ -132,11 +132,11 @@ builtinType
 enumType
     : enumTypeId=(
         // Bitfield types
-        'BYTE' | 'WORD' | 'DWORD' | 'LWORD'
+        'BYTE' | 'WORD' | 'DWORD' | 'LWORD' | 'XWORD' | '__XWORD'
         // Unsigned integer types
-        | 'USINT' | 'UINT' | 'UDINT' | 'ULINT'
+        | 'USINT' | 'UINT' | 'UDINT' | 'ULINT' | 'UXINT' | '__UXINT'
         // Signed integer types
-        | 'SINT' | 'INT' | 'DINT' | 'LINT'
+        | 'SINT' | 'INT' | 'DINT' | 'LINT' | 'XINT' | '__XINT'
     ) SUBRANGE_PARAM?
     ;
 

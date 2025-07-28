@@ -1,5 +1,5 @@
 // Platform independent pointer type
-TYPE PVOID : UDINT;
+TYPE PVOID : UXINT;
 END_TYPE
 
 // ADR delivers the address of its argument in a PVOID

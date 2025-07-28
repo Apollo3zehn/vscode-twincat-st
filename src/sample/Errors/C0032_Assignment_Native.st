@@ -13,18 +13,21 @@ FUNCTION_BLOCK C0032_Assignment_Native
         _word:  WORD;
         _dword: DWORD;
         _lword: LWORD;
+        _xword: XWORD;
 
         // Unsigned Integer Types
         _usint: USINT;
         _uint:  UINT;
         _udint: UDINT;
         _ulint: ULINT;
+        _uxint: UXINT;
 
         // Signed Integer Types
         _sint:  SINT;
         _int:   INT;
         _dint:  DINT;
         _lint:  LINT;
+        _xint:  XINT;
 
         // Floating Point Types
         _real:  REAL;
@@ -40,14 +43,17 @@ FUNCTION_BLOCK C0032_Assignment_Native
     _bool := _byte;
     _bool := _word;
     _bool := _dword;
+    _bool := _xword;
     _bool := _lword;
     _bool := _usint;
     _bool := _uint;
     _bool := _udint;
+    _bool := _uxint;
     _bool := _ulint;
     _bool := _sint;
     _bool := _int;
     _bool := _dint;
+    _bool := _xint;
     _bool := _lint;
     _bool := _real;
     _bool := _lreal;
@@ -55,14 +61,17 @@ FUNCTION_BLOCK C0032_Assignment_Native
     _bit  := _byte;
     _bit  := _word;
     _bit  := _dword;
+    _bit  := _xword;
     _bit  := _lword;
     _bit  := _usint;
     _bit  := _uint;
-    _bit   := _udint;
+    _bit  := _udint;
+    _bit  := _uxint;
     _bit  := _ulint;
     _bit  := _sint;
     _bit  := _int;
     _bit  := _dint;
+    _bit  := _xint;
     _bit  := _lint;
     _bit  := _real;
     _bit  := _lreal;
@@ -71,12 +80,15 @@ FUNCTION_BLOCK C0032_Assignment_Native
     _byte := _bit;
     _byte := _word;
     _byte := _dword;
+    _byte := _xword;
     _byte := _lword;
     _byte := _uint;
     _byte := _udint;
+    _byte := _uxint;
     _byte := _ulint;
     _byte := _int;
     _byte := _dint;
+    _byte := _xint;
     _byte := _lint;
     _byte := _real;
     _byte := _lreal;
@@ -84,10 +96,13 @@ FUNCTION_BLOCK C0032_Assignment_Native
     _word := _bool;
     _word := _bit;
     _word := _dword;
+    _word := _xword;
     _word := _lword;
     _word := _udint;
+    _word := _uxint;
     _word := _ulint;
     _word := _dint;
+    _word := _xint;
     _word := _lint;
     _word := _real;
     _word := _lreal;
@@ -100,6 +115,14 @@ FUNCTION_BLOCK C0032_Assignment_Native
     _dword := _real;
     _dword := _lreal;
 
+    _xword := _bool;
+    _xword := _bit;
+    _xword := _lword;
+    _xword := _ulint;
+    _xword := _lint;
+    _xword := _real;
+    _xword := _lreal;
+
     _lword := _bool;
     _lword := _bit;
     _lword := _real;
@@ -109,12 +132,15 @@ FUNCTION_BLOCK C0032_Assignment_Native
     _usint := _bit;
     _usint := _word;
     _usint := _dword;
+    _usint := _xword;
     _usint := _lword;
     _usint := _uint;
     _usint := _udint;
+    _usint := _uxint;
     _usint := _ulint;
     _usint := _int;
     _usint := _dint;
+    _usint := _xint;
     _usint := _lint;
     _usint := _real;
     _usint := _lreal;
@@ -122,10 +148,13 @@ FUNCTION_BLOCK C0032_Assignment_Native
     _uint := _bool;
     _uint := _bit;
     _uint := _dword;
+    _uint := _xword;
     _uint := _lword;
     _uint := _udint;
+    _uint := _uxint;
     _uint := _ulint;
     _uint := _dint;
+    _uint := _xint;
     _uint := _lint;
     _uint := _real;
     _uint := _lreal;
@@ -138,6 +167,14 @@ FUNCTION_BLOCK C0032_Assignment_Native
     _udint := _real;
     _udint := _lreal;
 
+    _uxint := _bool;
+    _uxint := _bit;
+    _uxint := _lword;
+    _uxint := _ulint;
+    _uxint := _lint;
+    _uxint := _real;
+    _uxint := _lreal;
+
     _ulint := _bool;
     _ulint := _bit;
     _ulint := _real;
@@ -147,12 +184,15 @@ FUNCTION_BLOCK C0032_Assignment_Native
     _sint := _bit;
     _sint := _word;
     _sint := _dword;
+    _sint := _xword;
     _sint := _lword;
     _sint := _uint;
     _sint := _udint;
+    _sint := _uxint;
     _sint := _ulint;
     _sint := _int;
     _sint := _dint;
+    _sint := _xint;
     _sint := _lint;
     _sint := _real;
     _sint := _lreal;
@@ -160,10 +200,13 @@ FUNCTION_BLOCK C0032_Assignment_Native
     _int := _bool;
     _int := _bit;
     _int := _dword;
+    _int := _xword;
     _int := _lword;
     _int := _udint;
+    _int := _uxint;
     _int := _ulint;
     _int := _dint;
+    _int := _xint;
     _int := _lint;
     _int := _real;
     _int := _lreal;
@@ -175,6 +218,14 @@ FUNCTION_BLOCK C0032_Assignment_Native
     _dint := _lint;
     _dint := _real;
     _dint := _lreal;
+
+    _xint := _bool;
+    _xint := _bit;
+    _xint := _lword;
+    _xint := _ulint;
+    _xint := _lint;
+    _xint := _real;
+    _xint := _lreal;
 
     _lint := _bool;
     _lint := _bit;

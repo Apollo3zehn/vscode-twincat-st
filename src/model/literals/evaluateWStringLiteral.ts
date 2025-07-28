@@ -16,7 +16,7 @@ export function evaluateWStringLiteral(
     if (!isUcs2) {
 
         const warning = new Diagnostic(
-            getContextRange(literal)!,
+            getContextRange(literal),
             `The string '${text}' contains non-representable characters`,
             DiagnosticSeverity.Warning
         );

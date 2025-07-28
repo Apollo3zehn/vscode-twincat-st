@@ -1,3 +1,9 @@
+TYPE ST_E_C0032 :
+STRUCT
+    A: USINT := 1024;
+END_STRUCT
+END_TYPE
+
 TYPE E_C0032_Default :
 (
     A
@@ -6,7 +12,7 @@ END_TYPE
 
 TYPE E_C0032_USINT :
 (
-    A
+    A := 1024
 ) USINT;
 END_TYPE
 
@@ -23,7 +29,7 @@ FUNCTION_BLOCK C0032_Enums_Aliases
         _enum_usint:        E_C0032_USINT       := 256;
         _alias:             C0032_OuterAlias    := 256;
         _assign_from_x_1:   USINT               := E_C0032_Default.A;
-        _assign_from_x_2:   REAL;
+        _assign_from_x_2:   BOOL;
     END_VAR
 
     _enum_default       := 32768;

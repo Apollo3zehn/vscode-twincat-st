@@ -2,8 +2,8 @@ import { CharStream, CommonTokenStream, ParserRuleContext } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vscode";
 import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
-import { AssignmentContext, CallStatementContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
-import { getContextRange, getNestedTypeOrSelf, getOriginalText } from "../utils.js";
+import { AssignmentContext, CallStatementContext, EnumMemberContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
+import { getContextRange, getNestedTypeOrSelf } from "../utils.js";
 import { StVisitor } from "./StVisitor.js";
 import { C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0077, C0080, C0143, C0185, C0261 } from "./diagnostics.js";
 import { evaluateBoolLiteral } from "./literals/evaluateBoolLiteral.js";
@@ -57,9 +57,9 @@ export class SemanticModelBuilder {
                 const type = symbol.type!;
                 const isArrayOrPointerOrReference = type.isArray || type.isPointer || type.isReference;
 
-                if (isArrayOrPointerOrReference && type.underlyingType) {
+                if (isArrayOrPointerOrReference && type.referencedOrElementType) {
 
-                    const underlyingType = type.underlyingType;
+                    const underlyingType = type.referencedOrElementType;
 
                     if (underlyingType.isReference)
                         C0261(symbol, sourceFile);
@@ -75,7 +75,7 @@ export class SemanticModelBuilder {
                         // Inheritance
                         if (ctx.parent instanceof ExtendsClauseContext && symbol.parent) {
 
-                            const parentTypeInfo = symbol.parent.typeHierarchyInfo;
+                            const parentTypeInfo = symbol.parent.typeDeclarationDetails;
 
                             if (parentTypeInfo) {
 
@@ -85,7 +85,7 @@ export class SemanticModelBuilder {
                                 parentTypeInfo.baseTypes.push(declaration);
 
                                 // Add back reference
-                                const declaringSymbolTypeInfo = declaration.typeHierarchyInfo!;
+                                const declaringSymbolTypeInfo = declaration.typeDeclarationDetails!;
 
                                 if (!declaringSymbolTypeInfo.subTypes)
                                     declaringSymbolTypeInfo.subTypes = []
@@ -97,7 +97,7 @@ export class SemanticModelBuilder {
                         // Interfaces
                         if (ctx.parent instanceof ImplementsClauseContext && symbol.parent) {
 
-                            const parentTypeInfo = symbol.parent.typeHierarchyInfo;
+                            const parentTypeInfo = symbol.parent.typeDeclarationDetails;
 
                             if (parentTypeInfo) {
 
@@ -107,7 +107,7 @@ export class SemanticModelBuilder {
                                 parentTypeInfo.interfaces.push(declaration);
 
                                 // Add back reference
-                                const declaringSymbolTypeInfo = declaration.typeHierarchyInfo!;
+                                const declaringSymbolTypeInfo = declaration.typeDeclarationDetails!;
 
                                 if (!declaringSymbolTypeInfo.subTypes)
                                     declaringSymbolTypeInfo.subTypes = []
@@ -124,39 +124,61 @@ export class SemanticModelBuilder {
             }
         }
 
-        // ... then evaluate all variable declaration initializers
+        // ... then evaluate all variable declaration initializers and enum member initializers
         for (const sourceFile of this._model.sourceFileMap.values()) {
             
             for (const [ctx, symbol] of sourceFile.symbolMap) {
                 
-                if (symbol.kind != StSymbolKind.VariableDeclaration)
-                    continue;
+                if (symbol.kind === StSymbolKind.VariableDeclaration) {
 
-                const varDeclCtx = ctx as VarDeclContext;
+                    const varDeclCtx = ctx as VarDeclContext;
+                    const lhsCtx = varDeclCtx.type();
+                    const lhsTypeUsage = sourceFile.symbolMap.get(lhsCtx);
+                    const lhsType = lhsTypeUsage?.type;
 
-                const lhsCtx = varDeclCtx.type();
-                const lhsTypeUsage = sourceFile.symbolMap.get(lhsCtx);
-                const lhsType = lhsTypeUsage?.type;
+                    let nestedLhsType = lhsType
+                        ? getNestedTypeOrSelf(lhsType)
+                        : undefined;
+                            
+                    const rhsCtx = varDeclCtx.exprOrArrayInit()?.expr();
 
-                let nestedLhsType = lhsType
-                    ? getNestedTypeOrSelf(lhsType)
-                    : undefined;
-                           
-                const rhsCtx = varDeclCtx.exprOrArrayInit()?.expr();
+                    let rhsType: StType | undefined;
 
-                let rhsType: StType | undefined;
+                    if (rhsCtx)
+                        rhsType = this.evaluateExpression(rhsCtx, nestedLhsType?.builtinType, sourceFile);
 
-                if (rhsCtx)
-                    rhsType = this.evaluateExpression(rhsCtx, nestedLhsType?.builtinType, sourceFile);
+                    if (nestedLhsType && rhsType) {
 
-                if (nestedLhsType && rhsType) {
+                        this.CheckTypes(
+                            nestedLhsType, lhsCtx,
+                            rhsType, rhsCtx!,
+                            false,
+                            sourceFile
+                        );
+                    }
+                }
 
-                    this.CheckTypes(
-                        nestedLhsType, lhsCtx,
-                        rhsType, rhsCtx!,
-                        false,
-                        sourceFile
-                    );
+                else if (symbol.kind === StSymbolKind.EnumMember) {
+                   
+                    const lhsType = symbol?.parent?.typeDeclarationDetails?.underlyingType;
+                    
+                    const enumMemberCtx = ctx as EnumMemberContext;
+                    const rhsCtx = enumMemberCtx.expr();
+
+                    let rhsType: StType | undefined;
+
+                    if (rhsCtx)
+                        rhsType = this.evaluateExpression(rhsCtx, lhsType?.builtinType, sourceFile);
+
+                    if (lhsType && rhsType) {
+
+                        this.CheckTypes(
+                            lhsType, undefined,
+                            rhsType, rhsCtx!,
+                            false,
+                            sourceFile
+                        );
+                    }
                 }
             }
         }
@@ -521,35 +543,8 @@ export class SemanticModelBuilder {
 
         let noMoreOpsAllowed = false;
 
-        # TODO: Find a nice way to provide Enum default values. Not only here, search for getNestedTypeOrSelf
-        # Maybe create a general defaultType field and use that as fallback. It is always zero except for Enums with default type
-        // // Ensure default enum type
-        // if (
-        //     lastMemberDeclaration?.kind === StSymbolKind.EnumMember &&
-        //     !lastMemberDeclaration?.parent?.typeUsage
-        // ) {
-        //     currentType = StModel.defaultIntType;
-        // }
-
-        // else if (lastMemberDeclaration?.kind === StSymbolKind.VariableDeclaration) {
-
-        //     const declarationType = lastMemberDeclaration.typeUsage?.type;
-
-        //     if (declarationType) {
-
-        //         const nestedDeclarationType = getNestedTypeOrSelf(declarationType);
-
-        //         if (
-        //             nestedDeclarationType.declaration?.kind === StSymbolKind.Enum &&
-        //             !nestedDeclarationType.declaration?.parent?.typeUsage
-        //         ) {
-        //             currentType = StModel.defaultIntType;
-        //         }
-        //     }
-        // }
-
         let currentType = memberDeclaration.kind === StSymbolKind.EnumMember
-            ? memberDeclaration.parent?.typeUsage?.type
+            ? memberDeclaration.parent?.typeDeclarationDetails?.underlyingType
             : memberDeclaration.typeUsage?.type;
 
         if (currentType)
@@ -565,17 +560,17 @@ export class SemanticModelBuilder {
             if (postfixOp.dereference()) {
                 
                 if (member.id === "THIS") {
-                    currentType = currentType?.underlyingType;
+                    currentType = currentType?.referencedOrElementType;
                 }
                 
                 else {
 
                     if (!currentType?.isPointer) {
-                        C0064(postfixOp, member, sourceFile);
+                        C0064(postfixOp, sourceFile);
                         return undefined;
                     }
 
-                    currentType = currentType.underlyingType;
+                    currentType = currentType.referencedOrElementType;
                 }
             }
             
@@ -587,12 +582,12 @@ export class SemanticModelBuilder {
                         ? currentType.getId()
                         : memberDeclaration.id;
 
-                    C0047(postfixOp, member, id, sourceFile);
+                    C0047(postfixOp, id, sourceFile);
 
                     return undefined;
                 }
 
-                currentType = currentType.underlyingType;
+                currentType = currentType.referencedOrElementType;
             }
 
             else if (postfixOp.call()) {
@@ -660,7 +655,7 @@ export class SemanticModelBuilder {
     private CannotEvaluateExpression(expression: ParserRuleContext, sourceFile: StSourceFile) {
         
         const diagnostic = new Diagnostic(
-            getContextRange(expression)!,
+            getContextRange(expression),
             `Unable to evaluate expression. Please create a new issue with a minimal sample here: https://github.com/Apollo3zehn/vscode-twincat-st`,
             DiagnosticSeverity.Error
         );
@@ -670,7 +665,7 @@ export class SemanticModelBuilder {
 
     private CheckTypes(
         lhsType: StType,
-        lhsCtx: ParserRuleContext,
+        lhsCtx: ParserRuleContext | undefined,
         rhsType: StType,
         rhsCtx: ParserRuleContext,
         isRefAssignment: boolean,
@@ -682,7 +677,7 @@ export class SemanticModelBuilder {
             if (!lhsType.isReference) {
 
                 const diagnostic = new Diagnostic(
-                    getContextRange(lhsCtx)!,
+                    getContextRange(lhsCtx),
                     "Reference assign is only allowed to variables of reference type",
                     DiagnosticSeverity.Error
                 );
@@ -713,7 +708,7 @@ export class SemanticModelBuilder {
                     ) {
 
                         const warning = new Diagnostic(
-                            getContextRange(rhsCtx)!,
+                            getContextRange(rhsCtx),
                             `String type '${StBuiltinType[rhsType.builtinType]}(${rhsType.stringLength})' too long for string type '${StBuiltinType[lhsType.builtinType]}(${lhsType.stringLength})': The string will be truncated`,
                             DiagnosticSeverity.Warning
                         );
@@ -776,7 +771,7 @@ export class SemanticModelBuilder {
                                     if (rhsNativeType.signed && !lhsNativeType.signed) {
 
                                         const warning = new Diagnostic(
-                                            getContextRange(rhsCtx)!,
+                                            getContextRange(rhsCtx),
                                             `Implicit conversion from signed type '${StBuiltinType[rhsType.builtinType]}' to unsigned type '${StBuiltinType[lhsType.builtinType]}': Possible change of sign`,
                                             DiagnosticSeverity.Warning
                                         );
@@ -787,7 +782,7 @@ export class SemanticModelBuilder {
                                     else if (!rhsNativeType.signed && lhsNativeType.signed) {
 
                                         const warning = new Diagnostic(
-                                            getContextRange(rhsCtx)!,
+                                            getContextRange(rhsCtx),
                                             `Implicit conversion from unsigned type '${StBuiltinType[rhsType.builtinType]}' to signed type '${StBuiltinType[lhsType.builtinType]}': Possible change of sign`,
                                             DiagnosticSeverity.Warning
                                         );
@@ -819,7 +814,7 @@ export class SemanticModelBuilder {
                                 )
                             ) {
                                 const warning = new Diagnostic(
-                                    getContextRange(rhsCtx)!,
+                                    getContextRange(rhsCtx),
                                     `Implicit conversion from '${StBuiltinType[rhsType.builtinType]}' to '${StBuiltinType[lhsType?.builtinType]}': Possible loss of information`,
                                     DiagnosticSeverity.Warning
                                 );
@@ -834,15 +829,7 @@ export class SemanticModelBuilder {
                 }
             }
 
-            const lhsTypeId = lhsType
-                ? lhsType.getId()
-                : getOriginalText(lhsCtx);
-            
-            const rhsTypeId = rhsType
-                ? rhsType.getId()
-                : getOriginalText(rhsCtx);
-
-            C0032(rhsCtx, rhsTypeId, lhsTypeId, sourceFile);
+            C0032(rhsCtx, lhsType.getId(), rhsType.getId(), sourceFile);
         }
     }
 

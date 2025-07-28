@@ -8,7 +8,7 @@ import { getContextRange, getOriginalText, getTokenRange, getTypeOfType } from "
 export function C0001(literal: LiteralContext, typeName: string, sourceFile: StSourceFile) {
     
     const diagnostic = new Diagnostic(
-        getContextRange(literal)!,
+        getContextRange(literal),
         `Constant '${getOriginalText(literal)}' too large for type '${typeName}'`,
         DiagnosticSeverity.Error
     );
@@ -32,14 +32,14 @@ export function C0018(lastMember: StSymbol, sourceFile: StSourceFile) {
 
 // Cannot convert type '{name}' to type '{name}'
 export function C0032(
-    rhsCtx: ParserRuleContext,
+    rhsCtx: ParserRuleContext | undefined,
     rhsTypeId: string | undefined,
     lhsTypeId: string | undefined,
     sourceFile: StSourceFile
 ) {
 
     const diagnostic = new Diagnostic(
-        getContextRange(rhsCtx)!,
+        getContextRange(rhsCtx),
         `Cannot convert type '${rhsTypeId}' to type '${lhsTypeId}'`,
         DiagnosticSeverity.Error
     );
@@ -101,10 +101,10 @@ export function C0046(currentMember: StSymbol, sourceFile: StSourceFile) {
 }
 
 // C0047: Cannot apply indexing with [] to an expression of type '{type}'
-export function C0047(postfixOp: PostfixOpContext, member: StSymbol, typeId: string, sourceFile: StSourceFile) {
+export function C0047(postfixOp: PostfixOpContext, typeId: string, sourceFile: StSourceFile) {
 
     const diagnostic = new Diagnostic(
-        getContextRange(postfixOp.arrayIndex()) ?? member.selectionRange ?? member.range,
+        getContextRange(postfixOp.arrayIndex()),
         `Cannot apply indexing with [] to an expression of type '${typeId}'`,
         DiagnosticSeverity.Error
     );
@@ -114,10 +114,10 @@ export function C0047(postfixOp: PostfixOpContext, member: StSymbol, typeId: str
 }
 
 // C0064: Dereference requires a pointer
-export function C0064(postfixOp: PostfixOpContext, member: StSymbol, sourceFile: StSourceFile) {
+export function C0064(postfixOp: PostfixOpContext, sourceFile: StSourceFile) {
 
     const diagnostic = new Diagnostic(
-        getTokenRange(postfixOp.dereference()?.CARET().symbol) ?? member.selectionRange ?? member.range,
+        getTokenRange(postfixOp.dereference()?.CARET().symbol),
         `Dereference requires a pointer`,
         DiagnosticSeverity.Error
     );

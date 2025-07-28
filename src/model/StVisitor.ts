@@ -1,7 +1,7 @@
 import { ParserRuleContext, TerminalNode, Token } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Uri } from "vscode";
-import { StAccessModifier, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StTypeHierarchyInfo, StVariableScope } from "../core.js";
-import { AccessModifierContext, BuiltinTypeContext, EnumMemberContext, ExprOrArrayInitContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StatementContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { StAccessModifier, StBuiltinType, StModel, StNativeTypeDetails, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StTypeDeclarationDetails, StVariableScope } from "../core.js";
+import { AccessModifierContext, EnumMemberContext, EnumTypeContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StatementContext, TypeContext, TypeDeclContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 import { getContextRange, getOriginalText, getTokenRange } from "../utils.js";
 
@@ -31,8 +31,18 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         this._type = undefined;
 
-        this.createType(ctx);
+        const symbol = this.createType(ctx);
         this.visitChildren(ctx);
+
+        if (symbol?.typeDeclarationDetails) {
+            
+            let type: StType | undefined = this._type;
+
+            if (!this._type && symbol.kind == StSymbolKind.Enum)
+                type = StModel.defaultIntType;
+
+            symbol.typeDeclarationDetails.underlyingType = type;
+        }
     };
 
     public override visitEnumMember = (ctx: EnumMemberContext): void => {
@@ -117,6 +127,13 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this._type = symbol.type;
     }
 
+    public override visitEnumType? = (ctx: EnumTypeContext): void | undefined => {
+        this.visitChildren(ctx);
+
+        const symbol = this.createEnumTypeUsage(ctx);
+        this._type = symbol.type;
+    }
+
     //#endregion
 
     //#region Create
@@ -137,7 +154,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, StSymbolKind.Interface);
 
-        symbol.typeHierarchyInfo = new StTypeHierarchyInfo();
+        symbol.typeDeclarationDetails = new StTypeDeclarationDetails();
         symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
         this._parent = symbol;
@@ -149,7 +166,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, StSymbolKind.FunctionBlock);
 
-        symbol.typeHierarchyInfo = new StTypeHierarchyInfo();
+        symbol.typeDeclarationDetails = new StTypeDeclarationDetails();
         symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
         this.addGlobalObject(symbol);
@@ -157,7 +174,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         this._parent = symbol;
     }
 
-    private createType(ctx: TypeDeclContext) {
+    private createType(ctx: TypeDeclContext): StSymbol | undefined {
 
         const structDeclCtx = ctx.structDecl();
         const enumDeclCtx = ctx.enumDecl();
@@ -175,17 +192,20 @@ export class StVisitor extends StructuredTextVisitor<void> {
             symbolKind = StSymbolKind.Struct;
 
         else
-            return;
+            return undefined;
 
         const idToken = ctx.ID().symbol;
         const symbol = this.create(ctx, idToken, symbolKind);
 
+        symbol.typeDeclarationDetails = new StTypeDeclarationDetails();
         symbol.accessModifier = this.getAccessModifier(ctx.accessModifier() ?? undefined);
 
         this.addGlobalObject(symbol);
 
         this._parent = symbol;
         this._declaration = symbol;
+
+        return symbol;
     }
 
     private createFunction(ctx: FunctionContext) {
@@ -340,35 +360,13 @@ export class StVisitor extends StructuredTextVisitor<void> {
                         case StNativeTypeKind.SignedInteger:
 
                             const subRangeParamToken = builtinType.SUBRANGE_PARAM();
-                            const subRangeParam = subRangeParamToken?.getText();
-                            const subRangeParts = subRangeParam?.split('..');
-                            
-                            if (subRangeParts) {
 
-                                type.subRangeStart = Number.parseInt(subRangeParts[0].slice(1));
-                                type.subRangeStop = Number.parseInt(subRangeParts[1].slice(0, -1));
-                                type.isFullRange = false;
-
-                                const min = nativeTypeDetails!.min!;
-                                const max = nativeTypeDetails!.max!;
-
-                                if (
-                                    type.subRangeStart !== undefined &&
-                                    type.subRangeStop !== undefined &&
-                                    (
-                                        !(min <= type.subRangeStart && type.subRangeStart <= max) ||
-                                        !(min <= type.subRangeStop && type.subRangeStop <= max)
-                                    )
-                                ) {
-                                    this.M0001(symbol, subRangeParamToken!);
-                                }
-                            }
-
-                            else {
-                                type.subRangeStart = nativeTypeDetails!.min;
-                                type.subRangeStop = nativeTypeDetails!.max;
-                                type.isFullRange = true;
-                            }
+                            this.InitializeIntegerType(
+                                subRangeParamToken,
+                                type,
+                                nativeTypeDetails,
+                                symbol
+                            );
 
                             break;
                     }
@@ -378,7 +376,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
         // If this is not a type ID, it must get an underlying type assigned
         else {
-            type.underlyingType = this._type;
+            type.referencedOrElementType = this._type;
         }
 
         if (this._declaration) {
@@ -400,6 +398,75 @@ export class StVisitor extends StructuredTextVisitor<void> {
         return symbol;
     }
 
+    private createEnumTypeUsage(ctx: EnumTypeContext): StSymbol {
+           
+        const symbol = this.create(
+            ctx,
+            undefined,
+            StSymbolKind.TypeUsage
+        );
+
+        const type = new StType();
+        const typeText = ctx._enumTypeId?.text;
+
+        if (typeText && typeText in StBuiltinType) {
+
+            type.builtinType = typeText as StBuiltinType;
+
+            const nativeTypeDetails = type.builtinType
+                ? StModel.nativeTypesDetails.get(type.builtinType)
+                : undefined;
+
+            const subRangeParamToken = ctx.SUBRANGE_PARAM();
+
+            this.InitializeIntegerType(
+                subRangeParamToken,
+                type,
+                nativeTypeDetails,
+                symbol
+            );
+        }
+
+        symbol.type = type;
+
+        return symbol;
+    }
+
+    private InitializeIntegerType(
+        subRangeParamToken: TerminalNode | null,
+        type: StType,
+        nativeTypeDetails: StNativeTypeDetails | undefined,
+        symbol: StSymbol
+    ) {
+        const subRangeParam = subRangeParamToken?.getText();
+        const subRangeParts = subRangeParam?.split('..');
+
+        if (subRangeParts) {
+
+            type.subRangeStart = Number.parseInt(subRangeParts[0].slice(1));
+            type.subRangeStop = Number.parseInt(subRangeParts[1].slice(0, -1));
+            type.isFullRange = false;
+
+            const min = nativeTypeDetails!.min!;
+            const max = nativeTypeDetails!.max!;
+
+            if (type.subRangeStart !== undefined &&
+                type.subRangeStop !== undefined &&
+                (
+                    !(min <= type.subRangeStart && type.subRangeStart <= max) ||
+                    !(min <= type.subRangeStop && type.subRangeStop <= max)
+                )) {
+                this.M0001(symbol, subRangeParamToken!);
+            }
+        }
+
+        else {
+            type.subRangeStart = nativeTypeDetails!.min;
+            type.subRangeStop = nativeTypeDetails!.max;
+            type.isFullRange = true;
+        }
+    }
+
     private create(
         ctx: ParserRuleContext,
         idToken: Token | undefined,
@@ -407,7 +474,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
     ): StSymbol {
         
         // Create symbol
-        const range = getContextRange(ctx)!;
+        const range = getContextRange(ctx);
 
         const selectionRange = idToken
             ? getTokenRange(idToken)

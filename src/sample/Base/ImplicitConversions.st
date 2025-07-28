@@ -1,22 +1,5 @@
 // https://infosys.beckhoff.com/english.php?content=../content/1033/tf5100_tc3_nc_i/4188351883.html&id=
 
-// Combination generator (TS):
-
-// const vars = [
-//     "_bool", "_byte", "_word", "_dword", "_lword",
-//     "_usint", "_uint", "_udint", "_ulint",
-//     "_sint", "_int", "_dint", "_lint",
-//     "_real", "_lreal"
-// ];
-
-// for (const target of vars) {
-//     for (const source of vars) {
-//         if (target !== source) {
-//         console.log(`${target} := ${source};`);
-//         }
-//     }
-// }
-
 TYPE E_ImplicitConversions_Default :
 (
     A

@@ -60,14 +60,14 @@ export class StTypeHierarchyProvider implements TypeHierarchyProvider {
 
         const superTypes: TypeHierarchyItem[] = [];
         
-        if (symbol.typeHierarchyInfo?.baseTypes) {
-            for (const baseTypeSymbol of symbol.typeHierarchyInfo?.baseTypes) {
+        if (symbol.typeDeclarationDetails?.baseTypes) {
+            for (const baseTypeSymbol of symbol.typeDeclarationDetails?.baseTypes) {
                 superTypes.push(this.toTypeHierarchyItem(baseTypeSymbol));
             }
         }
 
-        if (symbol.typeHierarchyInfo?.interfaces) {
-            for (const interfaceSymbol of symbol.typeHierarchyInfo?.interfaces) {
+        if (symbol.typeDeclarationDetails?.interfaces) {
+            for (const interfaceSymbol of symbol.typeDeclarationDetails?.interfaces) {
                 superTypes.push(this.toTypeHierarchyItem(interfaceSymbol));
             }
         }
@@ -87,8 +87,8 @@ export class StTypeHierarchyProvider implements TypeHierarchyProvider {
 
         const subTypes: TypeHierarchyItem[] = [];
         
-        if (symbol.typeHierarchyInfo?.subTypes) {
-            for (const subTypeSymbol of symbol.typeHierarchyInfo?.subTypes) {
+        if (symbol.typeDeclarationDetails?.subTypes) {
+            for (const subTypeSymbol of symbol.typeDeclarationDetails?.subTypes) {
                 subTypes.push(this.toTypeHierarchyItem(subTypeSymbol));
             }
         }

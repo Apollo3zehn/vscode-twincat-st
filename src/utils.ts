@@ -31,8 +31,8 @@ export function getNestedTypeOrSelf(
 
     let current: StType = type;
 
-    while (current?.declaration?.typeUsage?.type) {
-        current = current.declaration.typeUsage.type;
+    while (current?.declaration?.typeDeclarationDetails?.underlyingType) {
+        current = current.declaration.typeDeclarationDetails.underlyingType;
     }
 
     return current;
@@ -61,10 +61,10 @@ export function findContextAtPosition(ctx: ParserRuleContext, position: Position
     return undefined;
 }
 
-export function getTokenRange(token: Token | undefined): Range | undefined {
+export function getTokenRange(token: Token | undefined): Range {
 
     if (!token)
-        return undefined;
+        return new Range(0, 0, 0, 0);
 
     return new Range(
         token.line - 1,
@@ -74,10 +74,10 @@ export function getTokenRange(token: Token | undefined): Range | undefined {
     );
 }
 
-export function getContextRange(ctx: ParserRuleContext | null | undefined): Range | undefined {
+export function getContextRange(ctx: ParserRuleContext | null | undefined): Range {
 
     if (!ctx)
-        return undefined;
+        return new Range(0, 0, 0, 0);
 
     const start = ctx.start!;
     const stop = ctx.stop!;

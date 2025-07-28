@@ -158,13 +158,13 @@ export class StHoverProvider implements HoverProvider {
                 return `VAR_GLOBAL ${accessModifier}${symbol.id}`;
             
             case StSymbolKind.Alias:
-                return `ALIAS ${accessModifier}${symbol.id} : ${symbol.type?.getId()}`;
+                return `ALIAS ${accessModifier}${symbol.id} : ${symbol.typeDeclarationDetails?.underlyingType?.getId()}`;
             
             case StSymbolKind.Struct:
                 return `STRUCT ${accessModifier}${symbol.id}`;
             
             case StSymbolKind.Enum:
-                return `ENUM ${accessModifier}${symbol.id} : ${symbol.type?.getId()}`;
+                return `ENUM ${accessModifier}${symbol.id} : ${symbol.typeDeclarationDetails?.underlyingType?.getId()}`;
             
             case StSymbolKind.EnumMember:
 

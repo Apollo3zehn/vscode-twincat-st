@@ -1,6 +1,7 @@
 import { CommonTokenStream, ParserRuleContext, Token } from "antlr4ng";
 import { Diagnostic, Range, Uri, window } from "vscode";
 import { StatementContext, TypeContext } from "./generated/StructuredTextParser.js";
+import { getOriginalText } from "./utils.js";
 
 export const logger = window.createOutputChannel("TwinCAT Structured Text");
 
@@ -27,7 +28,7 @@ export class StType {
     public builtinType: StBuiltinType | undefined;      // builtin types
     public declaration: StSymbol | undefined;           // custom types
 
-    public underlyingType: StType | undefined;          // arrays, references, pointers, enums, aliases
+    public referencedOrElementType: StType | undefined; // arrays, references, pointers
 
     public stringLength: number | undefined             // strings
 
@@ -76,7 +77,11 @@ export class StType {
         else if (this.declaration) {
             return this.declaration.id
         }
-                
+        
+        else if (this.context) {
+            return getOriginalText(this.context)!;
+        }
+            
         else {
             return "Unknown type";
         }
@@ -95,27 +100,25 @@ export class StSymbol {
         //
     }
 
-    public accessModifier: StAccessModifier | undefined;                // for many things
-    public references: StSymbol[] | undefined;                          // for many things
+    public accessModifier: StAccessModifier | undefined;                    // for many things
+    public references: StSymbol[] | undefined;                              // for many things
 
-    public typeUsage: StSymbol | undefined;                             // for variable declarations & properties
-    public variableKind: StVariableScope | undefined;                      // for variable declarations
-    public parent: StSymbol | undefined;                                // for variable declarations
+    public typeUsage: StSymbol | undefined;                                 // for variable declarations & properties
+    public variableKind: StVariableScope | undefined;                       // for variable declarations
+    public parent: StSymbol | undefined;                                    // for variable declarations
 
-    public typeHierarchyInfo: StTypeHierarchyInfo | undefined;          // for type declarations
+    public typeDeclarationDetails: StTypeDeclarationDetails | undefined;    // for type declarations
 
-    public returnTypeUsage: StSymbol | undefined;                       // for method & function declarations
+    public returnTypeUsage: StSymbol | undefined;                           // for method & function declarations
 
-    public declaration: StSymbol | undefined;                           // for variable usages
+    public declaration: StSymbol | undefined;                               // for variable usages
 
-    public type: StType | undefined;                                    // for type usages
+    public type: StType | undefined;                                        // for type usages
    
-    public variablesAndProperties: Map<string, StSymbol> | undefined;   // for function blocks, functions, methods, global variable lists, enums, structs
-    public methods: Map<string, StSymbol> | undefined;                  // for function blocks, interfaces
+    public variablesAndProperties: Map<string, StSymbol> | undefined;       // for function blocks, functions, methods, global variable lists, enums, structs
+    public methods: Map<string, StSymbol> | undefined;                      // for function blocks, interfaces
 
-    public children: StSymbol[] | undefined;                            // for hover provider
-
-    // Variables = normal variables + GVL members + Enum members + Struct members
+    public children: StSymbol[] | undefined;                                // for document symbol provider
 
     public addChild(symbol: StSymbol): void {
 
@@ -138,12 +141,13 @@ export class StNativeTypeDetails {
     }
 }
 
-export class StTypeHierarchyInfo {
+export class StTypeDeclarationDetails {
 
-    constructor(init?: Partial<StTypeHierarchyInfo>) {
+    constructor(init?: Partial<StTypeDeclarationDetails>) {
         Object.assign(this, init);
     }
 
+    public underlyingType: StType | undefined;
     public baseTypes: StSymbol[] | undefined;
     public interfaces: StSymbol[] | undefined;
     public subTypes: StSymbol[] | undefined;
@@ -193,6 +197,7 @@ export enum StAccessModifier {
 }
 
 export enum StBuiltinType {
+
     // Logical types
     BOOL = "BOOL",
     BIT = "BIT",

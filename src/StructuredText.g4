@@ -34,7 +34,7 @@ typeDecl
     ;
 
 enumDecl
-    : '(' enumMember (',' enumMember)* ')' (type)? (':=' initialValue)? ';'
+    : '(' enumMember (',' enumMember)* ')' (enumType)? (':=' initialValue)? ';'
     ;
 
 enumMember
@@ -122,6 +122,25 @@ builtinType
     | 'TIME' | 'LTIME' | 'DATE' | 'TIME_OF_DAY' | 'TOD' | 'DATE_AND_TIME' | 'DT'| 'LDATE' | 'LTIME_OF_DAY' | 'LTOD' | 'LDATE_AND_TIME' | 'LDT'
     // String types
     | ( ( 'STRING' | 'WSTRING' ) STRING_LEN_PARAM? )
+    ;
+
+enumType
+    : enumTypeId=(
+        // Bitfield types
+        'BYTE' | 'WORD' | 'DWORD' | 'LWORD'
+        // Unsigned integer types
+        | 'USINT' | 'UINT' | 'UDINT' | 'ULINT'
+        // Signed integer types
+        | 'SINT' | 'INT' | 'DINT' | 'LINT'
+    ) SUBRANGE_PARAM?
+    ;
+
+signedEnumType
+    : 
+    ;
+
+bitfieldEnumType
+    : 
     ;
 
 // =======================

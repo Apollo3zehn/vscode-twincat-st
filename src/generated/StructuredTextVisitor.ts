@@ -27,6 +27,9 @@ import { ArrayInitContext } from "./StructuredTextParser.js";
 import { TypeContext } from "./StructuredTextParser.js";
 import { TypeIdContext } from "./StructuredTextParser.js";
 import { BuiltinTypeContext } from "./StructuredTextParser.js";
+import { EnumTypeContext } from "./StructuredTextParser.js";
+import { SignedEnumTypeContext } from "./StructuredTextParser.js";
+import { BitfieldEnumTypeContext } from "./StructuredTextParser.js";
 import { StatementSectionContext } from "./StructuredTextParser.js";
 import { StatementContext } from "./StructuredTextParser.js";
 import { AssignmentContext } from "./StructuredTextParser.js";
@@ -217,6 +220,24 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      * @return the visitor result
      */
     visitBuiltinType?: (ctx: BuiltinTypeContext) => Result;
+    /**
+     * Visit a parse tree produced by `StructuredTextParser.enumType`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitEnumType?: (ctx: EnumTypeContext) => Result;
+    /**
+     * Visit a parse tree produced by `StructuredTextParser.signedEnumType`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitSignedEnumType?: (ctx: SignedEnumTypeContext) => Result;
+    /**
+     * Visit a parse tree produced by `StructuredTextParser.bitfieldEnumType`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitBitfieldEnumType?: (ctx: BitfieldEnumTypeContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.statementSection`.
      * @param ctx the parse tree

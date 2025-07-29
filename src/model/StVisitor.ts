@@ -381,9 +381,12 @@ export class StVisitor extends StructuredTextVisitor<void> {
             }
         }
 
-        // If this is not a type ID, it must get an underlying type assigned
+        // If this is a reference, pointer or array, it must get an underlying type assigned
         else {
             type.referencedOrElementType = this._type;
+
+            if (ctx.POINTER_TO())
+                type.builtinType = convertTypeText("PVOID", this._arch) as StBuiltinType;
         }
 
         if (this._declaration) {

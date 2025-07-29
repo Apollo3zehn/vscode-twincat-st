@@ -294,6 +294,12 @@ export function convertTypeText(typeText: string, arch: Architecture) {
                 ? "LINT"
                 : "DINT";
         
+        case "PVOID":
+            
+            return arch === Architecture.x64
+                ? "LWORD"
+                : "DWORD";
+        
         default:
             return typeText;
     }

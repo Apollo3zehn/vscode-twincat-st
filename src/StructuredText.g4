@@ -118,6 +118,7 @@ builtinType
     | ( UNSIGNED_INT_TYPE SUBRANGE_PARAM? )
     | ( SIGNED_INT_TYPE SUBRANGE_PARAM? )
     | X_TYPE
+    | POINTER_TYPE
     | FLOATING_POINT_TYPE
     | TIME_TYPE
     | DATE_TYPE
@@ -417,22 +418,21 @@ REFERENCE_TO        : 'REFERENCE TO' ;
 POINTER_TO          : 'POINTER TO' ;
 
 // Types
-SUBRANGE_PARAM      : '(' '-'? [0-9]+ '..' '-'? [0-9]+ ')' ;
-STRING_LEN_PARAM    : '(' [0-9]+ ')' ;
-
 LOGICAL_TYPE        : 'BOOL' | 'BIT' ;
 BITFIELD_TYPE       : 'BYTE' | 'WORD' | 'DWORD' | 'LWORD' ;
 UNSIGNED_INT_TYPE   : 'USINT' | 'UINT' | 'UDINT' | 'ULINT' ;
 SIGNED_INT_TYPE     : 'SINT' | 'INT' | 'DINT' | 'LINT' ;
 FLOATING_POINT_TYPE : 'REAL' | 'LREAL' ;
 X_TYPE              : 'XWORD' | '__XWORD' | 'UXINT' | '__UXINT' | 'XINT' | '__XINT' ;
-
+POINTER_TYPE        : 'PVOID' ;
 TIME_TYPE           : 'TIME' | 'LTIME' ;
 DATE_TYPE           : 'DATE' | 'LDATE';
 TIME_OF_DAY_TYPE    : 'TIME_OF_DAY' | 'TOD' | 'LTIME_OF_DAY' | 'LTOD' ;
 DATE_AND_TIME_TYPE  : 'DATE_AND_TIME' | 'DT' | 'LDATE_AND_TIME' | 'LDT' ;
-
 STRING_TYPE         : 'STRING' | 'WSTRING' ;
+
+SUBRANGE_PARAM      : '(' '-'? [0-9]+ '..' '-'? [0-9]+ ')' ;
+STRING_LEN_PARAM    : '(' [0-9]+ ')' ;
 
 // Identifiers and literals
 BOOL_LITERAL        : 'TRUE' | 'FALSE' ;
@@ -462,7 +462,7 @@ INTEGER_LITERAL
                     ;
 
 REAL_LITERAL
-                    : '-'? FLOATING_POINT_TYPE '#' DEC_DIGIT+ ('.' DEC_DIGIT+)? ([eE][+\-]?DEC_DIGIT+)?
+                    : '-'? (FLOATING_POINT_TYPE '#')? DEC_DIGIT+ ('.' DEC_DIGIT+)? ([eE][+\-]?DEC_DIGIT+)?
                     ;
 
 STRING_LITERAL      : '\'' (~['\r\n])* '\'' ;

@@ -671,7 +671,6 @@ export class SemanticModelBuilder {
         isRefAssignment: boolean,
         sourceFile: StSourceFile
     ) {
-
         if (isRefAssignment) {
 
             if (!lhsType.isReference) {
@@ -687,150 +686,153 @@ export class SemanticModelBuilder {
             }
         }
 
-        else {
+        if (lhsType.isReference)
+            lhsType = lhsType.referencedOrElementType!;
 
-            if (lhsType.declaration && lhsType.declaration === rhsType.declaration)
-                return;
+        if (rhsType.isReference)
+            rhsType = rhsType.referencedOrElementType!;
+
+        if (lhsType.declaration && lhsType.declaration === rhsType.declaration)
+            return;
+        
+        if (lhsType.builtinType && rhsType.builtinType) {
+
+            const lhsNativeType = StModel.nativeTypesDetails.get(lhsType.builtinType);
+            const rhsNativeType = StModel.nativeTypesDetails.get(rhsType.builtinType);
             
-            if (lhsType.builtinType && rhsType.builtinType) {
+            if (!lhsNativeType || !rhsNativeType)
+                return;
 
-                const lhsNativeType = StModel.nativeTypesDetails.get(lhsType.builtinType);
-                const rhsNativeType = StModel.nativeTypesDetails.get(rhsType.builtinType);
-                
-                if (!lhsNativeType || !rhsNativeType)
-                    return;
+            if (lhsType.builtinType === rhsType.builtinType) {
 
-                if (lhsType.builtinType === rhsType.builtinType) {
+                if (
+                    rhsNativeType.kind === StNativeTypeKind.String &&
+                    lhsType.stringLength! < rhsType.stringLength!
+                ) {
 
-                    if (
-                        rhsNativeType.kind === StNativeTypeKind.String &&
-                        lhsType.stringLength! < rhsType.stringLength!
-                    ) {
+                    const warning = new Diagnostic(
+                        getContextRange(rhsCtx),
+                        `String type '${StBuiltinType[rhsType.builtinType]}(${rhsType.stringLength})' too long for string type '${StBuiltinType[lhsType.builtinType]}(${lhsType.stringLength})': The string will be truncated`,
+                        DiagnosticSeverity.Warning
+                    );
 
-                        const warning = new Diagnostic(
-                            getContextRange(rhsCtx),
-                            `String type '${StBuiltinType[rhsType.builtinType]}(${rhsType.stringLength})' too long for string type '${StBuiltinType[lhsType.builtinType]}(${lhsType.stringLength})': The string will be truncated`,
-                            DiagnosticSeverity.Warning
-                        );
-
-                        sourceFile.diagnostics.push(warning);
-                    }
-
-                    return;
+                    sourceFile.diagnostics.push(warning);
                 }
 
-                const rhsIsInteger =
-                    rhsNativeType.kind === StNativeTypeKind.Bitfield ||
-                    rhsNativeType.kind === StNativeTypeKind.UnsignedInteger ||
-                    rhsNativeType.kind === StNativeTypeKind.SignedInteger;
-
-                switch (lhsNativeType.kind) {
-
-                    case StNativeTypeKind.Logical:
-
-                        if (rhsNativeType.kind === StNativeTypeKind.Logical)
-                            return;
-
-                        break;
-
-                    case StNativeTypeKind.Bitfield:
-                    case StNativeTypeKind.UnsignedInteger:
-                    case StNativeTypeKind.SignedInteger:
-
-                        if (rhsIsInteger) {
-
-                            if (rhsNativeType.size <= lhsNativeType.size) {
-
-                                let subRangeIsOK = lhsType.isFullRange && rhsType.isFullRange;
-
-                                if (!subRangeIsOK) {
-
-                                    const lhsStart = lhsType.subRangeStart! < lhsType.subRangeStop!
-                                        ? lhsType.subRangeStart!
-                                        : lhsType.subRangeStop!;
-                                    
-                                    const lhsStop = lhsType.subRangeStart! < lhsType.subRangeStop!
-                                        ? lhsType.subRangeStop!
-                                        : lhsType.subRangeStart!;
-                                    
-                                    const rhsStart = rhsType.subRangeStart! < rhsType.subRangeStop!
-                                        ? rhsType.subRangeStart!
-                                        : rhsType.subRangeStop!;
-                                    
-                                    const rhsStop = rhsType.subRangeStart! < rhsType.subRangeStop!
-                                        ? rhsType.subRangeStop!
-                                        : rhsType.subRangeStart!;
-
-                                    subRangeIsOK =
-                                        lhsStart <= rhsStart && rhsStart <= lhsStop &&
-                                        lhsStart <= rhsStop && rhsStop <= lhsStop;
-                                }
-
-                                if (subRangeIsOK) {
-
-                                    if (rhsNativeType.signed && !lhsNativeType.signed) {
-
-                                        const warning = new Diagnostic(
-                                            getContextRange(rhsCtx),
-                                            `Implicit conversion from signed type '${StBuiltinType[rhsType.builtinType]}' to unsigned type '${StBuiltinType[lhsType.builtinType]}': Possible change of sign`,
-                                            DiagnosticSeverity.Warning
-                                        );
-
-                                        sourceFile.diagnostics.push(warning);
-                                    }
-
-                                    else if (!rhsNativeType.signed && lhsNativeType.signed) {
-
-                                        const warning = new Diagnostic(
-                                            getContextRange(rhsCtx),
-                                            `Implicit conversion from unsigned type '${StBuiltinType[rhsType.builtinType]}' to signed type '${StBuiltinType[lhsType.builtinType]}': Possible change of sign`,
-                                            DiagnosticSeverity.Warning
-                                        );
-
-                                        sourceFile.diagnostics.push(warning);
-                                    }
-
-                                    return;
-                                }
-                            }
-                        }
-
-                        break;
-
-                    case StNativeTypeKind.Float:
-
-                        if (
-                            rhsNativeType.kind === StNativeTypeKind.Float ||
-                            rhsIsInteger
-                        ) {
-                            if (
-                                (
-                                    rhsNativeType.kind === StNativeTypeKind.Float &&
-                                    rhsNativeType.size > lhsNativeType.size
-                                ) ||
-                                (
-                                    rhsIsInteger &&
-                                    rhsNativeType.size >= lhsNativeType.size
-                                )
-                            ) {
-                                const warning = new Diagnostic(
-                                    getContextRange(rhsCtx),
-                                    `Implicit conversion from '${StBuiltinType[rhsType.builtinType]}' to '${StBuiltinType[lhsType?.builtinType]}': Possible loss of information`,
-                                    DiagnosticSeverity.Warning
-                                );
-
-                                sourceFile.diagnostics.push(warning);
-                            }
-
-                            return;
-                        }
-
-                        break;
-                }
+                return;
             }
 
-            C0032(rhsCtx, rhsType.getId(), lhsType.getId(), sourceFile);
+            const rhsIsInteger =
+                rhsNativeType.kind === StNativeTypeKind.Bitfield ||
+                rhsNativeType.kind === StNativeTypeKind.UnsignedInteger ||
+                rhsNativeType.kind === StNativeTypeKind.SignedInteger;
+
+            switch (lhsNativeType.kind) {
+
+                case StNativeTypeKind.Logical:
+
+                    if (rhsNativeType.kind === StNativeTypeKind.Logical)
+                        return;
+
+                    break;
+
+                case StNativeTypeKind.Bitfield:
+                case StNativeTypeKind.UnsignedInteger:
+                case StNativeTypeKind.SignedInteger:
+
+                    if (rhsIsInteger) {
+
+                        if (rhsNativeType.size <= lhsNativeType.size) {
+
+                            let subRangeIsOK = lhsType.isFullRange && rhsType.isFullRange;
+
+                            if (!subRangeIsOK) {
+
+                                const lhsStart = lhsType.subRangeStart! < lhsType.subRangeStop!
+                                    ? lhsType.subRangeStart!
+                                    : lhsType.subRangeStop!;
+                                
+                                const lhsStop = lhsType.subRangeStart! < lhsType.subRangeStop!
+                                    ? lhsType.subRangeStop!
+                                    : lhsType.subRangeStart!;
+                                
+                                const rhsStart = rhsType.subRangeStart! < rhsType.subRangeStop!
+                                    ? rhsType.subRangeStart!
+                                    : rhsType.subRangeStop!;
+                                
+                                const rhsStop = rhsType.subRangeStart! < rhsType.subRangeStop!
+                                    ? rhsType.subRangeStop!
+                                    : rhsType.subRangeStart!;
+
+                                subRangeIsOK =
+                                    lhsStart <= rhsStart && rhsStart <= lhsStop &&
+                                    lhsStart <= rhsStop && rhsStop <= lhsStop;
+                            }
+
+                            if (subRangeIsOK) {
+
+                                if (rhsNativeType.signed && !lhsNativeType.signed) {
+
+                                    const warning = new Diagnostic(
+                                        getContextRange(rhsCtx),
+                                        `Implicit conversion from signed type '${StBuiltinType[rhsType.builtinType]}' to unsigned type '${StBuiltinType[lhsType.builtinType]}': Possible change of sign`,
+                                        DiagnosticSeverity.Warning
+                                    );
+
+                                    sourceFile.diagnostics.push(warning);
+                                }
+
+                                else if (!rhsNativeType.signed && lhsNativeType.signed) {
+
+                                    const warning = new Diagnostic(
+                                        getContextRange(rhsCtx),
+                                        `Implicit conversion from unsigned type '${StBuiltinType[rhsType.builtinType]}' to signed type '${StBuiltinType[lhsType.builtinType]}': Possible change of sign`,
+                                        DiagnosticSeverity.Warning
+                                    );
+
+                                    sourceFile.diagnostics.push(warning);
+                                }
+
+                                return;
+                            }
+                        }
+                    }
+
+                    break;
+
+                case StNativeTypeKind.Float:
+
+                    if (
+                        rhsNativeType.kind === StNativeTypeKind.Float ||
+                        rhsIsInteger
+                    ) {
+                        if (
+                            (
+                                rhsNativeType.kind === StNativeTypeKind.Float &&
+                                rhsNativeType.size > lhsNativeType.size
+                            ) ||
+                            (
+                                rhsIsInteger &&
+                                rhsNativeType.size >= lhsNativeType.size
+                            )
+                        ) {
+                            const warning = new Diagnostic(
+                                getContextRange(rhsCtx),
+                                `Implicit conversion from '${StBuiltinType[rhsType.builtinType]}' to '${StBuiltinType[lhsType?.builtinType]}': Possible loss of information`,
+                                DiagnosticSeverity.Warning
+                            );
+
+                            sourceFile.diagnostics.push(warning);
+                        }
+
+                        return;
+                    }
+
+                    break;
+            }
         }
+
+        C0032(rhsCtx, rhsType.getId(), lhsType.getId(), sourceFile);
     }
 
     //#endregion

@@ -435,8 +435,6 @@ DATE_AND_TIME_TYPE  : 'DATE_AND_TIME' | 'DT' | 'LDATE_AND_TIME' | 'LDT' ;
 STRING_TYPE         : 'STRING' | 'WSTRING' ;
 
 // Identifiers and literals
-ID                  : ID_START ID_PART* ;
-
 BOOL_LITERAL        : 'TRUE' | 'FALSE' ;
 
 INTEGER_LITERAL
@@ -499,6 +497,8 @@ LTIME_LITERAL
 DATE_LITERAL        : DEC_DIGIT+ '-' DEC_DIGIT+ '-' DEC_DIGIT+ ;
 TIME_OF_DAY_LITERAL : DEC_DIGIT+ ':' DEC_DIGIT+ (':' DEC_DIGIT+ ('.' DEC_DIGIT+)? )? ;
 DATETIME_LITERAL    : DATE_LITERAL '-' TIME_OF_DAY_LITERAL ;
+
+ID                  : ID_START ID_PART* ;
 
 // Symbols
 WS                  : [ \t\r\n]+ -> skip ;

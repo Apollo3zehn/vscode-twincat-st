@@ -12,8 +12,8 @@ export function evaluateIntegerNumber(
         ? StModel.nativeTypesDetails.get(typeHint)?.kind
         : undefined;
 
-    const integerNumber = literal.INTEGER_NUMBER()!;
-    let text = integerNumber.getText();
+    const integerLiteral = literal.INTEGER_LITERAL()!;
+    let text = integerLiteral.getText();
 
     const isNegative = text.startsWith("-");
 

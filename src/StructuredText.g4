@@ -102,7 +102,7 @@ arrayInit
 // =======================
 type
     : typeId
-    | ARRAY '[' INTEGER_NUMBER '..' INTEGER_NUMBER ']' OF type
+    | ARRAY '[' INTEGER_LITERAL '..' INTEGER_LITERAL ']' OF type
     | POINTER_TO type
     | REFERENCE_TO type
     ;
@@ -113,31 +113,21 @@ typeId
     ;
 
 builtinType
-    // Logical types
-    : 'BOOL' | 'BIT'
-    // Bitstring types
-    | ( ( 'BYTE' | 'WORD' | 'DWORD' | 'LWORD' | 'XWORD' | '__XWORD' ) SUBRANGE_PARAM? )
-    // Unsigned integer types
-    | ( ( 'USINT' | 'UINT' | 'UDINT' | 'ULINT' | 'UXINT' | '__UXINT' ) SUBRANGE_PARAM? )
-    // Signed integer types
-    | ( ( 'SINT' | 'INT' | 'DINT' | 'LINT' | 'XINT' | '__XINT' ) SUBRANGE_PARAM? )
-    // Floating point types
-    | 'REAL' | 'LREAL'
-    // Time and date types
-    | 'TIME' | 'LTIME' | 'DATE' | 'TIME_OF_DAY' | 'TOD' | 'DATE_AND_TIME' | 'DT'| 'LDATE' | 'LTIME_OF_DAY' | 'LTOD' | 'LDATE_AND_TIME' | 'LDT'
-    // String types
-    | ( ( 'STRING' | 'WSTRING' ) STRING_LEN_PARAM? )
+    : LOGICAL_TYPE
+    | ( BITFIELD_TYPE SUBRANGE_PARAM? )
+    | ( UNSIGNED_INT_TYPE SUBRANGE_PARAM? )
+    | ( SIGNED_INT_TYPE SUBRANGE_PARAM? )
+    | X_TYPE
+    | FLOATING_POINT_TYPE
+    | TIME_TYPE
+    | DATE_TYPE
+    | TIME_OF_DAY_TYPE
+    | DATE_AND_TIME_TYPE
+    | ( STRING_TYPE STRING_LEN_PARAM? )
     ;
 
 enumType
-    : enumTypeId=(
-        // Bitfield types
-        'BYTE' | 'WORD' | 'DWORD' | 'LWORD' | 'XWORD' | '__XWORD'
-        // Unsigned integer types
-        | 'USINT' | 'UINT' | 'UDINT' | 'ULINT' | 'UXINT' | '__UXINT'
-        // Signed integer types
-        | 'SINT' | 'INT' | 'DINT' | 'LINT' | 'XINT' | '__XINT'
-    ) SUBRANGE_PARAM?
+    : enumTypeId=(BITFIELD_TYPE | UNSIGNED_INT_TYPE | SIGNED_INT_TYPE | X_TYPE) SUBRANGE_PARAM?
     ;
 
 signedEnumType
@@ -210,7 +200,7 @@ caseElement
     ;
 
 caseValue
-    : INTEGER_NUMBER | BOOL | STRING_LITERAL | ID
+    : BOOL_LITERAL | INTEGER_LITERAL | STRING_LITERAL | ID
     ;
 
 whileStatement
@@ -270,9 +260,9 @@ call
     ;
 
 literal
-    : INTEGER_NUMBER
-    | REAL_NUMBER
-    | BOOL
+    : INTEGER_LITERAL
+    | REAL_LITERAL
+    | BOOL_LITERAL
     | TIME_LITERAL
     | LTIME_LITERAL
     | dateLiteral
@@ -283,15 +273,15 @@ literal
     ;
 
 dateLiteral
-    : prefix=('DATE' | 'D' | 'LDATE' | 'LD') '#' date=DATE
+    : prefix=(DATE_TYPE | 'D' | 'LD') '#' date=DATE_LITERAL
     ;
 
 dateAndTimeLiteral
-    : prefix=('DATE_AND_TIME' | 'DT' | 'LDATE_AND_TIME' | 'LDT') '#' dateAndTime=DATETIME
+    : prefix=DATE_AND_TIME_TYPE '#' dateAndTime=DATETIME_LITERAL
     ;
 
 timeOfDayLiteral
-    : prefix=('TIME_OF_DAY' | 'TOD' | 'LTIME_OF_DAY' | 'LTOD') '#' timeOfDay=TIME_OF_DAY
+    : prefix=TIME_OF_DAY_TYPE '#' timeOfDay=TIME_OF_DAY_LITERAL
     ;
 
 expr
@@ -334,7 +324,7 @@ attributeArgList
     ;
 
 attributeArg
-    : ID | INTEGER_NUMBER | REAL_NUMBER | STRING_LITERAL
+    : ID | INTEGER_LITERAL | REAL_LITERAL | STRING_LITERAL
     ;
 
 // =======================
@@ -430,15 +420,31 @@ POINTER_TO          : 'POINTER TO' ;
 SUBRANGE_PARAM      : '(' '-'? [0-9]+ '..' '-'? [0-9]+ ')' ;
 STRING_LEN_PARAM    : '(' [0-9]+ ')' ;
 
-// Literals and identifiers
-BOOL                : 'TRUE' | 'FALSE' ;
+LOGICAL_TYPE        : 'BOOL' | 'BIT' ;
+BITFIELD_TYPE       : 'BYTE' | 'WORD' | 'DWORD' | 'LWORD' ;
+UNSIGNED_INT_TYPE   : 'USINT' | 'UINT' | 'UDINT' | 'ULINT' ;
+SIGNED_INT_TYPE     : 'SINT' | 'INT' | 'DINT' | 'LINT' ;
+FLOATING_POINT_TYPE : 'REAL' | 'LREAL' ;
+X_TYPE              : 'XWORD' | '__XWORD' | 'UXINT' | '__UXINT' | 'XINT' | '__XINT' ;
 
-INTEGER_NUMBER
+TIME_TYPE           : 'TIME' | 'LTIME' ;
+DATE_TYPE           : 'DATE' | 'LDATE';
+TIME_OF_DAY_TYPE    : 'TIME_OF_DAY' | 'TOD' | 'LTIME_OF_DAY' | 'LTOD' ;
+DATE_AND_TIME_TYPE  : 'DATE_AND_TIME' | 'DT' | 'LDATE_AND_TIME' | 'LDT' ;
+
+STRING_TYPE         : 'STRING' | 'WSTRING' ;
+
+// Identifiers and literals
+ID                  : ID_START ID_PART* ;
+
+BOOL_LITERAL        : 'TRUE' | 'FALSE' ;
+
+INTEGER_LITERAL
                     : '-'? (
                         ( 
-                            'BYTE' | 'WORD' | 'DWORD' | 'LWORD'
-                            | 'USINT' | 'UINT' | 'UDINT' | 'ULINT'
-                            | 'SINT' | 'INT' | 'DINT' | 'LINT'
+                            BITFIELD_TYPE
+                            | UNSIGNED_INT_TYPE
+                            | SIGNED_INT_TYPE
                         ) '#' (
                             DEC_DIGIT+
                             | '2#' BIN_DIGIT+
@@ -457,25 +463,13 @@ INTEGER_NUMBER
                     )
                     ;
 
-REAL_NUMBER
-                    : '-'? (
-                        ( 
-                            'REAL' | 'LREAL'
-                        ) '#' (
-                            DEC_DIGIT+ ('.' DEC_DIGIT+)? ([eE][+\-]?DEC_DIGIT+)?
-                        )
-                        | (
-                            DEC_DIGIT+ ('.' DEC_DIGIT+)? ([eE][+\-]?DEC_DIGIT+)?
-                        )
-                        | DEC_DIGIT+ ('.' DEC_DIGIT+)? ([eE][+\-]?DEC_DIGIT+)?
-                    )
+REAL_LITERAL
+                    : '-'? FLOATING_POINT_TYPE '#' DEC_DIGIT+ ('.' DEC_DIGIT+)? ([eE][+\-]?DEC_DIGIT+)?
                     ;
 
 STRING_LITERAL      : '\'' (~['\r\n])* '\'' ;
 WSTRING_LITERAL     : '"' (~["\r\n])* '"' ;
-ID                  : ID_START ID_PART* ;
 
-// Date and time
 TIME_LITERAL
                     : 
                     ('TIME' | 'T') '#'
@@ -502,9 +496,9 @@ LTIME_LITERAL
                     )
                     ;
 
-DATE                : DEC_DIGIT+ '-' DEC_DIGIT+ '-' DEC_DIGIT+ ;
-TIME_OF_DAY         : DEC_DIGIT+ ':' DEC_DIGIT+ (':' DEC_DIGIT+ ('.' DEC_DIGIT+)? )? ;
-DATETIME            : DATE '-' TIME_OF_DAY ;
+DATE_LITERAL        : DEC_DIGIT+ '-' DEC_DIGIT+ '-' DEC_DIGIT+ ;
+TIME_OF_DAY_LITERAL : DEC_DIGIT+ ':' DEC_DIGIT+ (':' DEC_DIGIT+ ('.' DEC_DIGIT+)? )? ;
+DATETIME_LITERAL    : DATE_LITERAL '-' TIME_OF_DAY_LITERAL ;
 
 // Symbols
 WS                  : [ \t\r\n]+ -> skip ;

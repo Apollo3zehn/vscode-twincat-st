@@ -405,13 +405,13 @@ export class SemanticModelBuilder {
         sourceFile: StSourceFile
     ): StType | undefined {
 
-        if (literal.BOOL())
+        if (literal.BOOL_LITERAL())
             return evaluateBoolLiteral();
 
-        else if (literal.INTEGER_NUMBER())
+        else if (literal.INTEGER_LITERAL())
             return evaluateIntegerNumber(literal, sourceFile, typeHint);
 
-        else if (literal.REAL_NUMBER())
+        else if (literal.REAL_LITERAL())
             return evaluateRealNumber(literal, sourceFile, typeHint);
             
         else if (literal.TIME_LITERAL())

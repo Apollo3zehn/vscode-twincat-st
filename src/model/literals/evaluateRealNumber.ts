@@ -8,8 +8,8 @@ export function evaluateRealNumber(
     typeHint: StBuiltinType | undefined,
 ): StType | undefined {
     
-    const realNumber = literal.REAL_NUMBER()!;
-    let text = realNumber.getText();
+    const realLiteral = literal.REAL_LITERAL()!;
+    let text = realLiteral.getText();
 
     const isNegative = text.startsWith("-");
 

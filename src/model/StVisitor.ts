@@ -25,7 +25,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
     //#region Visit
 
     public override visitProgram = (ctx: ProgramContext): void => {
-        this.createProgram(ctx)
+        this.createProgram(ctx);
         this.visitChildren(ctx);
     };
 
@@ -40,7 +40,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
             
             let type: StType | undefined = this._type;
 
-            if (!this._type && symbol.kind == StSymbolKind.Enum)
+            if (!this._type && symbol.kind === StSymbolKind.Enum)
                 type = StModel.defaultIntType;
 
             symbol.typeDeclarationDetails.underlyingType = type;
@@ -53,8 +53,8 @@ export class StVisitor extends StructuredTextVisitor<void> {
     };
 
     public override visitInitialValue = (ctx: InitialValueContext): void => {
-        const idToken = ctx.ID().symbol
-        this.createVariableUsage(ctx, idToken)
+        const idToken = ctx.ID().symbol;
+        this.createVariableUsage(ctx, idToken);
     };
 
     public override visitInterface = (ctx: InterfaceContext): void => {
@@ -63,7 +63,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
     };
 
     public override visitFunctionBlock = (ctx: FunctionBlockContext): void => {
-        this.createFunctionBlock(ctx)
+        this.createFunctionBlock(ctx);
         this.visitChildren(ctx);
     };
 
@@ -90,12 +90,12 @@ export class StVisitor extends StructuredTextVisitor<void> {
     };
 
     public override visitProperty = (ctx: PropertyContext): void => {
-        this.createProperty(ctx)
+        this.createProperty(ctx);
         this.visitChildren(ctx);
     };
 
     public override visitVarDeclSection = (ctx: VarDeclSectionContext): void => {
-        this.processVarDeclSection(ctx)
+        this.processVarDeclSection(ctx);
         this.visitChildren(ctx);
     };
 
@@ -111,30 +111,30 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
     public override visitMemberAccess = (ctx: MemberAccessContext): void => {
         
-        const idToken = ctx.ID()?.symbol
+        const idToken = ctx.ID()?.symbol;
 
         if (idToken)
             this.createVariableUsage(ctx, idToken);
-    }
+    };
 
     public override visitStatement = (ctx: StatementContext): void => {
         this._sourceFile.statements.push(ctx);
         this.visitChildren(ctx);
-    }
+    };
 
     public override visitType? = (ctx: TypeContext): void | undefined => {
         this.visitChildren(ctx);
 
         const symbol = this.createTypeUsage(ctx);
         this._type = symbol.type;
-    }
+    };
 
     public override visitEnumType? = (ctx: EnumTypeContext): void | undefined => {
         this.visitChildren(ctx);
 
         const symbol = this.createEnumTypeUsage(ctx);
         this._type = symbol.type;
-    }
+    };
 
     //#endregion
 
@@ -395,7 +395,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
                 this._declaration.kind === StSymbolKind.Method ||
                 this._declaration.kind === StSymbolKind.Function
             ) {
-                this._declaration.returnTypeUsage = symbol
+                this._declaration.returnTypeUsage = symbol;
             }
 
             else {

@@ -41,11 +41,11 @@ export class StType {
 
     public referencedOrElementType: StType | undefined; // arrays, references, pointers
 
-    public stringLength: number | undefined             // strings
+    public stringLength: number | undefined;            // strings
 
-    public subRangeStart: number | undefined            // unsigned and signed integers
-    public subRangeStop: number | undefined             // unsigned and signed integers
-    public isFullRange: boolean | undefined             // unsigned and signed integers
+    public subRangeStart: number | undefined;           // unsigned and signed integers
+    public subRangeStop: number | undefined;            // unsigned and signed integers
+    public isFullRange: boolean | undefined;            // unsigned and signed integers
 
     public context: TypeContext | undefined;
 
@@ -86,7 +86,7 @@ export class StType {
         }
             
         else if (this.declaration) {
-            return this.declaration.id
+            return this.declaration.id;
         }
         
         else if (this.context) {

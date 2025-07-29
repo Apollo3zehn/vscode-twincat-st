@@ -51,7 +51,7 @@ export class SemanticModelBuilder {
             
             for (const [ctx, symbol] of sourceFile.symbolMap) {
                 
-                if (symbol.kind != StSymbolKind.TypeUsage)
+                if (symbol.kind !== StSymbolKind.TypeUsage)
                     continue;
 
                 const type = symbol.type!;
@@ -80,7 +80,7 @@ export class SemanticModelBuilder {
                             if (parentTypeInfo) {
 
                                 if (!parentTypeInfo.baseTypes)
-                                    parentTypeInfo.baseTypes = []
+                                    parentTypeInfo.baseTypes = [];
 
                                 parentTypeInfo.baseTypes.push(declaration);
 
@@ -88,7 +88,7 @@ export class SemanticModelBuilder {
                                 const declaringSymbolTypeInfo = declaration.typeDeclarationDetails!;
 
                                 if (!declaringSymbolTypeInfo.subTypes)
-                                    declaringSymbolTypeInfo.subTypes = []
+                                    declaringSymbolTypeInfo.subTypes = [];
 
                                 declaringSymbolTypeInfo.subTypes.push(symbol.parent);
                             }
@@ -102,7 +102,7 @@ export class SemanticModelBuilder {
                             if (parentTypeInfo) {
 
                                 if (!parentTypeInfo.interfaces)
-                                    parentTypeInfo.interfaces = []
+                                    parentTypeInfo.interfaces = [];
 
                                 parentTypeInfo.interfaces.push(declaration);
 
@@ -110,7 +110,7 @@ export class SemanticModelBuilder {
                                 const declaringSymbolTypeInfo = declaration.typeDeclarationDetails!;
 
                                 if (!declaringSymbolTypeInfo.subTypes)
-                                    declaringSymbolTypeInfo.subTypes = []
+                                    declaringSymbolTypeInfo.subTypes = [];
 
                                 declaringSymbolTypeInfo.subTypes.push(symbol.parent);
                             }

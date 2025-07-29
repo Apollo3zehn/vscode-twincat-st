@@ -32,7 +32,7 @@ export class StReferencesCodeLensProvider implements CodeLensProvider {
                 symbol.kind === StSymbolKind.Enum ||
                 symbol.kind === StSymbolKind.EnumMember
             ) {
-                if (symbol.accessModifier == StAccessModifier.Private)
+                if (symbol.accessModifier === StAccessModifier.Private)
                     continue;
 
                 // Reference count

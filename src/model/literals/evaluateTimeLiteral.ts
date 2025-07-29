@@ -24,7 +24,7 @@ export function evaluateTimeLiteral(
 
     // Find index of first overflowing component
     const index = match.slice(1).findIndex(x => x);
-    const hasOverflow = findOverflowComponent(index)
+    const hasOverflow = findOverflowComponent(index);
 
     // Validate
     if (

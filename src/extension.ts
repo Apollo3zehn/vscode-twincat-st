@@ -44,10 +44,10 @@ export async function activate(context: ExtensionContext) {
         if (editor && editor.document.languageId === 'st') {
             decorationProvider.provideDecorations(editor.document, editor);
         }
-    })
+    });
 
     if (window.activeTextEditor)
-        decorationProvider.provideDecorations(window.activeTextEditor.document, window.activeTextEditor)
+        decorationProvider.provideDecorations(window.activeTextEditor.document, window.activeTextEditor);
 
     context.subscriptions.push(languages.registerHoverProvider(
         documentSelector, new StHoverProvider(model)

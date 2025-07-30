@@ -110,8 +110,14 @@ export async function activate(context: ExtensionContext) {
 
     // TODO: Move to separate file
     const legend = new SemanticTokensLegend(
-        ["class", "enumMember", "function"],    // tokenTypes
-        []                                      // tokenModifiers
+
+        // https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#standard-token-types-and-modifiers
+
+        // tokenTypes
+        ["class", "enumMember", "function", "variable"],
+        
+        // tokenModifiers
+        ["readonly"]
     );
 
     context.subscriptions.push(

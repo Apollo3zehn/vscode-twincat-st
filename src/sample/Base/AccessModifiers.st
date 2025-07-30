@@ -42,6 +42,12 @@ STRUCT
 END_STRUCT
 END_TYPE
 
+TYPE INTERNAL U_AccessModifier :
+UNION
+    //
+END_UNION
+END_TYPE
+
 VAR_GLOBAL INTERNAL GVL_AccessModifier
-    dummy: BOOL;
+    //
 END_VAR

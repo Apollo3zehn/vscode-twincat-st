@@ -112,6 +112,7 @@ export class StSymbol {
     }
 
     public accessModifier: StAccessModifier | undefined;                    // for many things
+    public modifier: StModifier | undefined;                                // for many things
     public references: StSymbol[] | undefined;                              // for many things
 
     public typeUsage: StSymbol | undefined;                                 // for variable declarations & properties
@@ -206,6 +207,12 @@ export enum StAccessModifier {
     Internal,
     Protected,
     Private
+}
+
+export enum StModifier {
+    Abstract,
+    Final,
+    Constant
 }
 
 export enum StBuiltinType {

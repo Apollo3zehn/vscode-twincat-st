@@ -6,9 +6,11 @@ import {
     SemanticTokensBuilder,
     TextDocument
 } from "vscode";
-import { StModel, StSymbolKind } from "../core/types.js";
+import { StModel, StModifier, StSymbolKind } from "../core/types.js";
 
 export class StSemanticTokenProvider implements DocumentSemanticTokensProvider {
+
+    readonly abC: number = 1;
 
     private _model: StModel;
 
@@ -34,14 +36,15 @@ export class StSemanticTokenProvider implements DocumentSemanticTokensProvider {
 
             if (symbol.kind === StSymbolKind.VariableUsage) {
 
-                // Colorize tyües as class (token type 0)
+                // Colorize types as class (token type 0)
                 if (
                     (
                         symbol.id !== "THIS" &&
                         symbol.declaration?.kind === StSymbolKind.FunctionBlock ||
                         symbol.declaration?.kind === StSymbolKind.Gvl ||
                         symbol.declaration?.kind === StSymbolKind.Enum ||
-                        symbol.declaration?.kind === StSymbolKind.Struct
+                        symbol.declaration?.kind === StSymbolKind.Struct ||
+                        symbol.declaration?.kind === StSymbolKind.Union
                     )
                 ) {
                     builder.push(
@@ -49,7 +52,7 @@ export class StSemanticTokenProvider implements DocumentSemanticTokensProvider {
                         symbol.range.start.character,
                         symbol.id.length,
                         0, // class token type
-                        0
+                        undefined
                     );
                 }
 
@@ -61,7 +64,7 @@ export class StSemanticTokenProvider implements DocumentSemanticTokensProvider {
                         symbol.range.start.character,
                         symbol.id.length,
                         1, // enumMember token type
-                        0
+                        undefined
                     );
                 }
 
@@ -76,7 +79,35 @@ export class StSemanticTokenProvider implements DocumentSemanticTokensProvider {
                         symbol.range.start.character,
                         symbol.id.length,
                         2, // function token type
-                        0
+                        undefined
+                    );
+                }
+
+                // Colorize constants
+                if (
+                    symbol.declaration?.kind === StSymbolKind.VariableDeclaration &&
+                    symbol.declaration.modifier === StModifier.Constant
+                ) {
+                    builder.push(
+                        symbol.range.start.line,
+                        symbol.range.start.character,
+                        symbol.id.length,
+                        3,      // variable token type
+                        1 << 0  // readonly token modifier
+                    );
+                }
+            }
+
+            else if (symbol.kind === StSymbolKind.VariableDeclaration) {
+
+                // Colorize constants
+                if (symbol.modifier === StModifier.Constant) {
+                    builder.push(
+                        symbol.range.start.line,
+                        symbol.range.start.character,
+                        symbol.id.length,
+                        3,      // variable token type
+                        1 << 0  // readonly token modifier
                     );
                 }
             }

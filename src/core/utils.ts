@@ -2,7 +2,8 @@ import { Interval, ParserRuleContext, Token } from "antlr4ng";
 import * as fs from "fs";
 import path from "path";
 import { Position, Range, workspace } from "vscode";
-import { Architecture, StSymbol, StSymbolKind, StType, TcConfig } from "./types.js";
+import { Architecture, StModifier, StSymbol, StSymbolKind, StType, TcConfig } from "./types.js";
+import { ModifierContext } from "../generated/StructuredTextParser.js";
 
 export const TIME_COMPONENTS = [
     { value: 0, max: undefined },   // days
@@ -303,4 +304,23 @@ export function convertTypeText(typeText: string, arch: Architecture) {
         default:
             return typeText;
     }
+}
+
+export function getModifier(modifierCtx: ModifierContext | null): StModifier | undefined {
+
+    if (!modifierCtx)
+        return undefined;
+
+    const raw = modifierCtx.getText();
+    
+    if (!raw)
+        return undefined;
+
+    const normalized =
+        raw.charAt(0).toUpperCase() +
+        raw.slice(1).toLowerCase();
+
+    return (normalized in StModifier)
+        ? StModifier[normalized as keyof typeof StModifier]
+        : undefined;
 }

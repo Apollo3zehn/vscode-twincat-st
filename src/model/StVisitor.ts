@@ -1,9 +1,9 @@
 import { ParserRuleContext, TerminalNode, Token } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Uri } from "vscode";
-import { Architecture, StAccessModifier, StBuiltinType, StModel, StNativeTypeDetails, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StTypeDeclarationDetails, StVariableScope } from "../core/types.js";
-import { AccessModifierContext, DutDeclContext, EnumMemberContext, EnumTypeContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ProgramContext, PropertyContext, StatementContext, TypeContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { Architecture, StAccessModifier, StBuiltinType, StModel, StModifier, StNativeTypeDetails, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StTypeDeclarationDetails, StVariableScope } from "../core/types.js";
+import { AccessModifierContext, DutDeclContext, EnumMemberContext, EnumTypeContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ModifierContext, ProgramContext, PropertyContext, StatementContext, TypeContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
-import { convertTypeText, getContextRange, getOriginalText, getTokenRange } from "../core/utils.js";
+import { convertTypeText, getContextRange, getModifier, getOriginalText, getTokenRange } from "../core/utils.js";
 
 export class StVisitor extends StructuredTextVisitor<void> {
 
@@ -302,6 +302,16 @@ export class StVisitor extends StructuredTextVisitor<void> {
         );
         
         symbol.variableKind = this._variableKind;
+
+        let modifier: ModifierContext | null = null;
+        
+        if (ctx.parent instanceof VarDeclSectionContext)
+            modifier = ctx.parent.modifier();
+
+        else if (ctx.parent instanceof VarGlobalSectionContext)
+            modifier = ctx.parent.modifier();
+
+        symbol.modifier = getModifier(modifier);
 
         if (this._parent)
             this.addLocalObject(this._parent, symbol, "variablesAndProperties");

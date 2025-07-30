@@ -1,5 +1,5 @@
 import { Hover, HoverProvider, MarkdownString, Position, ProviderResult, TextDocument } from "vscode";
-import { StAccessModifier, StModel, StSymbol, StSymbolKind } from "../core/types.js";
+import { StAccessModifier, StModel, StModifier, StSymbol, StSymbolKind } from "../core/types.js";
 import { EnumMemberContext, StructDeclContext, UnionDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { isInRange } from "../core/utils.js";
 
@@ -79,6 +79,10 @@ export class StHoverProvider implements HoverProvider {
         const accessModifier = symbol.accessModifier
             ? `${StAccessModifier[symbol.accessModifier].toUpperCase()} `
             : "";
+        
+        const modifier = symbol.modifier
+            ? `${StModifier[symbol.modifier].toUpperCase()} `
+            : "";
 
         switch (symbol.kind) {
 
@@ -111,7 +115,7 @@ export class StHoverProvider implements HoverProvider {
                         qualifier = `${symbol.parent?.id ?? "??"}.`;
                 }
 
-                return `${prefix}${accessModifier}${qualifier}${symbol.id}: ${symbol.typeUsage?.id ?? "?"}`;
+                return `${prefix}${accessModifier}${modifier}${qualifier}${symbol.id}: ${symbol.typeUsage?.id ?? "?"}`;
             
             case StSymbolKind.VariableUsage:
 
@@ -135,7 +139,7 @@ export class StHoverProvider implements HoverProvider {
                     ? ` : ${symbol.typeUsage?.id}`
                     : "";
                 
-                return `METHOD ${accessModifier}${symbol.id}${suffix1}`;
+                return `METHOD ${accessModifier}${modifier}${symbol.id}${suffix1}`;
             
             case StSymbolKind.Function:
 
@@ -146,10 +150,10 @@ export class StHoverProvider implements HoverProvider {
                 return `FUNCTION ${accessModifier}${symbol.id}${suffix2}`;
             
             case StSymbolKind.Property:
-                return `PROPERTY ${accessModifier}${symbol.id} : ${symbol.typeUsage?.id ?? "?"}`;
+                return `PROPERTY ${accessModifier}${modifier}${symbol.id} : ${symbol.typeUsage?.id ?? "?"}`;
             
             case StSymbolKind.FunctionBlock:
-                return `FUNCTION_BLOCK ${accessModifier}${symbol.id}`;
+                return `FUNCTION_BLOCK ${accessModifier}${modifier}${symbol.id}`;
             
             case StSymbolKind.Interface:
                 return `INTERFACE ${accessModifier}${symbol.id}`;
@@ -158,7 +162,7 @@ export class StHoverProvider implements HoverProvider {
                 return `PROGRAM ${accessModifier}${symbol.id}`;
             
             case StSymbolKind.Gvl:
-                return `VAR_GLOBAL ${accessModifier}${symbol.id}`;
+                return `VAR_GLOBAL ${accessModifier}${modifier}${symbol.id}`;
             
             case StSymbolKind.Alias:
                 return `ALIAS ${accessModifier}${symbol.id} : ${symbol.typeDeclarationDetails?.underlyingType?.getId()}`;

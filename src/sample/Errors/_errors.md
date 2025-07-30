@@ -1,4 +1,5 @@
 - Use BigInt here: _int2:                  INT             := 18446744073709551616;
+- Is utf-8 allowed for var names?
 
 - C0018: When trying to assign to a const variable
 
@@ -21,9 +22,6 @@ END_VAR
 - M_A_1().A; => C0061 Bit access on function call is not allowed (M_A_1() => INT)
 - C0050: Bit access requires literal or symbolic integer constant
 
-- c: WORD;
-  c := E_AnalyticsOpMode.Analyze; => Warning: Implicit conversion from signed type 'E_AnalyticsOpMode' to unsigned type 'WORD' ...
-	
 - _a := M_C(); where M_C() is a method which has no return value: C0032: Cannot convert type 'Unknown type: 'M_C()'' to type 'INT'
 
 

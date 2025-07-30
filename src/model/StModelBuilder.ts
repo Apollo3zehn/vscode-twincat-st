@@ -3,7 +3,7 @@ import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vs
 import { logger, StAccessModifier, StBuiltinType, StModel, StModifier, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
 import { AssignmentContext, CallStatementContext, EnumMemberContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
-import { ConnectDeclaringSymbols, getContextRange, getNestedTypeOrSelf } from "../core/utils.js";
+import { ConnectDeclaringSymbols, getContextRange, getNestedTypeOrSelf, InitializeIntegerType } from "../core/utils.js";
 import { StVisitor } from "./StVisitor.js";
 import { C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0077, C0080, C0143, C0185, C0261 } from "./diagnostics.js";
 import { evaluateBoolLiteral } from "./literals/evaluateBoolLiteral.js";
@@ -144,8 +144,14 @@ export class SemanticModelBuilder {
 
                     let rhsType: StType | undefined;
 
-                    if (rhsCtx)
-                        rhsType = this.evaluateExpression(rhsCtx, nestedLhsType?.builtinType, sourceFile);
+                    if (rhsCtx) {
+
+                        rhsType = this.evaluateExpression(
+                            rhsCtx,
+                            nestedLhsType?.builtinType,
+                            sourceFile
+                        );
+                    }
 
                     if (nestedLhsType && rhsType) {
 
@@ -167,8 +173,14 @@ export class SemanticModelBuilder {
 
                     let rhsType: StType | undefined;
 
-                    if (rhsCtx)
-                        rhsType = this.evaluateExpression(rhsCtx, lhsType?.builtinType, sourceFile);
+                    if (rhsCtx) {
+
+                        rhsType = this.evaluateExpression(
+                            rhsCtx,
+                            lhsType?.builtinType,
+                            sourceFile
+                        );
+                    }
 
                     if (lhsType && rhsType) {
 
@@ -391,10 +403,122 @@ export class SemanticModelBuilder {
         if (memberExpression)
             return this.evaluateMemberExpression(memberExpression, sourceFile, false);
 
+        const expressions = expression.expr();
         const literal = expression.literal();
 
-        if (literal)
-            return this.evaluateLiteral(literal, typeHint, sourceFile);
+        if (expressions.length == 2) {
+
+            var lhsType = this.evaluateExpression(
+                expressions[0],
+                undefined,
+                sourceFile
+            );
+
+            var rhsType = this.evaluateExpression(
+                expressions[1],
+                undefined,
+                sourceFile
+            );
+
+            if (!lhsType?.builtinType || !rhsType?.builtinType)
+                return undefined;
+
+            const builtinType = this.evaluateBinaryExpressionType(
+                lhsType.builtinType,
+                rhsType.builtinType
+            );
+
+            if (!builtinType)
+                return undefined;
+
+            const type = new StType();
+            type.builtinType = builtinType;
+            InitializeIntegerType(null, type, sourceFile);
+
+            return type;
+        }
+
+        else if (expressions.length == 1) {
+
+            return this.evaluateExpression(
+                expression,
+                typeHint,
+                sourceFile
+            );
+        }
+
+        else if (literal) {
+
+            return this.evaluateLiteral(
+                literal,
+                typeHint,
+                sourceFile
+            );
+        }
+
+        return undefined;
+    }
+
+    private evaluateBinaryExpressionType(
+        left: StBuiltinType,
+        right: StBuiltinType
+    ): StBuiltinType | undefined {
+
+        // TODO: CheckTypes here as well? Because often, the types are incompatible
+        // TODO: Same types left and right
+        // TODO: BOOL & BIT
+
+        // Prefer REAL / LREAL
+        if (left === StBuiltinType.LREAL || right === StBuiltinType.LREAL)
+            return StBuiltinType.LREAL;
+
+        if (left === StBuiltinType.REAL || right === StBuiltinType.REAL)
+            return StBuiltinType.REAL;
+
+        // If both are unsigned, promote to the larger unsigned type
+        const leftDetails = StModel.nativeTypesDetails.get(left);
+        const rightDetails = StModel.nativeTypesDetails.get(right);
+
+        if (leftDetails?.kind === StNativeTypeKind.UnsignedInteger && rightDetails?.kind === StNativeTypeKind.UnsignedInteger)
+            return leftDetails.size >= rightDetails.size ? left : right;
+
+        // If both are signed, promote to the larger signed type
+        if (leftDetails?.kind === StNativeTypeKind.SignedInteger && rightDetails?.kind === StNativeTypeKind.SignedInteger)
+            return leftDetails.size >= rightDetails.size ? left : right;
+
+        // If one is signed and one is unsigned, promote to signed type with larger size
+        if (
+            (leftDetails?.kind === StNativeTypeKind.SignedInteger && rightDetails?.kind === StNativeTypeKind.UnsignedInteger) ||
+            (leftDetails?.kind === StNativeTypeKind.UnsignedInteger && rightDetails?.kind === StNativeTypeKind.SignedInteger)
+        ) {
+            // Use the signed type with the larger size
+            if (
+                (leftDetails?.kind === StNativeTypeKind.SignedInteger && leftDetails.size >= rightDetails.size) ||
+                (rightDetails?.kind === StNativeTypeKind.SignedInteger && rightDetails.size >= leftDetails.size)
+            ) {
+                return leftDetails.size >= rightDetails.size ? left : right;
+            }
+
+            // TODO: finish implementation here
+
+            if (
+                (left === StBuiltinType.INT && right === StBuiltinType.UDINT) ||
+                (right === StBuiltinType.INT && left === StBuiltinType.UDINT)
+            ) {
+                return StBuiltinType.DINT;
+            }
+            if (
+                (left === StBuiltinType.INT && right === StBuiltinType.ULINT) ||
+                (right === StBuiltinType.INT && left === StBuiltinType.ULINT)
+            ) {
+                return StBuiltinType.LINT;
+            }
+        }
+
+        // // Default: fallback to the larger type
+        // if (leftDetails && rightDetails) {
+        //     return leftDetails.size >= rightDetails.size ? left : right;
+        // }
 
         return undefined;
     }

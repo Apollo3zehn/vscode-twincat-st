@@ -1,9 +1,9 @@
 import { ParserRuleContext, TerminalNode, Token } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Uri } from "vscode";
-import { Architecture, StAccessModifier, StBuiltinType, StModel, StModifier, StNativeTypeDetails, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StTypeDeclarationDetails, StVariableScope } from "../core/types.js";
+import { Architecture, StAccessModifier, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StTypeDeclarationDetails, StVariableScope } from "../core/types.js";
+import { convertTypeText, getContextRange, getModifier, getOriginalText, getTokenRange, InitializeIntegerType } from "../core/utils.js";
 import { AccessModifierContext, DutDeclContext, EnumMemberContext, EnumTypeContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ModifierContext, ProgramContext, PropertyContext, StatementContext, TypeContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
-import { convertTypeText, getContextRange, getModifier, getOriginalText, getTokenRange } from "../core/utils.js";
 
 export class StVisitor extends StructuredTextVisitor<void> {
 
@@ -378,11 +378,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
                             const subRangeParamToken = builtinType.SUBRANGE_PARAM();
 
-                            this.InitializeIntegerType(
+                            InitializeIntegerType(
                                 subRangeParamToken,
                                 type,
-                                nativeTypeDetails,
-                                symbol
+                                this._sourceFile
                             );
 
                             break;
@@ -436,59 +435,18 @@ export class StVisitor extends StructuredTextVisitor<void> {
         if (convertedTypeText && convertedTypeText in StBuiltinType) {
 
             type.builtinType = convertedTypeText as StBuiltinType;
-
-            const nativeTypeDetails = type.builtinType
-                ? StModel.nativeTypesDetails.get(type.builtinType)
-                : undefined;
-
             const subRangeParamToken = ctx.SUBRANGE_PARAM();
 
-            this.InitializeIntegerType(
+            InitializeIntegerType(
                 subRangeParamToken,
                 type,
-                nativeTypeDetails,
-                symbol
+                this._sourceFile
             );
         }
 
         symbol.type = type;
 
         return symbol;
-    }
-
-    private InitializeIntegerType(
-        subRangeParamToken: TerminalNode | null,
-        type: StType,
-        nativeTypeDetails: StNativeTypeDetails | undefined,
-        symbol: StSymbol
-    ) {
-        const subRangeParam = subRangeParamToken?.getText();
-        const subRangeParts = subRangeParam?.split('..');
-
-        if (subRangeParts) {
-
-            type.subRangeStart = Number.parseInt(subRangeParts[0].slice(1));
-            type.subRangeStop = Number.parseInt(subRangeParts[1].slice(0, -1));
-            type.isFullRange = false;
-
-            const min = nativeTypeDetails!.min!;
-            const max = nativeTypeDetails!.max!;
-
-            if (type.subRangeStart !== undefined &&
-                type.subRangeStop !== undefined &&
-                (
-                    !(min <= type.subRangeStart && type.subRangeStart <= max) ||
-                    !(min <= type.subRangeStop && type.subRangeStop <= max)
-                )) {
-                this.M0001(symbol, subRangeParamToken!);
-            }
-        }
-
-        else {
-            type.subRangeStart = nativeTypeDetails!.min;
-            type.subRangeStop = nativeTypeDetails!.max;
-            type.isFullRange = true;
-        }
     }
 
     private create(
@@ -621,19 +579,6 @@ export class StVisitor extends StructuredTextVisitor<void> {
         );
 
         diagnostic.code = "C0142";
-        this._sourceFile.diagnostics.push(diagnostic);
-    }
-
-    // M0001: The subrange parameters are not within the valid range
-    private M0001(symbol: StSymbol, subRangeToken: TerminalNode) {
-
-        const diagnostic = new Diagnostic(
-            getTokenRange(subRangeToken.symbol)!,
-            `The subrange parameters are not within the valid range`,
-            DiagnosticSeverity.Error
-        );
-
-        diagnostic.code = "M0001";
         this._sourceFile.diagnostics.push(diagnostic);
     }
 

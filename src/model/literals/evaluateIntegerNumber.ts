@@ -27,9 +27,9 @@ export function evaluateIntegerNumber(
     let value: number;
 
     /* Important: Do not convert type to uppercase
-        * first because TwinCAT requires the input string 
-        * to be uppercase, otherwise it is a syntax error.
-        */
+     * first because TwinCAT requires the input string 
+     * to be uppercase, otherwise it is a syntax error.
+     */
     if (splittedText.length === 3) {
         requestedType = splittedText[0] as StBuiltinType;
         radix = parseInt(splittedText[1], 10);

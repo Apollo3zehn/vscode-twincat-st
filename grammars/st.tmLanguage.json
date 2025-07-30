@@ -476,7 +476,7 @@
     "assignments": {
       "patterns": [
         {
-          "match": "\\b([^\\s]+)\\s*(:=|REF=)\\s*(.*)",
+          "match": "\\b([^\\s]+)\\s*(:=|REF=)\\s*(.*);",
           "captures": {
             "1": { "patterns": [{ "include": "#identifiers" }] },
             "2": { "patterns": [{ "include": "#operators" }] },

@@ -1,3 +1,5 @@
+- unary minus: https://gist.github.com/mattmcd/5277890#file-expr-g4-L8
+
 - Use BigInt here: _int2:                  INT             := 18446744073709551616;
 
 - assignment: incompatible types, (inheritance, interfaces)

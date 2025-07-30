@@ -1,3 +1,5 @@
+// C0032: Cannot convert type '{type}' to type '{type}'
+
 TYPE U_C0032 :
 UNION
     A: USINT := 1024;

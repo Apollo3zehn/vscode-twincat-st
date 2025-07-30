@@ -1,7 +1,4 @@
 - Use BigInt here: _int2:                  INT             := 18446744073709551616;
-- Is utf-8 allowed for var names?
-
-- C0018: When trying to assign to a const variable
 
 - assignment: incompatible types, (inheritance, interfaces)
 

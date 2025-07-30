@@ -1,6 +1,6 @@
 import { CharStream, CommonTokenStream, ParserRuleContext } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vscode";
-import { logger, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
+import { logger, StAccessModifier, StBuiltinType, StModel, StModifier, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
 import { AssignmentContext, CallStatementContext, EnumMemberContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
 import { ConnectDeclaringSymbols, getContextRange, getNestedTypeOrSelf } from "../core/utils.js";
@@ -509,6 +509,9 @@ export class SemanticModelBuilder {
                         ) {
                             C0037(lastMember, sourceFile);
                         }
+
+                        if (lastMemberDeclaration.modifier === StModifier.Constant)
+                            C0018(lastMember, sourceFile);
 
                         break;
                         

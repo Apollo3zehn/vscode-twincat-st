@@ -4,8 +4,7 @@ import { C0001 } from "../diagnostics.js";
 
 export function evaluateRealNumber(
     literal: LiteralContext,
-    sourceFile: StSourceFile,
-    typeHint: StBuiltinType | undefined,
+    sourceFile: StSourceFile
 ): StType | undefined {
     
     const realLiteral = literal.REAL_LITERAL()!;
@@ -99,18 +98,12 @@ export function evaluateRealNumber(
         choosenType = StBuiltinType.LREAL;
     }
 
-    switch (typeHint) {
-
-        case StBuiltinType.REAL:
-
-            if (value <= 3.402823e+38)
-                choosenType = StBuiltinType.REAL;
-
-            break;
-    }
-
     const type = new StType();
     type.builtinType = choosenType;
+
+    type.value = isNegative
+        ? -value
+        : value;
 
     return type;
 }

@@ -1,7 +1,7 @@
 import { ParserRuleContext, TerminalNode, Token } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Uri } from "vscode";
 import { Architecture, StAccessModifier, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StTypeDeclarationDetails, StVariableScope } from "../core/types.js";
-import { convertTypeText, getContextRange, getModifier, getOriginalText, getTokenRange, InitializeIntegerType } from "../core/utils.js";
+import { convertTypeText, getContextRange, getModifier, getOriginalText, getTokenRange, initializeIntegerType } from "../core/utils.js";
 import { AccessModifierContext, DutDeclContext, EnumMemberContext, EnumTypeContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ModifierContext, ProgramContext, PropertyContext, StatementContext, TypeContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
 
@@ -41,7 +41,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
             let type: StType | undefined = this._type;
 
             if (!this._type && symbol.kind === StSymbolKind.Enum)
-                type = StModel.defaultIntType;
+                type = StModel.defaultTypes.get(StBuiltinType.INT);
 
             symbol.typeDeclarationDetails.underlyingType = type;
         }
@@ -378,7 +378,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
                             const subRangeParamToken = builtinType.SUBRANGE_PARAM();
 
-                            InitializeIntegerType(
+                            initializeIntegerType(
                                 subRangeParamToken,
                                 type,
                                 this._sourceFile
@@ -437,7 +437,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
             type.builtinType = convertedTypeText as StBuiltinType;
             const subRangeParamToken = ctx.SUBRANGE_PARAM();
 
-            InitializeIntegerType(
+            initializeIntegerType(
                 subRangeParamToken,
                 type,
                 this._sourceFile

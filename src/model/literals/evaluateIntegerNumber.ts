@@ -4,14 +4,9 @@ import { C0001 } from "../diagnostics.js";
 
 export function evaluateIntegerNumber(
     literal: LiteralContext,
-    sourceFile: StSourceFile,
-    typeHint: StBuiltinType | undefined
+    sourceFile: StSourceFile
 ): StType | undefined {
     
-    const typeHintKind = typeHint
-        ? StModel.nativeTypesDetails.get(typeHint)?.kind
-        : undefined;
-
     const integerLiteral = literal.INTEGER_LITERAL()!;
     let text = integerLiteral.getText();
 
@@ -133,31 +128,15 @@ export function evaluateIntegerNumber(
         }
     }
 
-    switch (typeHintKind) {
-
-        case StNativeTypeKind.Logical:
-
-            if (!isNegative && (value === 0 || value === 1))
-                choosenType = typeHint;
-
-            break;
-        
-        case StNativeTypeKind.Bitfield:
-        case StNativeTypeKind.UnsignedInteger:
-
-            const choosenTypeDetails = StModel.nativeTypesDetails.get(choosenType);
-            const typeHintDetails = StModel.nativeTypesDetails.get(typeHint!);
-            
-            if (!isNegative && choosenTypeDetails!.size <= typeHintDetails!.size)
-                choosenType = typeHint;
-
-            break;
-    }
-
     const type = new StType();
     type.builtinType = choosenType;
-    type.subRangeStart = value;
-    type.subRangeStop = value;
+
+    type.value = isNegative
+        ? -value
+        : value;
+    
+    type.subRangeStart = type.value;
+    type.subRangeStop = type.value;
 
     return type;
 }

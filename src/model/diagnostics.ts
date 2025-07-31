@@ -152,6 +152,18 @@ export function C0080(member: StSymbol, sourceFile: StSourceFile) {
     sourceFile.diagnostics.push(diagnostic);
 }
 
+export function C0140(lhsCtx: ParserRuleContext | undefined, sourceFile: StSourceFile) {
+
+    const diagnostic = new Diagnostic(
+        getContextRange(lhsCtx),
+        "Reference assign is only allowed to variables of reference type",
+        DiagnosticSeverity.Error
+    );
+
+    diagnostic.code = "C0140";
+    sourceFile.diagnostics.push(diagnostic);
+}
+
 // C0143: The property '{name}' cannot be used in this context because it lacks the get accessor
 export function C0143(member: StSymbol, sourceFile: StSourceFile) {
     

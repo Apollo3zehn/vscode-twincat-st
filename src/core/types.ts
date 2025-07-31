@@ -47,6 +47,10 @@ export class StType {
     public subRangeStop: number | undefined;            // unsigned and signed integers
     public isFullRange: boolean | undefined;            // unsigned and signed integers
 
+    public value: number | undefined;                   // literals or constants
+
+    public isLiteral: boolean | undefined;              // literals
+
     public context: TypeContext | undefined;
 
     public get isArray(): boolean {
@@ -304,8 +308,9 @@ export class StModel {
         [StBuiltinType.WSTRING, new StNativeTypeDetails(StNativeTypeKind.String, -1, undefined, undefined, undefined)],
     ]);
 
-    // Required for enums with default type
-    public static readonly defaultIntType: StType = new StType();
+    public static readonly defaultTypes = new Map<StBuiltinType, StType>([
+        [StBuiltinType.INT, new StType()]
+    ]);
 
     constructor() {
         this.tcConfig = getTcConfig() ?? new TcConfig();
@@ -313,12 +318,13 @@ export class StModel {
 
     static {
         
-        // Prepare StModel.defaultIntType
-        const nativeTypeDetails = StModel.nativeTypesDetails.get(StBuiltinType.INT);
+        // Prepare INT
+        const intDetails = StModel.nativeTypesDetails.get(StBuiltinType.INT)!;
+        const defaultIntType = StModel.defaultTypes.get(StBuiltinType.INT)!;
 
-        StModel.defaultIntType.builtinType = StBuiltinType.INT;
-        StModel.defaultIntType.isFullRange = true;
-        StModel.defaultIntType.subRangeStart = nativeTypeDetails?.min;
-        StModel.defaultIntType.subRangeStop = nativeTypeDetails?.max;
+        defaultIntType.builtinType = StBuiltinType.INT;
+        defaultIntType.isFullRange = true;
+        defaultIntType.subRangeStart = intDetails.min;
+        defaultIntType.subRangeStop = intDetails.max;
     }
 }

@@ -2,7 +2,7 @@ import { Interval, ParserRuleContext, TerminalNode, Token } from "antlr4ng";
 import * as fs from "fs";
 import path from "path";
 import { Diagnostic, DiagnosticSeverity, Position, Range, workspace } from "vscode";
-import { Architecture, StModel, StModifier, StSourceFile, StSymbol, StSymbolKind, StType, TcConfig } from "./types.js";
+import { Architecture, StModel, StModifier, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, TcConfig } from "./types.js";
 import { ModifierContext } from "../generated/StructuredTextParser.js";
 
 export const TIME_COMPONENTS = [
@@ -325,7 +325,7 @@ export function getModifier(modifierCtx: ModifierContext | null): StModifier | u
         : undefined;
 }
 
-export function InitializeIntegerType(
+export function initializeIntegerType(
     subRangeParamToken: TerminalNode | null,
     type: StType,
     sourceFile: StSourceFile
@@ -333,7 +333,7 @@ export function InitializeIntegerType(
     const nativeTypeDetails = type.builtinType
         ? StModel.nativeTypesDetails.get(type.builtinType)
         : undefined;
-    
+       
     const subRangeParam = subRangeParamToken?.getText();
     const subRangeParts = subRangeParam?.split('..');
 

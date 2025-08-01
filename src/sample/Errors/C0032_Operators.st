@@ -1,6 +1,6 @@
 // C0032: Cannot convert type '{type}' to type '{type}'
 
-FUNCTION_BLOCK C0032_Literals
+FUNCTION_BLOCK C0032_Operators
 
     VAR
 

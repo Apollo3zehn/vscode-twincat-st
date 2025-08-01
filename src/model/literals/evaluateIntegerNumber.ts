@@ -12,7 +12,7 @@ export function evaluateIntegerNumber(
 
     const splittedText = text.split('#');
 
-    let requestedType: StBuiltinType | undefined;
+    let lhsType: StBuiltinType | undefined;
     let radix: number = 10;
     let value: number;
 
@@ -21,54 +21,54 @@ export function evaluateIntegerNumber(
      * to be uppercase, otherwise it is a syntax error.
      */
     if (splittedText.length === 3) {
-        requestedType = splittedText[0] as StBuiltinType;
+        lhsType = splittedText[0] as StBuiltinType;
         radix = parseInt(splittedText[1], 10);
     }
 
     else if (splittedText.length === 2) {
 
         if (splittedText[0] in StBuiltinType)
-            requestedType = splittedText[0] as StBuiltinType;
+            lhsType = splittedText[0] as StBuiltinType;
             
         else
             radix = parseInt(splittedText[0], 10);
     }
 
-    const requestedTypeDetails = requestedType
-        ? StModel.nativeTypesDetails.get(requestedType)
+    const lhsTypeDetails = lhsType
+        ? StModel.nativeTypesDetails.get(lhsType)
         : undefined;
     
     value = parseInt(splittedText[splittedText.length - 1], radix);
 
-    let fittingType: StBuiltinType;
+    let rhsType: StBuiltinType;
 
     if (value < 0) {
 
         if (
-            requestedType &&
-            requestedTypeDetails &&
-            requestedTypeDetails?.kind !== StNativeTypeKind.SignedInteger
+            lhsType &&
+            lhsTypeDetails &&
+            lhsTypeDetails?.kind !== StNativeTypeKind.SignedInteger
         ) {
-            C0001(literal, StBuiltinType[requestedType], sourceFile);
+            C0001(literal, StBuiltinType[lhsType], sourceFile);
             return undefined;
         }
 
         if (value >= -Math.pow(2, 7))
-            fittingType = StBuiltinType.SINT;   // -2^7 .. 2^7-1
+            rhsType = StBuiltinType.SINT;   // -2^7 .. 2^7-1
             
         else if (value >= -Math.pow(2, 15))
-            fittingType = StBuiltinType.INT;    // -2^15 .. 2^15-1
+            rhsType = StBuiltinType.INT;    // -2^15 .. 2^15-1
             
         else if (value >= -Math.pow(2, 31))
-            fittingType = StBuiltinType.DINT;   // -2^31 .. 2^31-1
+            rhsType = StBuiltinType.DINT;   // -2^31 .. 2^31-1
             
         else if (value >= -Math.pow(2, 63))
-            fittingType = StBuiltinType.LINT;   // -2^63 .. 2^63-1
+            rhsType = StBuiltinType.LINT;   // -2^63 .. 2^63-1
             
         else {
 
-            if (requestedType)
-                C0001(literal, StBuiltinType[requestedType], sourceFile);
+            if (lhsType)
+                C0001(literal, StBuiltinType[lhsType], sourceFile);
 
             else
                 C0001(literal, "ANY_INT", sourceFile);
@@ -80,33 +80,33 @@ export function evaluateIntegerNumber(
     else {
 
         if (value <= Math.pow(2, 7) - 1)
-            fittingType = StBuiltinType.SINT;   // -2^7 .. 2^7-1
+            rhsType = StBuiltinType.SINT;   // -2^7 .. 2^7-1
             
         else if (value <= Math.pow(2, 8) - 1)
-            fittingType = StBuiltinType.USINT;  // 0 .. 2^8-1
+            rhsType = StBuiltinType.USINT;  // 0 .. 2^8-1
             
         else if (value <= Math.pow(2, 15) - 1)
-            fittingType = StBuiltinType.INT;    // -2^15 .. 2^15-1
+            rhsType = StBuiltinType.INT;    // -2^15 .. 2^15-1
             
         else if (value <= Math.pow(2, 16) - 1)
-            fittingType = StBuiltinType.UINT;   // 0 .. 2^16-1
+            rhsType = StBuiltinType.UINT;   // 0 .. 2^16-1
             
         else if (value <= Math.pow(2, 31) - 1)
-            fittingType = StBuiltinType.DINT;   // -2^31 .. 2^31-1
+            rhsType = StBuiltinType.DINT;   // -2^31 .. 2^31-1
             
         else if (value <= Math.pow(2, 32) - 1)
-            fittingType = StBuiltinType.UDINT;  // 0 .. 2^32-1
+            rhsType = StBuiltinType.UDINT;  // 0 .. 2^32-1
             
         else if (value <= Math.pow(2, 63) - 1)
-            fittingType = StBuiltinType.LINT;   // -2^63 .. 2^63-1
+            rhsType = StBuiltinType.LINT;   // -2^63 .. 2^63-1
             
         else if (value <= Math.pow(2, 64) - 1)
-            fittingType = StBuiltinType.ULINT;  // 0 .. 2^64-1
+            rhsType = StBuiltinType.ULINT;  // 0 .. 2^64-1
             
         else {
             
-            if (requestedType)
-                C0001(literal, StBuiltinType[requestedType], sourceFile);
+            if (lhsType)
+                C0001(literal, StBuiltinType[lhsType], sourceFile);
 
             else
                 C0001(literal, "ANY_INT", sourceFile);
@@ -115,28 +115,26 @@ export function evaluateIntegerNumber(
         }
     }
 
-    let choosenType: StBuiltinType | undefined = fittingType;
+    if (lhsType) {
 
-    if (requestedType) {
-
-        const fittingTypeDetails = StModel.nativeTypesDetails.get(fittingType);
+        const rhsTypeDetails = StModel.nativeTypesDetails.get(rhsType);
 
         if (
-            requestedTypeDetails &&
-            fittingTypeDetails &&
-            requestedTypeDetails.max! < fittingTypeDetails.max!
+            rhsTypeDetails &&
+            lhsTypeDetails &&
+            lhsTypeDetails.max! < rhsTypeDetails.max!
         ) {
-            C0001(literal, StBuiltinType[requestedType], sourceFile);
+            C0001(literal, StBuiltinType[lhsType], sourceFile);
             return undefined;
         }
 
         else {
-            choosenType = requestedType;
+            rhsType = lhsType;
         }
     }
 
     const type = new StType();
-    type.builtinType = choosenType;
+    type.builtinType = rhsType;
     type.value = value;
     type.subRangeStart = type.value;
     type.subRangeStop = type.value;

@@ -2,11 +2,6 @@
 
 - Use BigInt here: _int2:                  INT             := 18446744073709551616;
 
-- Constant too large and shifted minus sign:
-  _xx: UINT := UINT#-100;
-  And this gives no compile error:
-  _xx: UINT := -UINT#100;
-
 - isRefAssignment: 
     _boolValue: BOOL;
     _bool: REFERENCE TO BOOL REF= _boolValue;

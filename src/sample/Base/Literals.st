@@ -1,15 +1,17 @@
 FUNCTION_BLOCK Literals
+
     VAR
+    
         // Logical Types
         bool_0:             BOOL    := 0;
         bool_false:         BOOL    := FALSE;
         bool_1:             BOOL    := 1;
         bool_true:          BOOL    := TRUE;
 
-        bit_0:              BOOL    := 0;
-        bit_false:          BOOL    := FALSE;
-        bit_1:              BOOL    := 1;
-        bit_true:           BOOL    := TRUE;
+        bit_0:              BIT     := 0;
+        bit_false:          BIT     := FALSE;
+        bit_1:              BIT     := 1;
+        bit_true:           BIT     := TRUE;
 
         // Bitstring Types
         _word_1:            WORD    := 1;
@@ -21,7 +23,7 @@ FUNCTION_BLOCK Literals
 
         int_positive:       INT     := 10;
         int_negative:       INT     := -10;
-        int_typed:          INT     := -INT#1;
+        int_typed:          INT     := INT#-1;
 
         // HEX
         int_hex:            INT     := 16#0A;

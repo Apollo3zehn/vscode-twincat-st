@@ -1,0 +1,6 @@
+FUNCTION_BLOCK FB_Operators
+
+    VAR
+        _uint: UINT := UINT#10 + 1;
+    END_VAR
+END_FUNCTION_BLOCK

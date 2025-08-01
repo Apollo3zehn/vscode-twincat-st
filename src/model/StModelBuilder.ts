@@ -16,6 +16,7 @@ import { evaluateStringLiteral } from "./literals/evaluateStringLiteral.js";
 import { evaluateTimeLiteral } from "./literals/evaluateTimeLiteral.js";
 import { evaluateTimeOfDayLiteral } from "./literals/evaluateTimeOfDayLiteral.js";
 import { evaluateWStringLiteral } from "./literals/evaluateWStringLiteral.js";
+import { getLowestCommonDenominator, promoteConstant } from "./typeHelper.js";
 
 export class SemanticModelBuilder {
 
@@ -132,7 +133,7 @@ export class SemanticModelBuilder {
                 if (symbol.kind === StSymbolKind.VariableDeclaration) {
 
                     const varDeclCtx = ctx as VarDeclContext;
-                    const lhsCtx = varDeclCtx.type();
+                    const lhsCtx = varDeclCtx.type() ?? undefined;
                     const lhsTypeUsage = sourceFile.symbolMap.get(lhsCtx);
                     const lhsType = lhsTypeUsage?.type;
 
@@ -140,7 +141,7 @@ export class SemanticModelBuilder {
                         ? getNestedTypeOrSelf(lhsType)
                         : undefined;
                             
-                    const rhsCtx = varDeclCtx.exprOrArrayInit()?.expr();
+                    const rhsCtx = varDeclCtx.exprOrArrayInit()?.expr() ?? undefined;
 
                     let rhsType: StType | undefined;
 
@@ -154,7 +155,12 @@ export class SemanticModelBuilder {
 
                     if (nestedLhsType && rhsType) {
 
-                        [nestedLhsType, rhsType] = this.promoteAssignmentTypes(nestedLhsType, rhsType);
+                        const nestedLhsTypeDetails = nestedLhsType.builtinType
+                            ? StModel.nativeTypesDetails.get(nestedLhsType.builtinType)
+                            : undefined;
+
+                        if (nestedLhsTypeDetails?.kind !== undefined)
+                            rhsType = promoteConstant(nestedLhsTypeDetails.kind, rhsType, rhsCtx) ?? nestedLhsType;
 
                         this.CheckAssignment(
                             nestedLhsType, lhsCtx,
@@ -170,7 +176,7 @@ export class SemanticModelBuilder {
                     let lhsType = symbol?.parent?.typeDeclarationDetails?.underlyingType;
                     
                     const enumMemberCtx = ctx as EnumMemberContext;
-                    const rhsCtx = enumMemberCtx.expr();
+                    const rhsCtx = enumMemberCtx.expr() ?? undefined;
 
                     let rhsType: StType | undefined;
 
@@ -184,7 +190,12 @@ export class SemanticModelBuilder {
 
                     if (lhsType && rhsType) {
 
-                        [lhsType, rhsType] = this.promoteAssignmentTypes(lhsType, rhsType);
+                        const lhsTypeDetails = lhsType.builtinType
+                            ? StModel.nativeTypesDetails.get(lhsType.builtinType)
+                            : undefined;
+
+                        if (lhsTypeDetails?.kind !== undefined)
+                            rhsType = promoteConstant(lhsTypeDetails.kind, rhsType, rhsCtx) ?? lhsType;
 
                         this.CheckAssignment(
                             lhsType, undefined,
@@ -385,7 +396,12 @@ export class SemanticModelBuilder {
 
         if (lhsType && rhsType) {
 
-            [lhsType, rhsType] = this.promoteAssignmentTypes(lhsType, rhsType);
+            const lhsTypeDetails = lhsType.builtinType
+                ? StModel.nativeTypesDetails.get(lhsType.builtinType)
+                : undefined;
+
+            if (lhsTypeDetails?.kind !== undefined)
+                rhsType = promoteConstant(lhsTypeDetails.kind, rhsType, rhsCtx) ?? lhsType;
 
             this.CheckAssignment(
                 lhsType, lhsCtx,
@@ -411,6 +427,7 @@ export class SemanticModelBuilder {
 
         if (expressions.length == 2) {
 
+            // Step 1: Evaluate both expressions
             var lhsType = this.evaluateExpression(
                 expressions[0],
                 sourceFile
@@ -424,38 +441,59 @@ export class SemanticModelBuilder {
             if (!lhsType?.builtinType || !rhsType?.builtinType)
                 return undefined;
 
-            const promotedBuiltinType = this.evaluateBinaryExpression(
+            const lhsTypeDetails = lhsType.builtinType
+                ? StModel.nativeTypesDetails.get(lhsType.builtinType)
+                : undefined;
+            
+            const rhsTypeDetails = rhsType.builtinType
+                ? StModel.nativeTypesDetails.get(rhsType.builtinType)
+                : undefined;
+
+            // Step 2: Promote possible constants
+            if (
+                lhsTypeDetails?.kind !== undefined &&
+                rhsTypeDetails?.kind !== undefined
+            ) {
+                lhsType = promoteConstant(rhsTypeDetails.kind, lhsType, expressions[0]) ?? rhsType;
+                rhsType = promoteConstant(lhsTypeDetails.kind, rhsType, expressions[1]) ?? lhsType;
+            }
+
+            // Step 3: Get lowest common denominator type
+            const lcdBuiltinType = getLowestCommonDenominator(
                 lhsType,
                 rhsType
             );
 
-            if (!promotedBuiltinType)
+            if (!lcdBuiltinType)
                 return undefined;
 
-            const promotedType = new StType();
-            promotedType.builtinType = promotedBuiltinType;
+            const lcdType = new StType();
+            lcdType.builtinType = lcdBuiltinType;
 
-            // TODO: only do this for actual integer types !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            initializeIntegerType(null, promotedType, sourceFile);
+            // TODO: 
+            // - only do this for actual integer types
+            // - evaluate math operations involving only constants
+            initializeIntegerType(null, lcdType, sourceFile);
 
-            // Check lhs -> promoted type assignment
+            // Step 4: 
+            // Check assignment (lhs -> lcd)
             const lhsResult = this.CheckAssignment(
-                promotedType, expression,
+                lcdType, expression,
                 lhsType, expressions[0],
                 false,
                 sourceFile
             );
 
-            // Check rhs -> promoted type assignment
+            // Check assignment (rhs -> lcd)
             const rhsResult = this.CheckAssignment(
-                promotedType, expression,
+                lcdType, expression,
                 rhsType, expressions[1],
                 false,
                 sourceFile
             );
 
             return lhsResult && rhsResult
-                ? promotedType
+                ? lcdType
                 : undefined;
         }
 
@@ -476,71 +514,6 @@ export class SemanticModelBuilder {
         }
 
         return undefined;
-    }
-
-    private evaluateBinaryExpression(
-        lhsType: StType,
-        rhsType: StType
-    ): StBuiltinType | undefined {
-
-        /* The calling method ensures that both values are defined */
-        const left = lhsType.builtinType!;
-        const right = rhsType.builtinType!;
-
-        // Prefer REAL / LREAL
-        if (left === StBuiltinType.LREAL || right === StBuiltinType.LREAL)
-            return StBuiltinType.LREAL;
-
-        if (left === StBuiltinType.REAL || right === StBuiltinType.REAL)
-            return StBuiltinType.REAL;
-
-        const leftDetails = StModel.nativeTypesDetails.get(left);
-        const rightDetails = StModel.nativeTypesDetails.get(right);
-
-        if (leftDetails && rightDetails) {
-
-            const leftIsUnsignedInteger = leftDetails.kind === StNativeTypeKind.Bitfield || leftDetails.kind === StNativeTypeKind.UnsignedInteger;
-            const leftIsSignedInteger = leftDetails.kind === StNativeTypeKind.SignedInteger;
-
-            const rightIsUnsignedInteger = rightDetails.kind === StNativeTypeKind.Bitfield || rightDetails.kind === StNativeTypeKind.UnsignedInteger;
-            const rightIsSignedInteger = rightDetails.kind === StNativeTypeKind.SignedInteger;
-
-            // If both are unsigned, promote to the larger unsigned type
-            if (leftIsUnsignedInteger && rightIsUnsignedInteger)
-                return leftDetails.size >= rightDetails.size ? left : right;
-
-            // If both are signed, promote to the larger signed type
-            if (leftIsSignedInteger && rightIsSignedInteger)
-                return leftDetails.size >= rightDetails.size ? left : right;
-
-            // If one is signed and one is unsigned, promote to signed type with larger size
-            if (
-                (leftIsSignedInteger && rightIsUnsignedInteger) ||
-                (leftIsUnsignedInteger && rightIsSignedInteger)
-            ) {
-                // TODO:
-                //  - When one of the operants is signed, create a new signed type with
-                //    the size whichever is larger (don't forget to initialize this new
-                //    integer type)
-                //
-                //  - In case of unsigned literal (left or right) + signed non-literal: 
-                //    promote the literal to the next larger integer size
-
-                // if (
-                //     (leftIsSignedInteger && leftDetails.size >= rightDetails.size) ||
-                //     (rightIsSignedInteger && rightDetails.size >= leftDetails.size)
-                // ) {
-                //     return leftDetails.size >= rightDetails.size ? left : right;
-                // }
-            }
-
-            // Default: fallback to the larger type
-            return leftDetails.size >= rightDetails.size ? left : right;
-        }
-        
-        // Either leftDetails or rightDetails is not defined, so just return any type.
-        // The type checking algorithm will then throw an appropriate error.
-        return left;
     }
 
     private evaluateLiteral(
@@ -815,80 +788,6 @@ export class SemanticModelBuilder {
         );
 
         sourceFile.diagnostics.push(diagnostic);
-    }
-
-    private promoteAssignmentTypes(lhsType: StType, rhsType: StType): [StType, StType] {
-        
-        if (!(rhsType.value !== undefined && lhsType.builtinType && rhsType.builtinType))
-            return [lhsType, rhsType];
-        
-        const lhsDetails = lhsType
-            ? StModel.nativeTypesDetails.get(lhsType.builtinType)
-            : undefined;
-        
-        const rhsDetails = lhsType
-            ? StModel.nativeTypesDetails.get(rhsType.builtinType)
-            : undefined;
-        
-        if (!lhsDetails || !rhsDetails)
-            return [lhsType, rhsType];
-
-        const lhsKind = lhsDetails.kind;
-        const rhsKind = rhsDetails.kind;
-
-        switch (rhsKind) {
-
-            case StNativeTypeKind.Bitfield:
-            case StNativeTypeKind.UnsignedInteger:
-            case StNativeTypeKind.SignedInteger:
-
-                switch (lhsKind) {
-
-                    case StNativeTypeKind.Logical:
-                       
-                        if (
-                            rhsType.isLiteral /* ONLY literals are allowed here! */ &&
-                            (
-                                rhsType.value === 0 ||
-                                rhsType.value === 1
-                            )
-                        ) {
-                            rhsType = lhsType;
-                        }
-                        
-                        break;
-                    
-                    case StNativeTypeKind.Bitfield:
-                    case StNativeTypeKind.UnsignedInteger:
-                       
-                        if (
-                            rhsType.value >= 0 &&
-                            rhsDetails.size <= lhsDetails.size
-                        ) {
-                            rhsType = lhsType;
-                        }
-
-                        break;
-                }
-                
-                break;
-            
-            case StNativeTypeKind.Float:
-
-                switch (lhsType.builtinType) {
-
-                    case StBuiltinType.REAL:
-
-                        if (Math.abs(rhsType.value) <= 3.402823e+38)
-                            rhsType = lhsType;
-
-                        break;
-                }
-
-                break;
-        }
-
-        return [lhsType, rhsType];
     }
 
     private CheckAssignment(

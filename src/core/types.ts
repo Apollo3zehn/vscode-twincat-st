@@ -151,7 +151,8 @@ export class StNativeTypeDetails {
         public readonly size: number,
         public readonly signed: boolean | undefined,
         public readonly min?: number,
-        public readonly max?: number
+        public readonly max?: number,
+        public readonly nextLargerType?: StBuiltinType
     ) {
         //
     }
@@ -282,30 +283,35 @@ export class StModel {
     public readonly sourceFileMap = new Map<string, StSourceFile>();
 
     public static readonly nativeTypesDetails = new Map<StBuiltinType, StNativeTypeDetails>([
-        
+        // Logical Types
         [StBuiltinType.BOOL,  new StNativeTypeDetails(StNativeTypeKind.Logical, 1, undefined, 0, 1)],
         [StBuiltinType.BIT,   new StNativeTypeDetails(StNativeTypeKind.Logical, 1, undefined, 0, 1)],
 
-        [StBuiltinType.BYTE,  new StNativeTypeDetails(StNativeTypeKind.Bitfield, 1, false, 0, 0xFF)],
-        [StBuiltinType.WORD,  new StNativeTypeDetails(StNativeTypeKind.Bitfield, 2, false, 0, 0xFFFF)],
-        [StBuiltinType.DWORD, new StNativeTypeDetails(StNativeTypeKind.Bitfield, 4, false, 0, 0xFFFFFFFF)],
+        // Bitstring Types
+        [StBuiltinType.BYTE,  new StNativeTypeDetails(StNativeTypeKind.Bitfield, 1, false, 0, 0xFF, StBuiltinType.INT)],
+        [StBuiltinType.WORD,  new StNativeTypeDetails(StNativeTypeKind.Bitfield, 2, false, 0, 0xFFFF, StBuiltinType.DINT)],
+        [StBuiltinType.DWORD, new StNativeTypeDetails(StNativeTypeKind.Bitfield, 4, false, 0, 0xFFFFFFFF, StBuiltinType.LINT)],
         [StBuiltinType.LWORD, new StNativeTypeDetails(StNativeTypeKind.Bitfield, 8, false, 0, Number.MAX_SAFE_INTEGER)],
 
-        [StBuiltinType.USINT, new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 1, false, 0, 0xFF)],
-        [StBuiltinType.UINT,  new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 2, false, 0, 0xFFFF)],
-        [StBuiltinType.UDINT, new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 4, false, 0, 0xFFFFFFFF)],
+        // Unsigned Integer Types
+        [StBuiltinType.USINT, new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 1, false, 0, 0xFF, StBuiltinType.INT)],
+        [StBuiltinType.UINT,  new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 2, false, 0, 0xFFFF, StBuiltinType.DINT)],
+        [StBuiltinType.UDINT, new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 4, false, 0, 0xFFFFFFFF, StBuiltinType.LINT)],
         [StBuiltinType.ULINT, new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 8, false, 0, Number.MAX_SAFE_INTEGER)],
 
-        [StBuiltinType.SINT,  new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 1, true, -0x80, 0x7F)],
-        [StBuiltinType.INT,   new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 2, true, -0x8000, 0x7FFF)],
-        [StBuiltinType.DINT,  new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 4, true, -0x80000000, 0x7FFFFFFF)],
+        // Signed Integer Types
+        [StBuiltinType.SINT,  new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 1, true, -0x80, 0x7F, StBuiltinType.UINT)],
+        [StBuiltinType.INT,   new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 2, true, -0x8000, 0x7FFF, StBuiltinType.UDINT)],
+        [StBuiltinType.DINT,  new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 4, true, -0x80000000, 0x7FFFFFFF, StBuiltinType.ULINT)],
         [StBuiltinType.LINT,  new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 8, true, Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)],
 
-        [StBuiltinType.REAL,  new StNativeTypeDetails(StNativeTypeKind.Float, 4, undefined, -3.402823e+38, 3.402823e+38)],
+        // Floating Point Types
+        [StBuiltinType.REAL,  new StNativeTypeDetails(StNativeTypeKind.Float, 4, undefined, -3.402823e+38, 3.402823e+38, StBuiltinType.LREAL)],
         [StBuiltinType.LREAL, new StNativeTypeDetails(StNativeTypeKind.Float, 8, undefined, -1.7976931348623158e+308, 1.7976931348623158e+308)],
 
-        [StBuiltinType.STRING,  new StNativeTypeDetails(StNativeTypeKind.String, -1, undefined, undefined, undefined)],
-        [StBuiltinType.WSTRING, new StNativeTypeDetails(StNativeTypeKind.String, -1, undefined, undefined, undefined)],
+        // String Types
+        [StBuiltinType.STRING,  new StNativeTypeDetails(StNativeTypeKind.String, -1, undefined)],
+        [StBuiltinType.WSTRING, new StNativeTypeDetails(StNativeTypeKind.String, -1, undefined)],
     ]);
 
     public static readonly defaultTypes = new Map<StBuiltinType, StType>([
@@ -317,7 +323,7 @@ export class StModel {
     }
 
     static {
-        
+
         // Prepare INT
         const intDetails = StModel.nativeTypesDetails.get(StBuiltinType.INT)!;
         const defaultIntType = StModel.defaultTypes.get(StBuiltinType.INT)!;

@@ -328,7 +328,7 @@ export function getModifier(modifierCtx: ModifierContext | null): StModifier | u
 export function initializeIntegerType(
     subRangeParamToken: TerminalNode | null,
     type: StType,
-    sourceFile: StSourceFile
+    sourceFile: StSourceFile | undefined
 ) {
     const nativeTypeDetails = type.builtinType
         ? StModel.nativeTypesDetails.get(type.builtinType)
@@ -354,7 +354,8 @@ export function initializeIntegerType(
                 !(min <= type.subRangeStop && type.subRangeStop <= max)
             )
         ) {
-            M0001(subRangeParamToken!, sourceFile);
+            if (sourceFile)
+                M0001(subRangeParamToken!, sourceFile);
         }
     }
 

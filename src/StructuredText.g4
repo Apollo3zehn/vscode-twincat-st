@@ -431,38 +431,33 @@ TIME_OF_DAY_TYPE    : 'TIME_OF_DAY' | 'TOD' | 'LTIME_OF_DAY' | 'LTOD' ;
 DATE_AND_TIME_TYPE  : 'DATE_AND_TIME' | 'DT' | 'LDATE_AND_TIME' | 'LDT' ;
 STRING_TYPE         : 'STRING' | 'WSTRING' ;
 
-SUBRANGE_PARAM      : '(' '-'? [0-9]+ '..' '-'? [0-9]+ ')' ;
-STRING_LEN_PARAM    : '(' [0-9]+ ')' ;
+SUBRANGE_PARAM      : '(' INTEGER_LITERAL '..' '-'? INTEGER_LITERAL ')' ;
+STRING_LEN_PARAM    : '(' INTEGER_LITERAL ')' ;
 
 // Identifiers and literals
 BOOL_LITERAL        : 'TRUE' | 'FALSE' ;
 
 INTEGER_LITERAL
-                    : '-'? (
+                    :
+                    (
                         ( 
                             BITFIELD_TYPE
                             | UNSIGNED_INT_TYPE
                             | SIGNED_INT_TYPE
-                        ) '#' (
-                            DEC_DIGIT+
-                            | '2#' BIN_DIGIT+
-                            | '8#' OCT_DIGIT+
-                            | '10#' DEC_DIGIT+
-                            | '16#' HEX_DIGIT+
-                        )
-                        | (
-                            DEC_DIGIT+
-                            | '2#' BIN_DIGIT+
-                            | '8#' OCT_DIGIT+
-                            | '10#' DEC_DIGIT+
-                            | '16#' HEX_DIGIT+
-                        )
-                        | DEC_DIGIT+
+                        ) 
+                        '#' 
+                    )?
+                    (
+                        '-'? DEC_DIGIT+
+                        | '2#' BIN_DIGIT+
+                        | '8#' OCT_DIGIT+
+                        | '10#' DEC_DIGIT+
+                        | '16#' HEX_DIGIT+
                     )
                     ;
 
 REAL_LITERAL
-                    : '-'? (FLOATING_POINT_TYPE '#')? DEC_DIGIT+ ('.' DEC_DIGIT+)? ([eE][+\-]?DEC_DIGIT+)?
+                    : (FLOATING_POINT_TYPE '#')? '-'? DEC_DIGIT+ ('.' DEC_DIGIT+)? ([eE][+\-]?DEC_DIGIT+)?
                     ;
 
 STRING_LITERAL      : '\'' (~['\r\n])* '\'' ;

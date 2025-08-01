@@ -5,6 +5,9 @@ FUNCTION_BLOCK C0001
         // Signed Integer Types
         _int:                   INT             := INT#16#8000;
 
+        // Unsigned Integer Types
+        _uint:                  UINT            := UINT#-1;
+
         (* Javascript cannot properly represent 2^64-1 so we get no correct error here unfortunately. *)
         _int2:                  INT             := 18446744073709551616;
 

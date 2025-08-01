@@ -10,11 +10,6 @@ export function evaluateRealNumber(
     const realLiteral = literal.REAL_LITERAL()!;
     let text = realLiteral.getText();
 
-    const isNegative = text.startsWith("-");
-
-    if (isNegative)
-        text = text.substring(1);
-
     const splittedText = text.split('#');
 
     let requestedType: StBuiltinType | undefined;
@@ -33,7 +28,7 @@ export function evaluateRealNumber(
 
     // https://infosys.beckhoff.com/english.php?content=../content/1033/tc3_plc_intro/2529405067.html&id=
 
-    if (isNegative) {
+    if (value < 0) {
 
         if (-value >= -3.402823e+38)
             fittingType = StBuiltinType.REAL;
@@ -100,10 +95,7 @@ export function evaluateRealNumber(
 
     const type = new StType();
     type.builtinType = choosenType;
-
-    type.value = isNegative
-        ? -value
-        : value;
+    type.value = value;
 
     return type;
 }

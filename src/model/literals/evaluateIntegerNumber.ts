@@ -10,11 +10,6 @@ export function evaluateIntegerNumber(
     const integerLiteral = literal.INTEGER_LITERAL()!;
     let text = integerLiteral.getText();
 
-    const isNegative = text.startsWith("-");
-
-    if (isNegative)
-        text = text.substring(1);
-
     const splittedText = text.split('#');
 
     let requestedType: StBuiltinType | undefined;
@@ -39,22 +34,35 @@ export function evaluateIntegerNumber(
             radix = parseInt(splittedText[0], 10);
     }
 
+    const requestedTypeDetails = requestedType
+        ? StModel.nativeTypesDetails.get(requestedType)
+        : undefined;
+    
     value = parseInt(splittedText[splittedText.length - 1], radix);
 
     let fittingType: StBuiltinType;
 
-    if (isNegative) {
+    if (value < 0) {
 
-        if (-value >= -Math.pow(2, 7))
+        if (
+            requestedType &&
+            requestedTypeDetails &&
+            requestedTypeDetails?.kind !== StNativeTypeKind.SignedInteger
+        ) {
+            C0001(literal, StBuiltinType[requestedType], sourceFile);
+            return undefined;
+        }
+
+        if (value >= -Math.pow(2, 7))
             fittingType = StBuiltinType.SINT;   // -2^7 .. 2^7-1
             
-        else if (-value >= -Math.pow(2, 15))
+        else if (value >= -Math.pow(2, 15))
             fittingType = StBuiltinType.INT;    // -2^15 .. 2^15-1
             
-        else if (-value >= -Math.pow(2, 31))
+        else if (value >= -Math.pow(2, 31))
             fittingType = StBuiltinType.DINT;   // -2^31 .. 2^31-1
             
-        else if (-value >= -Math.pow(2, 63))
+        else if (value >= -Math.pow(2, 63))
             fittingType = StBuiltinType.LINT;   // -2^63 .. 2^63-1
             
         else {
@@ -111,7 +119,6 @@ export function evaluateIntegerNumber(
 
     if (requestedType) {
 
-        const requestedTypeDetails = StModel.nativeTypesDetails.get(requestedType);
         const fittingTypeDetails = StModel.nativeTypesDetails.get(fittingType);
 
         if (
@@ -130,11 +137,7 @@ export function evaluateIntegerNumber(
 
     const type = new StType();
     type.builtinType = choosenType;
-
-    type.value = isNegative
-        ? -value
-        : value;
-    
+    type.value = value;
     type.subRangeStart = type.value;
     type.subRangeStop = type.value;
 

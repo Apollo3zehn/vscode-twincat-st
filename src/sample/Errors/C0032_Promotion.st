@@ -23,7 +23,7 @@ FUNCTION_BLOCK C0032_Promotion
     //
     // * For assignments, the first operand refers to the variable being assigned to.
 
-    // Left operand: typed, right operand: types
+    // Left operand: typed, right operand: typed
     _bit := BYTE#1 + UINT#1;	// UINT
     _bit := UINT#1 + BYTE#1;	// UINT
 

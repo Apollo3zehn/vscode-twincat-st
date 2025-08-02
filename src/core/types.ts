@@ -36,20 +36,20 @@ export class StSourceFile {
 
 export class StType {
 
-    public builtinType: StBuiltinType | undefined;      // builtin types
-    public declaration: StSymbol | undefined;           // custom types
+    public builtinType: StBuiltinType | undefined | null;   // builtin types (null = untyped integer literal)
+    public declaration: StSymbol | undefined;               // custom types
 
-    public referencedOrElementType: StType | undefined; // arrays, references, pointers
+    public referencedOrElementType: StType | undefined;     // arrays, references, pointers
 
-    public stringLength: number | undefined;            // strings
+    public stringLength: number | undefined;                // strings
 
-    public subRangeStart: number | undefined;           // unsigned and signed integers
-    public subRangeStop: number | undefined;            // unsigned and signed integers
-    public isFullRange: boolean | undefined;            // unsigned and signed integers
+    public subRangeStart: number | undefined;               // unsigned and signed integers
+    public subRangeStop: number | undefined;                // unsigned and signed integers
+    public isFullRange: boolean | undefined;                // unsigned and signed integers
 
-    public value: number | undefined;                   // literals or constants
+    public value: number | undefined;                       // literals or constants
 
-    public isLiteral: boolean | undefined;              // literals
+    public isLiteral: boolean | undefined;                  // literals
 
     public context: TypeContext | undefined;
 

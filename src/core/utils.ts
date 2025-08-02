@@ -334,6 +334,9 @@ export function initializeIntegerType(
         ? StModel.nativeTypesDetails.get(type.builtinType)
         : undefined;
        
+    if (!nativeTypeDetails)
+        return;
+    
     const subRangeParam = subRangeParamToken?.getText();
     const subRangeParts = subRangeParam?.split('..');
 
@@ -343,8 +346,8 @@ export function initializeIntegerType(
         type.subRangeStop = Number.parseInt(subRangeParts[1].slice(0, -1));
         type.isFullRange = false;
 
-        const min = nativeTypeDetails!.min!;
-        const max = nativeTypeDetails!.max!;
+        const min = nativeTypeDetails.min!;
+        const max = nativeTypeDetails.max!;
 
         if (
             type.subRangeStart !== undefined &&
@@ -360,8 +363,8 @@ export function initializeIntegerType(
     }
 
     else {
-        type.subRangeStart = nativeTypeDetails!.min;
-        type.subRangeStop = nativeTypeDetails!.max;
+        type.subRangeStart = nativeTypeDetails.min;
+        type.subRangeStop = nativeTypeDetails.max;
         type.isFullRange = true;
     }
 }

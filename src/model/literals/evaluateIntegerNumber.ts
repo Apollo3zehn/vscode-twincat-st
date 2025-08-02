@@ -42,80 +42,33 @@ export function evaluateIntegerNumber(
 
     let rhsType: StBuiltinType;
 
-    if (value < 0) {
+    const integerType = getSmallestIntegerForValue(value, true, true);
+
+    if (integerType) {
+        rhsType = integerType;
+    }
+        
+    else {
+        
+        if (lhsType)
+            C0001(literal, StBuiltinType[lhsType], sourceFile);
+
+        else
+            C0001(literal, "ANY_INT", sourceFile);
+
+        return undefined;
+    }
+
+    if (lhsType) {
 
         if (
-            lhsType &&
+            value < 0 &&
             lhsTypeDetails &&
             lhsTypeDetails?.kind !== StNativeTypeKind.SignedInteger
         ) {
             C0001(literal, StBuiltinType[lhsType], sourceFile);
             return undefined;
         }
-
-        if (value >= -Math.pow(2, 7))
-            rhsType = StBuiltinType.SINT;   // -2^7 .. 2^7-1
-            
-        else if (value >= -Math.pow(2, 15))
-            rhsType = StBuiltinType.INT;    // -2^15 .. 2^15-1
-            
-        else if (value >= -Math.pow(2, 31))
-            rhsType = StBuiltinType.DINT;   // -2^31 .. 2^31-1
-            
-        else if (value >= -Math.pow(2, 63))
-            rhsType = StBuiltinType.LINT;   // -2^63 .. 2^63-1
-            
-        else {
-
-            if (lhsType)
-                C0001(literal, StBuiltinType[lhsType], sourceFile);
-
-            else
-                C0001(literal, "ANY_INT", sourceFile);
-
-            return undefined;
-        }
-    }
-
-    else {
-
-        if (value <= Math.pow(2, 7) - 1)
-            rhsType = StBuiltinType.SINT;   // -2^7 .. 2^7-1
-            
-        else if (value <= Math.pow(2, 8) - 1)
-            rhsType = StBuiltinType.USINT;  // 0 .. 2^8-1
-            
-        else if (value <= Math.pow(2, 15) - 1)
-            rhsType = StBuiltinType.INT;    // -2^15 .. 2^15-1
-            
-        else if (value <= Math.pow(2, 16) - 1)
-            rhsType = StBuiltinType.UINT;   // 0 .. 2^16-1
-            
-        else if (value <= Math.pow(2, 31) - 1)
-            rhsType = StBuiltinType.DINT;   // -2^31 .. 2^31-1
-            
-        else if (value <= Math.pow(2, 32) - 1)
-            rhsType = StBuiltinType.UDINT;  // 0 .. 2^32-1
-            
-        else if (value <= Math.pow(2, 63) - 1)
-            rhsType = StBuiltinType.LINT;   // -2^63 .. 2^63-1
-            
-        else if (value <= Math.pow(2, 64) - 1)
-            rhsType = StBuiltinType.ULINT;  // 0 .. 2^64-1
-            
-        else {
-            
-            if (lhsType)
-                C0001(literal, StBuiltinType[lhsType], sourceFile);
-
-            else
-                C0001(literal, "ANY_INT", sourceFile);
-
-            return undefined;
-        }
-    }
-
-    if (lhsType) {
 
         const rhsTypeDetails = StModel.nativeTypesDetails.get(rhsType);
 
@@ -127,17 +80,46 @@ export function evaluateIntegerNumber(
             C0001(literal, StBuiltinType[lhsType], sourceFile);
             return undefined;
         }
-
-        else {
-            rhsType = lhsType;
-        }
     }
 
     const type = new StType();
-    type.builtinType = rhsType;
+    type.builtinType = lhsType ?? null; // Return 'null' for untyped integer literals
     type.value = value;
     type.subRangeStart = type.value;
     type.subRangeStop = type.value;
 
     return type;
+}
+
+export function getSmallestIntegerForValue(
+    value: number,
+    withSigned: boolean,
+    withUnsigned: boolean
+): StBuiltinType | undefined {
+
+    if (withSigned && value >= -Math.pow(2, 7) && value < Math.pow(2, 7))
+        return StBuiltinType.SINT;
+        
+    else if (withUnsigned && value >= 0 && value < Math.pow(2, 8))
+        return StBuiltinType.USINT;
+        
+    else if (withSigned && value >= -Math.pow(2, 15) && value < Math.pow(2, 15))
+        return StBuiltinType.INT;
+        
+    else if (withUnsigned && value >= 0 && value < Math.pow(2, 16))
+        return StBuiltinType.UINT;
+        
+    else if (withSigned && value >= -Math.pow(2, 31) && value < Math.pow(2, 31))
+        return StBuiltinType.DINT;
+        
+    else if (withUnsigned && value >= 0 && value < Math.pow(2, 32))
+        return StBuiltinType.UDINT;
+        
+    else if (withSigned && value >= -Math.pow(2, 63) && value < Math.pow(2, 63))
+        return StBuiltinType.LINT;
+        
+    else if (withUnsigned && value >= 0 && value < Math.pow(2, 64))
+        return StBuiltinType.ULINT;
+
+    return undefined;
 }

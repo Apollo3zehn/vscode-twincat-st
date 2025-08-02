@@ -2,6 +2,13 @@
 
 - Use BigInt here: _int2:                  INT             := 18446744073709551616;
 
+- C0374: Division by zero	
+_bit := 0 / (1-1);
+
+- C0049: The constant index '0' is not within the range from '1' to '4'
+ChannelStatus	AT %I* : ARRAY [1..4] OF WORD;
+ChannelStatus[0]
+
 - isRefAssignment: 
     _boolValue: BOOL;
     _bool: REFERENCE TO BOOL REF= _boolValue;

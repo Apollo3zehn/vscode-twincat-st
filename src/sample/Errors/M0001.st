@@ -1,3 +1,4 @@
+// M0001: The subrange parameters are not within the valid range
 FUNCTION_BLOCK M0001
 
     VAR

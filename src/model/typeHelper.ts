@@ -1,6 +1,27 @@
 import { ParserRuleContext } from "antlr4ng";
 import { StBuiltinType, StModel, StNativeTypeKind, StType } from "../core/types.js";
+import { getSmallestIntegerForValue } from "./literals/evaluateIntegerNumber.js";
 import { initializeIntegerType } from "../core/utils.js";
+
+export function promoteSignedIntegerConstant(value: number): StType {
+
+    const type = new StType();
+    type.builtinType = getSmallestIntegerForValue(value, true, false);
+
+    initializeIntegerType(null, type, undefined);
+
+    return type;
+}
+
+export function promoteUnsignedIntegerConstant(value: number) {
+
+    const type = new StType();
+    type.builtinType = getSmallestIntegerForValue(value, false, true);
+
+    initializeIntegerType(null, type, undefined);
+
+    return type;
+}
 
 export function promoteConstant(
     contextTypeKind: StNativeTypeKind,
@@ -36,46 +57,6 @@ export function promoteConstant(
                 )
             ) {
                 return null; // Null means the calling function should just continue with the context type
-            }
-            
-            break;
-
-        // Convert possibly signed constants to the next larger type (which is unsigned)
-        case StNativeTypeKind.Bitfield:
-        case StNativeTypeKind.UnsignedInteger:
-
-            const isSignedInteger = typeDetails.kind === StNativeTypeKind.SignedInteger;    
-            
-            if (
-                isSignedInteger &&
-                type.value! > 0 &&
-                typeDetails.nextLargerType
-            ) {
-                const promotedType = new StType();
-                promotedType.builtinType = typeDetails.nextLargerType;
-
-                initializeIntegerType(null, promotedType, undefined);
-
-                return promotedType;
-            }
-            
-            break;
-            
-        // Convert possibly unsigned constants to the next larger type (which is signed)
-        case StNativeTypeKind.SignedInteger:
-
-            const isUnsignedInteger =
-                typeDetails.kind === StNativeTypeKind.Bitfield ||
-                typeDetails.kind === StNativeTypeKind.UnsignedInteger;
-
-            if (isUnsignedInteger && typeDetails.nextLargerType) {
-
-                const promotedType = new StType();
-                promotedType.builtinType = typeDetails.nextLargerType;
-
-                initializeIntegerType(null, promotedType, undefined);
-
-                return promotedType;
             }
             
             break;
@@ -126,35 +107,31 @@ export function getLowestCommonDenominator(
             return leftDetails.size >= rightDetails.size ? left : right;
 
         // If both are signed, promote to the larger signed type
-        if (leftIsSignedInteger && rightIsSignedInteger)
+        else if (leftIsSignedInteger && rightIsSignedInteger)
             return leftDetails.size >= rightDetails.size ? left : right;
 
         // If one is signed and one is unsigned, promote to signed type with larger size
-        if (
+        else if (
             (leftIsSignedInteger && rightIsUnsignedInteger) ||
             (leftIsUnsignedInteger && rightIsSignedInteger)
         ) {
-            // TODO:
-            //  - When one of the operants is signed, create a new signed type with
-            //    the size whichever is larger (don't forget to initialize this new
-            //    integer type)
-            //
-            //  - In case of unsigned literal (left or right) + signed non-literal: 
-            //    promote the literal to the next larger integer size
+            const maxSize = Math.max(leftDetails.size, rightDetails.size);
 
-            // if (
-            //     (leftIsSignedInteger && leftDetails.size >= rightDetails.size) ||
-            //     (rightIsSignedInteger && rightDetails.size >= leftDetails.size)
-            // ) {
-            //     return leftDetails.size >= rightDetails.size ? left : right;
-            // }
+            for (const [builtinType, details] of StModel.nativeTypesDetails.entries()) {
+                if (
+                    details.kind === StNativeTypeKind.SignedInteger &&
+                    details.size === maxSize
+                ) {
+                    return builtinType;
+                }
+            }
         }
 
         // Default: fallback to the larger type
         return leftDetails.size >= rightDetails.size ? left : right;
     }
     
-    // Either leftDetails or rightDetails is not defined, so just return any type.
+    // Neither leftDetails or rightDetails is defined, so just return any type.
     // The type checking algorithm will then throw an appropriate error.
     return left;
 }

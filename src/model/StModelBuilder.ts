@@ -9,14 +9,14 @@ import { C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0077, C0080, C
 import { evaluateBoolLiteral } from "./literals/evaluateBoolLiteral.js";
 import { evaluateDateAndTimeLiteral } from "./literals/evaluateDateAndTimeLiteral.js";
 import { evaluateDateLiteral } from "./literals/evaluateDateLiteral.js";
-import { evaluateIntegerNumber, getSmallestIntegerForValue } from "./literals/evaluateIntegerNumber.js";
+import { evaluateIntegerNumber } from "./literals/evaluateIntegerNumber.js";
 import { evaluateLTimeLiteral } from "./literals/evaluateLTimeLiteral.js";
 import { evaluateRealNumber } from "./literals/evaluateRealNumber.js";
 import { evaluateStringLiteral } from "./literals/evaluateStringLiteral.js";
 import { evaluateTimeLiteral } from "./literals/evaluateTimeLiteral.js";
 import { evaluateTimeOfDayLiteral } from "./literals/evaluateTimeOfDayLiteral.js";
 import { evaluateWStringLiteral } from "./literals/evaluateWStringLiteral.js";
-import { getLowestCommonDenominator, promoteConstant } from "./typeHelper.js";
+import { getLowestCommonDenominator, promoteConstant, promoteSignedIntegerConstant, promoteUnsignedIntegerConstant } from "./typeHelper.js";
 
 export class SemanticModelBuilder {
 
@@ -440,16 +440,8 @@ export class SemanticModelBuilder {
 
             if (!lhsType || !rhsType)
                 return undefined;
-
-            const lhsTypeDetails = lhsType.builtinType
-                ? StModel.nativeTypesDetails.get(lhsType.builtinType)
-                : undefined;
-            
-            const rhsTypeDetails = rhsType.builtinType
-                ? StModel.nativeTypesDetails.get(rhsType.builtinType)
-                : undefined;
-                
-            // Step 2: Promote possible constants (including literals)
+               
+            // Step 2: Promote possible constants (literals and constant expressions)
             const operator = expression._op!.text!;
 
             const lhsIsUntypedLiteral = lhsType.builtinType === null;
@@ -459,18 +451,26 @@ export class SemanticModelBuilder {
                 
                 // Promote both literals to the smallest signed integer type that can represent their values
                 if (operator === "-" || lhsType.value! < 0 || rhsType.value! < 0) {
-                    lhsType = this.promoteSignedIntegerConstant(lhsType.value!);
-                    rhsType = this.promoteSignedIntegerConstant(rhsType.value!);
+                    lhsType = promoteSignedIntegerConstant(lhsType.value!);
+                    rhsType = promoteSignedIntegerConstant(rhsType.value!);
                 }
 
                 // Promote both literals to the smallest unsigned integer type that can represent their values
                 else {
-                    lhsType = this.promoteUnsignedIntegerConstant(lhsType.value!);
-                    rhsType = this.promoteUnsignedIntegerConstant(rhsType.value!);
+                    lhsType = promoteUnsignedIntegerConstant(lhsType.value!);
+                    rhsType = promoteUnsignedIntegerConstant(rhsType.value!);
                 }                    
             }
             
             else {
+
+                const lhsTypeDetails = lhsType.builtinType
+                    ? StModel.nativeTypesDetails.get(lhsType.builtinType)
+                    : undefined;
+                
+                const rhsTypeDetails = rhsType.builtinType
+                    ? StModel.nativeTypesDetails.get(rhsType.builtinType)
+                    : undefined;
 
                 const lhsIsSigned = lhsTypeDetails?.kind === StNativeTypeKind.SignedInteger;
                 const rhsIsSigned = rhsTypeDetails?.kind === StNativeTypeKind.SignedInteger;
@@ -479,22 +479,22 @@ export class SemanticModelBuilder {
                     
                     // Promote the lhs type to the smallest signed integer type that can represent its value
                     if (lhsType.value && lhsIsUntypedLiteral)
-                        lhsType = this.promoteSignedIntegerConstant(lhsType.value);
+                        lhsType = promoteSignedIntegerConstant(lhsType.value);
 
                     // Promote the rhs type to the smallest signed integer type that can represent its value
                     if (rhsType.value && rhsIsUntypedLiteral)
-                        rhsType = this.promoteSignedIntegerConstant(rhsType.value);
+                        rhsType = promoteSignedIntegerConstant(rhsType.value);
                 }
                                     
                 else {
                     
                     // Promote the lhs type to the smallest unsigned integer type that can represent its value
                     if (lhsType.value && lhsIsUntypedLiteral)
-                        lhsType = this.promoteUnsignedIntegerConstant(lhsType.value);
+                        lhsType = promoteUnsignedIntegerConstant(lhsType.value);
 
                     // Promote the rhs type to the smallest unsigned integer type that can represent its value
                     if (rhsType.value && rhsIsUntypedLiteral)
-                        rhsType = this.promoteUnsignedIntegerConstant(rhsType.value);
+                        rhsType = promoteUnsignedIntegerConstant(rhsType.value);
                 }
             }
 
@@ -526,8 +526,7 @@ export class SemanticModelBuilder {
             // - evaluate math operations involving only constants
             initializeIntegerType(null, lcdType, sourceFile);
 
-            // Step 4: 
-            // Check assignment (lhs -> lcd)
+            // Step 4: Check assignments of lhs and rhs to LCD
             const lhsResult = this.CheckAssignment(
                 lcdType, expression,
                 lhsType, expressions[0],
@@ -535,7 +534,6 @@ export class SemanticModelBuilder {
                 sourceFile
             );
 
-            // Check assignment (rhs -> lcd)
             const rhsResult = this.CheckAssignment(
                 lcdType, expression,
                 rhsType, expressions[1],
@@ -565,26 +563,6 @@ export class SemanticModelBuilder {
         }
 
         return undefined;
-    }
-
-    private promoteSignedIntegerConstant(value: number): StType {
-
-        const type = new StType();
-        type.builtinType = getSmallestIntegerForValue(value, true, false);
-
-        initializeIntegerType(null, type, undefined);
-
-        return type;
-    }
-
-    private promoteUnsignedIntegerConstant(value: number) {
-
-        const type = new StType();
-        type.builtinType = getSmallestIntegerForValue(value, false, true);
-
-        initializeIntegerType(null, type, undefined);
-
-        return type;
     }
 
     private evaluateLiteral(

@@ -93,33 +93,51 @@ export function evaluateIntegerNumber(
 
 export function getSmallestIntegerForValue(
     value: number,
-    withSigned: boolean,
-    withUnsigned: boolean
+    allowSigned: boolean,
+    allowUnsigned: boolean
 ): StBuiltinType | undefined {
 
-    if (withSigned && value >= -Math.pow(2, 7) && value < Math.pow(2, 7))
-        return StBuiltinType.SINT;
-        
-    else if (withUnsigned && value >= 0 && value < Math.pow(2, 8))
-        return StBuiltinType.USINT;
-        
-    else if (withSigned && value >= -Math.pow(2, 15) && value < Math.pow(2, 15))
-        return StBuiltinType.INT;
-        
-    else if (withUnsigned && value >= 0 && value < Math.pow(2, 16))
-        return StBuiltinType.UINT;
-        
-    else if (withSigned && value >= -Math.pow(2, 31) && value < Math.pow(2, 31))
-        return StBuiltinType.DINT;
-        
-    else if (withUnsigned && value >= 0 && value < Math.pow(2, 32))
-        return StBuiltinType.UDINT;
-        
-    else if (withSigned && value >= -Math.pow(2, 63) && value < Math.pow(2, 63))
-        return StBuiltinType.LINT;
-        
-    else if (withUnsigned && value >= 0 && value < Math.pow(2, 64))
-        return StBuiltinType.ULINT;
+    if (value < 0) {
+
+        if (value >= -Math.pow(2, 7))
+            return StBuiltinType.SINT;
+            
+        else if (value >= -Math.pow(2, 15))
+            return StBuiltinType.INT;
+            
+        else if (value >= -Math.pow(2, 31))
+            return StBuiltinType.DINT;
+            
+        else if (value >= -Math.pow(2, 63))
+            return StBuiltinType.LINT;
+    }
+
+    else {
+
+        if (allowSigned && value < Math.pow(2, 7))
+            return StBuiltinType.SINT;
+            
+        else if (allowUnsigned && value < Math.pow(2, 8))
+            return StBuiltinType.USINT;
+            
+        else if (allowSigned && value < Math.pow(2, 15))
+            return StBuiltinType.INT;
+            
+        else if (allowUnsigned && value < Math.pow(2, 16))
+            return StBuiltinType.UINT;
+            
+        else if (allowSigned && value < Math.pow(2, 31))
+            return StBuiltinType.DINT;
+            
+        else if (allowUnsigned && value < Math.pow(2, 32))
+            return StBuiltinType.UDINT;
+            
+        else if (allowSigned && value < Math.pow(2, 63))
+            return StBuiltinType.LINT;
+            
+        else if (allowUnsigned && value < Math.pow(2, 64))
+            return StBuiltinType.ULINT;
+    }
 
     return undefined;
 }

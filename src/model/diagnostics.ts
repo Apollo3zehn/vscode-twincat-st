@@ -178,15 +178,15 @@ export function C0143(member: StSymbol, sourceFile: StSourceFile) {
 }
 
 // C0185: It is not possible to perform component access '.', index access '[]' or call '()' on result of function call. Assign result to help variable first.
-export function C0185(member: StSymbol, sourceFile: StSourceFile) {
+export function C0185(context: ParserRuleContext, sourceFile: StSourceFile) {
 
     const diagnostic = new Diagnostic(
-        member.selectionRange ?? member.range,
+        getContextRange(context),
         "It is not possible to perform component access '.', index access '[]' or call '()' on result of function call. Assign result to help variable first.",
         DiagnosticSeverity.Error
     );
 
-    diagnostic.code = "C0143";
+    diagnostic.code = "C0185";
     sourceFile.diagnostics.push(diagnostic);
 }
 

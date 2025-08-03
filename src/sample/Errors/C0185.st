@@ -25,25 +25,12 @@ FUNCTION_BLOCK C0185
         //
     END_METHOD
 
-    // Methods
+    // Component access
+    M_A().A;
 
-        // Component access
-        M_A().A;
+    // Index access
+    M_B()[0];
 
-        // Index access
-        M_B()[0];
-
-        // Call
-        M_A()();
-    
-    // Properties
-
-        // Component access
-        A.A;
-
-        // Index access
-        B[0];
-
-        // Call
-        A();
+    // Call
+    M_A()();
 END_FUNCTION_BLOCK

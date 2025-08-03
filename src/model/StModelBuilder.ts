@@ -16,7 +16,7 @@ import { evaluateStringLiteral } from "./literals/evaluateStringLiteral.js";
 import { evaluateTimeLiteral } from "./literals/evaluateTimeLiteral.js";
 import { evaluateTimeOfDayLiteral } from "./literals/evaluateTimeOfDayLiteral.js";
 import { evaluateWStringLiteral } from "./literals/evaluateWStringLiteral.js";
-import { getLowestCommonDenominator, promoteConstant, promoteSignedIntegerConstant, promoteUnsignedIntegerConstant } from "./typeHelper.js";
+import { getLowestCommonDenominator, promoteAssignmentOperand, promoteMathOperands } from "./promotionHelper.js";
 
 export class SemanticModelBuilder {
 
@@ -155,12 +155,7 @@ export class SemanticModelBuilder {
 
                     if (nestedLhsType && rhsType) {
 
-                        const nestedLhsTypeDetails = nestedLhsType.builtinType
-                            ? StModel.nativeTypesDetails.get(nestedLhsType.builtinType)
-                            : undefined;
-
-                        if (nestedLhsTypeDetails?.kind !== undefined)
-                            rhsType = promoteConstant(nestedLhsTypeDetails.kind, rhsType, rhsCtx) ?? nestedLhsType;
+                        rhsType = promoteAssignmentOperand(nestedLhsType, rhsType, rhsCtx);
 
                         this.CheckAssignment(
                             nestedLhsType, lhsCtx,
@@ -190,12 +185,7 @@ export class SemanticModelBuilder {
 
                     if (lhsType && rhsType) {
 
-                        const lhsTypeDetails = lhsType.builtinType
-                            ? StModel.nativeTypesDetails.get(lhsType.builtinType)
-                            : undefined;
-
-                        if (lhsTypeDetails?.kind !== undefined)
-                            rhsType = promoteConstant(lhsTypeDetails.kind, rhsType, rhsCtx) ?? lhsType;
+                        rhsType = promoteAssignmentOperand(lhsType, rhsType, rhsCtx);
 
                         this.CheckAssignment(
                             lhsType, undefined,
@@ -306,10 +296,19 @@ export class SemanticModelBuilder {
                 declarationKind === StSymbolKind.Enum ||
                 declarationKind === StSymbolKind.Gvl ||
                 qualifier.id === "THIS";
+            
+            const isMethodOrFunction =
+                declarationKind === StSymbolKind.Method ||
+                declarationKind === StSymbolKind.Function;
 
-            scope = isType
-                ? declaration
-                : declaration?.typeUsage?.type?.declaration;
+            if (isType)
+                scope = declaration;
+
+            else if (isMethodOrFunction)
+                scope = declaration?.returnTypeUsage?.type?.declaration;
+            
+            else
+                scope = declaration?.typeUsage?.type?.declaration;
         }
 
         else {
@@ -396,12 +395,7 @@ export class SemanticModelBuilder {
 
         if (lhsType && rhsType) {
 
-            const lhsTypeDetails = lhsType.builtinType
-                ? StModel.nativeTypesDetails.get(lhsType.builtinType)
-                : undefined;
-
-            if (lhsTypeDetails?.kind !== undefined)
-                rhsType = promoteConstant(lhsTypeDetails.kind, rhsType, rhsCtx) ?? lhsType;
+            rhsType = promoteAssignmentOperand(lhsType, rhsType, rhsCtx);
 
             this.CheckAssignment(
                 lhsType, lhsCtx,
@@ -442,73 +436,11 @@ export class SemanticModelBuilder {
                 return undefined;
                
             // Step 2: Promote possible constants (literals and constant expressions)
-            const operator = expression._op!.text!;
-
-            const lhsIsUntypedLiteral = lhsType.builtinType === null;
-            const rhsIsUntypedLiteral = rhsType.builtinType === null;
-
-            if (lhsIsUntypedLiteral && rhsIsUntypedLiteral) {
-                
-                // Promote both literals to the smallest signed integer type that can represent their values
-                if (operator === "-" || lhsType.value! < 0 || rhsType.value! < 0) {
-                    lhsType = promoteSignedIntegerConstant(lhsType.value!);
-                    rhsType = promoteSignedIntegerConstant(rhsType.value!);
-                }
-
-                // Promote both literals to the smallest unsigned integer type that can represent their values
-                else {
-                    lhsType = promoteUnsignedIntegerConstant(lhsType.value!);
-                    rhsType = promoteUnsignedIntegerConstant(rhsType.value!);
-                }                    
-            }
-            
-            else {
-
-                const lhsTypeDetails = lhsType.builtinType
-                    ? StModel.nativeTypesDetails.get(lhsType.builtinType)
-                    : undefined;
-                
-                const rhsTypeDetails = rhsType.builtinType
-                    ? StModel.nativeTypesDetails.get(rhsType.builtinType)
-                    : undefined;
-
-                const lhsIsSigned = lhsTypeDetails?.kind === StNativeTypeKind.SignedInteger;
-                const rhsIsSigned = rhsTypeDetails?.kind === StNativeTypeKind.SignedInteger;
-
-                if (lhsIsSigned || rhsIsSigned) {
-                    
-                    // Promote the lhs type to the smallest signed integer type that can represent its value
-                    if (lhsType.value && lhsIsUntypedLiteral)
-                        lhsType = promoteSignedIntegerConstant(lhsType.value);
-
-                    // Promote the rhs type to the smallest signed integer type that can represent its value
-                    if (rhsType.value && rhsIsUntypedLiteral)
-                        rhsType = promoteSignedIntegerConstant(rhsType.value);
-                }
-                                    
-                else {
-                    
-                    // Promote the lhs type to the smallest unsigned integer type that can represent its value
-                    if (lhsType.value && lhsIsUntypedLiteral)
-                        lhsType = promoteUnsignedIntegerConstant(lhsType.value);
-
-                    // Promote the rhs type to the smallest unsigned integer type that can represent its value
-                    if (rhsType.value && rhsIsUntypedLiteral)
-                        rhsType = promoteUnsignedIntegerConstant(rhsType.value);
-                }
-            }
+            [lhsType, rhsType] = promoteMathOperands(expression, lhsType, rhsType);
 
             if (!lhsType.builtinType || !rhsType.builtinType)
                 return undefined;
             
-            // if (
-            //     lhsTypeDetails?.kind !== undefined &&
-            //     rhsTypeDetails?.kind !== undefined
-            // ) {
-            //     lhsType = promoteConstant(rhsTypeDetails.kind, lhsType, expressions[0]) ?? rhsType;
-            //     rhsType = promoteConstant(lhsTypeDetails.kind, rhsType, expressions[1]) ?? lhsType;
-            // }
-
             // Step 3: Get lowest common denominator type
             const lcdBuiltinType = getLowestCommonDenominator(
                 lhsType,
@@ -622,8 +554,14 @@ export class SemanticModelBuilder {
         let currentMember: StSymbol | undefined = undefined;
         let currentType: StType | undefined = undefined;
         let currentQualifier: StSymbol | undefined = undefined;
+        let noMoreOpsAllowed: boolean = false; 
 
         for (const memberAccess of memberAccesses) {
+
+            if (noMoreOpsAllowed) {
+                C0185(memberAccess, sourceFile);
+                return undefined;
+            }
 
             currentMember = sourceFile.symbolMap.get(memberAccess);
 
@@ -649,7 +587,7 @@ export class SemanticModelBuilder {
                     }
                 }
 
-                currentType = this.evaluatePostOps(
+                [currentType, noMoreOpsAllowed] = this.evaluatePostOps(
                     currentMember,
                     memberAccess.postfixOp(),
                     sourceFile
@@ -712,7 +650,7 @@ export class SemanticModelBuilder {
         member: StSymbol,
         postfixOps: PostfixOpContext[],
         sourceFile: StSourceFile
-    ): StType | undefined {
+    ): [StType | undefined, boolean] {
 
         // The calling method ensures that declaration is defined
         const memberDeclaration = member.declaration!;
@@ -729,8 +667,8 @@ export class SemanticModelBuilder {
         for (const postfixOp of postfixOps) {
 
             if (noMoreOpsAllowed) {
-                C0185(member, sourceFile);
-                return undefined;
+                C0185(postfixOp, sourceFile);
+                return [undefined, noMoreOpsAllowed];
             }
 
             if (postfixOp.dereference()) {
@@ -743,7 +681,7 @@ export class SemanticModelBuilder {
 
                     if (!currentType?.isPointer) {
                         C0064(postfixOp, sourceFile);
-                        return undefined;
+                        return [undefined, noMoreOpsAllowed];
                     }
 
                     currentType = currentType.referencedOrElementType;
@@ -760,7 +698,7 @@ export class SemanticModelBuilder {
 
                     C0047(postfixOp, id, sourceFile);
 
-                    return undefined;
+                    return [undefined, noMoreOpsAllowed];
                 }
 
                 currentType = currentType.referencedOrElementType;
@@ -808,15 +746,15 @@ export class SemanticModelBuilder {
                             
                         case StSymbolKind.FunctionBlock:
                             C0080(member, sourceFile);
-                            return undefined;
+                            return [undefined, noMoreOpsAllowed];
 
                         case StSymbolKind.EnumMember:
                             C0035(member, sourceFile);
-                            return undefined;
+                            return [undefined, noMoreOpsAllowed];
                         
                         default:
                             C0036(member, memberDeclaration, sourceFile);
-                            return undefined;
+                            return [undefined, noMoreOpsAllowed];
                     }
                 }
             }
@@ -825,7 +763,7 @@ export class SemanticModelBuilder {
                 currentType = getNestedTypeOrSelf(currentType);
         }
 
-        return currentType;
+        return [currentType, noMoreOpsAllowed];
     }
 
     private cannotEvaluateExpression(expression: ParserRuleContext, sourceFile: StSourceFile) {

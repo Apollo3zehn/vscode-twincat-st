@@ -3,6 +3,17 @@ import { initializeIntegerType } from "../core/utils.js";
 import { ExprContext } from "../generated/StructuredTextParser.js";
 import { getSmallestIntegerForValue } from "./literals/evaluateIntegerNumber.js";
 
+
+export function promoteIntegerConstant(value: number): StType {
+
+    const type = new StType();
+    type.builtinType = getSmallestIntegerForValue(value, true, true);
+
+    initializeIntegerType(null, type, undefined);
+
+    return type;
+}
+
 export function promoteSignedIntegerConstant(value: number): StType {
 
     const type = new StType();
@@ -118,13 +129,20 @@ export function promoteAssignmentOperand(
             }
             
             break;
+              
+        case StNativeTypeKind.Bitfield:
+        case StNativeTypeKind.UnsignedInteger:
+           
+            // Promote the rhs type to the smallest unsigned integer type that can represent its value
+                if (rhsType.value !== undefined && rhsIsUntypedLiteral)
+                    rhsType = promoteUnsignedIntegerConstant(rhsType.value);
         
         case StNativeTypeKind.SignedInteger:
            
             // Promote the rhs type to the smallest signed integer type that can represent its value
                 if (rhsType.value !== undefined && rhsIsUntypedLiteral)
                     rhsType = promoteSignedIntegerConstant(rhsType.value);
-        
+            
         case StNativeTypeKind.Float:
 
             const typeDetails = rhsType
@@ -145,9 +163,9 @@ export function promoteAssignmentOperand(
 
     if (rhsIsUntypedLiteral) {
         
-        // Promote the rhs type to the smallest unsigned integer type that can represent its value
+        // Promote the rhs type to the smallest integer type that can represent its value
         if (rhsType.value !== undefined && rhsIsUntypedLiteral)
-            rhsType = promoteUnsignedIntegerConstant(rhsType.value);
+            rhsType = promoteIntegerConstant(rhsType.value);
     }
 
     return rhsType;

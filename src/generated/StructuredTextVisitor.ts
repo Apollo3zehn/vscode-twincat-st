@@ -59,6 +59,7 @@ import { DateLiteralContext } from "./StructuredTextParser.js";
 import { DateAndTimeLiteralContext } from "./StructuredTextParser.js";
 import { TimeOfDayLiteralContext } from "./StructuredTextParser.js";
 import { ExprContext } from "./StructuredTextParser.js";
+import { UnaryOpContext } from "./StructuredTextParser.js";
 import { PropertyBodyContext } from "./StructuredTextParser.js";
 import { GetterContext } from "./StructuredTextParser.js";
 import { SetterContext } from "./StructuredTextParser.js";
@@ -413,6 +414,12 @@ export class StructuredTextVisitor<Result> extends AbstractParseTreeVisitor<Resu
      * @return the visitor result
      */
     visitExpr?: (ctx: ExprContext) => Result;
+    /**
+     * Visit a parse tree produced by `StructuredTextParser.unaryOp`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitUnaryOp?: (ctx: UnaryOpContext) => Result;
     /**
      * Visit a parse tree produced by `StructuredTextParser.propertyBody`.
      * @param ctx the parse tree

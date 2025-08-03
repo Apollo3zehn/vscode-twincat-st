@@ -1,6 +1,17 @@
 - unary minus: https://gist.github.com/mattmcd/5277890#file-expr-g4-L8
 
+- implement M0002
+
 - Use BigInt here: _int2:                  INT             := 18446744073709551616;
+
+- Evaluate errors.st
+ array: ARRAY [0+1..GVL_Array.UPPER_LIMIT] OF INT;
+
+- C0107: The variable 'ChannelStatus2' is too large. (variable size: 2147483647, segment size: 2147483647)
+ARRAY [1__1___..1] OF WORD
+
+- C0163: Lower border must be lower than upper border
+ARRAY [1..0] OF WORD;
 
 - C0374: Division by zero	
 _bit := 0 / (1-1);

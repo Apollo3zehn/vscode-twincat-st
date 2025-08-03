@@ -20,6 +20,7 @@ FUNCTION_BLOCK Literals
         // Unsigned Integer Types
         uint_positive:          UINT            := 010;
         uint_typed:             UINT            := UINT#1;
+        usint_underscore:       UINT            := USINT#2__5_6;
 
         int_positive:           INT             := 10;
         int_negative:           INT             := -10;

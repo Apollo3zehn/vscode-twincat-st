@@ -102,7 +102,7 @@ arrayInit
 // =======================
 type
     : typeId
-    | ARRAY '[' INTEGER_LITERAL '..' INTEGER_LITERAL ']' OF type
+    | ARRAY '[' expr '..' expr ']' OF type
     | POINTER_TO type
     | REFERENCE_TO type
     ;
@@ -290,9 +290,14 @@ expr
     | expr op=('+'|'-') expr
     | expr op=('='|'<'|'>'|'<='|'>='|'<>') expr
     | expr op=('AND'|'OR'|'XOR') expr
+    | unaryOp expr
     | literal
     | memberExpression
     | '(' expr ')'
+    ;
+
+unaryOp
+    : '+' | '-' | 'NOT'
     ;
 
 // =======================
@@ -449,15 +454,15 @@ INTEGER_LITERAL
                     )?
                     (
                         '-'? DEC_DIGIT+
-                        | '2#' BIN_DIGIT+
-                        | '8#' OCT_DIGIT+
-                        | '10#' DEC_DIGIT+
-                        | '16#' HEX_DIGIT+
+                        | '2#' BIN_NUMBER+
+                        | '8#' OCT_NUMBER+
+                        | '10#' DEC_NUMBER+
+                        | '16#' HEX_NUMBER+
                     )
                     ;
 
 REAL_LITERAL
-                    : (FLOATING_POINT_TYPE '#')? '-'? DEC_DIGIT+ ('.' DEC_DIGIT+)? ([eE][+\-]?DEC_DIGIT+)?
+                    : (FLOATING_POINT_TYPE '#')? '-'? DEC_NUMBER+ ('.' DEC_NUMBER+)? ([eE][+\-]?DEC_NUMBER+)?
                     ;
 
 STRING_LITERAL      : '\'' (~['\r\n])* '\'' ;
@@ -489,8 +494,8 @@ LTIME_LITERAL
                     )
                     ;
 
-DATE_LITERAL        : DEC_DIGIT+ '-' DEC_DIGIT+ '-' DEC_DIGIT+ ;
-TIME_OF_DAY_LITERAL : DEC_DIGIT+ ':' DEC_DIGIT+ (':' DEC_DIGIT+ ('.' DEC_DIGIT+)? )? ;
+DATE_LITERAL        : DEC_NUMBER+ '-' DEC_NUMBER+ '-' DEC_NUMBER+ ;
+TIME_OF_DAY_LITERAL : DEC_NUMBER+ ':' DEC_NUMBER+ (':' DEC_NUMBER+ ('.' DEC_NUMBER+)? )? ;
 DATETIME_LITERAL    : DATE_LITERAL '-' TIME_OF_DAY_LITERAL ;
 
 ID                  : ID_START ID_PART* ;
@@ -501,19 +506,23 @@ COMMENT             : '//' ~[\r\n]* -> channel(HIDDEN) ;
 COMMENT_BLOCK       : '(*' .*? '*)' -> channel(HIDDEN) ;
 
 // Fragments
-fragment BIN_DIGIT  : [01_] ;
-fragment OCT_DIGIT  : [0-7_] ;
-fragment DEC_DIGIT  : [0-9_] ;
-fragment HEX_DIGIT  : [0-9A-Fa-f_] ;
+fragment BIN_DIGIT  : [01] ;
+fragment OCT_DIGIT  : [0-7] ;
+fragment DEC_DIGIT  : [0-9] ;
+fragment HEX_DIGIT  : [0-9A-Fa-f] ;
+fragment BIN_NUMBER : BIN_DIGIT '_'* BIN_DIGIT* ;
+fragment OCT_NUMBER : OCT_DIGIT '_'* OCT_DIGIT* ;
+fragment DEC_NUMBER : DEC_DIGIT '_'* DEC_DIGIT* ;
+fragment HEX_NUMBER : HEX_DIGIT '_'* HEX_DIGIT* ;
 
 fragment LETTER     : [a-zA-Z] ;
 fragment ID_START   : LETTER | '_' ;
 fragment ID_PART    : LETTER | DEC_DIGIT | '_' ;
 
-fragment DAY        : DEC_DIGIT+ 'D' ;
-fragment HOUR       : DEC_DIGIT+ 'H' ;
-fragment MIN        : DEC_DIGIT+ 'M' ;
-fragment SEC        : DEC_DIGIT+ 'S' ;
-fragment MS         : DEC_DIGIT+ 'MS' ;
-fragment US         : DEC_DIGIT+ 'US' ;
-fragment NS         : DEC_DIGIT+ 'NS' ;
+fragment DAY        : DEC_NUMBER+ 'D' ;
+fragment HOUR       : DEC_NUMBER+ 'H' ;
+fragment MIN        : DEC_NUMBER+ 'M' ;
+fragment SEC        : DEC_NUMBER+ 'S' ;
+fragment MS         : DEC_NUMBER+ 'MS' ;
+fragment US         : DEC_NUMBER+ 'US' ;
+fragment NS         : DEC_NUMBER+ 'NS' ;

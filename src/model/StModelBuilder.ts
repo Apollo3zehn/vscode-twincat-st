@@ -58,6 +58,19 @@ export class SemanticModelBuilder {
                 const type = symbol.type!;
                 const isArrayOrPointerOrReference = type.isArray || type.isPointer || type.isReference;
 
+                if (type.isArray) {
+                    
+                    for (const arrayLimitExpression of type.context!.expr()) {
+
+                        const rhsType = this.evaluateExpression(
+                            arrayLimitExpression,
+                            sourceFile
+                        );
+
+                        // TODO: Ensure that result is constant / Validate value (LHS type = ANY_INT)
+                    }
+                }
+
                 if (isArrayOrPointerOrReference && type.referencedOrElementType) {
 
                     const underlyingType = type.referencedOrElementType;
@@ -479,11 +492,17 @@ export class SemanticModelBuilder {
         }
 
         else if (expressions.length === 1) {
-
-            return this.evaluateExpression(
+          
+            const type = this.evaluateExpression(
                 expression,
                 sourceFile
             );
+
+            if (expression.unaryOp()) {
+                
+            }
+
+            return type;
         }
 
         else if (literal) {

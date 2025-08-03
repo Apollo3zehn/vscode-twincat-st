@@ -7,6 +7,11 @@
 - Evaluate errors.st
  array: ARRAY [0+1..GVL_Array.UPPER_LIMIT] OF INT;
 
+- Use expressions here:
+
+SUBRANGE_PARAM      : '(' INTEGER_LITERAL '..' '-'? INTEGER_LITERAL ')' ;
+STRING_LEN_PARAM    : '(' INTEGER_LITERAL ')' ;
+
 - C0107: The variable 'ChannelStatus2' is too large. (variable size: 2147483647, segment size: 2147483647)
 ARRAY [1__1___..1] OF WORD
 

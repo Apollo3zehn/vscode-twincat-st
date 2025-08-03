@@ -286,11 +286,11 @@ timeOfDayLiteral
     ;
 
 expr
-    : expr op=('*'|'/'|MOD) expr
+    : <assoc=right> unaryOp expr
+    | expr op=('*'|'/'|MOD) expr
     | expr op=('+'|'-') expr
     | expr op=('='|'<'|'>'|'<='|'>='|'<>') expr
     | expr op=('AND'|'OR'|'XOR') expr
-    | unaryOp expr
     | literal
     | memberExpression
     | '(' expr ')'
@@ -453,7 +453,7 @@ INTEGER_LITERAL
                         '#' 
                     )?
                     (
-                        '-'? DEC_DIGIT+
+                        '-'? DEC_NUMBER+
                         | '2#' BIN_NUMBER+
                         | '8#' OCT_NUMBER+
                         | '10#' DEC_NUMBER+

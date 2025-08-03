@@ -494,12 +494,12 @@ export class SemanticModelBuilder {
         else if (expressions.length === 1) {
           
             const type = this.evaluateExpression(
-                expression,
+                expressions[0],
                 sourceFile
             );
 
             if (expression.unaryOp()) {
-                
+                // TODO: when minus sign and type = unsigned integer, convert the current type to the next larger integer type
             }
 
             return type;

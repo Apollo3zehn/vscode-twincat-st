@@ -3145,7 +3145,7 @@ export class StructuredTextParser extends antlr.Parser {
                 this.state = 696;
                 this.unaryOp();
                 this.state = 697;
-                this.expr(4);
+                this.expr(8);
                 }
                 break;
             case StructuredTextParser.T__12:
@@ -3203,8 +3203,8 @@ export class StructuredTextParser extends antlr.Parser {
                         localContext = new ExprContext(parentContext, parentState);
                         this.pushNewRecursionContext(localContext, _startState, StructuredTextParser.RULE_expr);
                         this.state = 707;
-                        if (!(this.precpred(this.context, 8))) {
-                            throw this.createFailedPredicateException("this.precpred(this.context, 8)");
+                        if (!(this.precpred(this.context, 7))) {
+                            throw this.createFailedPredicateException("this.precpred(this.context, 7)");
                         }
                         this.state = 708;
                         localContext._op = this.tokenStream.LT(1);
@@ -3217,7 +3217,7 @@ export class StructuredTextParser extends antlr.Parser {
                             this.consume();
                         }
                         this.state = 709;
-                        this.expr(9);
+                        this.expr(8);
                         }
                         break;
                     case 2:
@@ -3225,8 +3225,8 @@ export class StructuredTextParser extends antlr.Parser {
                         localContext = new ExprContext(parentContext, parentState);
                         this.pushNewRecursionContext(localContext, _startState, StructuredTextParser.RULE_expr);
                         this.state = 710;
-                        if (!(this.precpred(this.context, 7))) {
-                            throw this.createFailedPredicateException("this.precpred(this.context, 7)");
+                        if (!(this.precpred(this.context, 6))) {
+                            throw this.createFailedPredicateException("this.precpred(this.context, 6)");
                         }
                         this.state = 711;
                         localContext._op = this.tokenStream.LT(1);
@@ -3239,7 +3239,7 @@ export class StructuredTextParser extends antlr.Parser {
                             this.consume();
                         }
                         this.state = 712;
-                        this.expr(8);
+                        this.expr(7);
                         }
                         break;
                     case 3:
@@ -3247,8 +3247,8 @@ export class StructuredTextParser extends antlr.Parser {
                         localContext = new ExprContext(parentContext, parentState);
                         this.pushNewRecursionContext(localContext, _startState, StructuredTextParser.RULE_expr);
                         this.state = 713;
-                        if (!(this.precpred(this.context, 6))) {
-                            throw this.createFailedPredicateException("this.precpred(this.context, 6)");
+                        if (!(this.precpred(this.context, 5))) {
+                            throw this.createFailedPredicateException("this.precpred(this.context, 5)");
                         }
                         this.state = 714;
                         localContext._op = this.tokenStream.LT(1);
@@ -3261,7 +3261,7 @@ export class StructuredTextParser extends antlr.Parser {
                             this.consume();
                         }
                         this.state = 715;
-                        this.expr(7);
+                        this.expr(6);
                         }
                         break;
                     case 4:
@@ -3269,8 +3269,8 @@ export class StructuredTextParser extends antlr.Parser {
                         localContext = new ExprContext(parentContext, parentState);
                         this.pushNewRecursionContext(localContext, _startState, StructuredTextParser.RULE_expr);
                         this.state = 716;
-                        if (!(this.precpred(this.context, 5))) {
-                            throw this.createFailedPredicateException("this.precpred(this.context, 5)");
+                        if (!(this.precpred(this.context, 4))) {
+                            throw this.createFailedPredicateException("this.precpred(this.context, 4)");
                         }
                         this.state = 717;
                         localContext._op = this.tokenStream.LT(1);
@@ -3283,7 +3283,7 @@ export class StructuredTextParser extends antlr.Parser {
                             this.consume();
                         }
                         this.state = 718;
-                        this.expr(6);
+                        this.expr(5);
                         }
                         break;
                     }
@@ -3655,13 +3655,13 @@ export class StructuredTextParser extends antlr.Parser {
     private expr_sempred(localContext: ExprContext | null, predIndex: number): boolean {
         switch (predIndex) {
         case 0:
-            return this.precpred(this.context, 8);
-        case 1:
             return this.precpred(this.context, 7);
-        case 2:
+        case 1:
             return this.precpred(this.context, 6);
-        case 3:
+        case 2:
             return this.precpred(this.context, 5);
+        case 3:
+            return this.precpred(this.context, 4);
         }
         return true;
     }
@@ -3927,13 +3927,13 @@ export class StructuredTextParser extends antlr.Parser {
         686,5,122,0,0,686,105,1,0,0,0,687,688,5,111,0,0,688,689,5,15,0,0,
         689,690,5,124,0,0,690,107,1,0,0,0,691,692,5,110,0,0,692,693,5,15,
         0,0,693,694,5,123,0,0,694,109,1,0,0,0,695,696,6,55,-1,0,696,697,
-        3,112,56,0,697,698,3,110,55,4,698,706,1,0,0,0,699,706,3,102,51,0,
+        3,112,56,0,697,698,3,110,55,8,698,706,1,0,0,0,699,706,3,102,51,0,
         700,706,3,90,45,0,701,702,5,3,0,0,702,703,3,110,55,0,703,704,5,5,
         0,0,704,706,1,0,0,0,705,695,1,0,0,0,705,699,1,0,0,0,705,700,1,0,
-        0,0,705,701,1,0,0,0,706,721,1,0,0,0,707,708,10,8,0,0,708,709,7,6,
-        0,0,709,720,3,110,55,9,710,711,10,7,0,0,711,712,7,7,0,0,712,720,
-        3,110,55,8,713,714,10,6,0,0,714,715,7,8,0,0,715,720,3,110,55,7,716,
-        717,10,5,0,0,717,718,7,9,0,0,718,720,3,110,55,6,719,707,1,0,0,0,
+        0,0,705,701,1,0,0,0,706,721,1,0,0,0,707,708,10,7,0,0,708,709,7,6,
+        0,0,709,720,3,110,55,8,710,711,10,6,0,0,711,712,7,7,0,0,712,720,
+        3,110,55,7,713,714,10,5,0,0,714,715,7,8,0,0,715,720,3,110,55,6,716,
+        717,10,4,0,0,717,718,7,9,0,0,718,720,3,110,55,5,719,707,1,0,0,0,
         719,710,1,0,0,0,719,713,1,0,0,0,719,716,1,0,0,0,720,723,1,0,0,0,
         721,719,1,0,0,0,721,722,1,0,0,0,722,111,1,0,0,0,723,721,1,0,0,0,
         724,725,7,10,0,0,725,113,1,0,0,0,726,735,3,116,58,0,727,735,3,118,

@@ -23,8 +23,6 @@ export class StDiagnosticsProvider {
             return;
         }
 
-        StModelBuilder.currentSourceFile = sourceFile;
-
         // TODO: Do not make full evaluation every file change
         const seen = new Set<string>();
 

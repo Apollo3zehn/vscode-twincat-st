@@ -50,9 +50,7 @@ export class StModelBuilder {
         await Promise.all(tasks);
 
         // Resolve types first ...
-        for (const sourceFile of this._model.sourceFileMap.values()) {
-            
-            StModelBuilder.currentSourceFile = sourceFile;
+        this.iterateAndSelectSourceFiles(sourceFile => {
 
             for (const [ctx, symbol] of sourceFile.symbolMap) {
                 
@@ -137,12 +135,10 @@ export class StModelBuilder {
                     }
                 }
             }
-        }
+        });
 
         // ... then evaluate all variable declaration initializers and enum member initializers
-        for (const sourceFile of this._model.sourceFileMap.values()) {
-            
-            StModelBuilder.currentSourceFile = sourceFile;
+        this.iterateAndSelectSourceFiles(sourceFile => {
 
             for (const [ctx, symbol] of sourceFile.symbolMap) {
                 
@@ -205,12 +201,10 @@ export class StModelBuilder {
                     }
                 }
             }
-        }
+        });
 
         // ... then evaluate all statements
-        for (const sourceFile of this._model.sourceFileMap.values()) {
-            
-            StModelBuilder.currentSourceFile = sourceFile;
+        this.iterateAndSelectSourceFiles(sourceFile => {
 
             for (const statementContext of sourceFile.statements) {
                 
@@ -220,7 +214,7 @@ export class StModelBuilder {
                 else if (statementContext.assignment())
                     this.evaluateAssignment(statementContext.assignment()!);
             }
-        }
+        });
 
         return this._model;
     }
@@ -939,4 +933,11 @@ export class StModelBuilder {
     }
 
     //#endregion
+
+    private iterateAndSelectSourceFiles(callback: (sourceFile: StSourceFile) => void): void {
+        for (const sourceFile of this._model.sourceFileMap.values()) {
+            StModelBuilder.currentSourceFile = sourceFile;
+            callback(sourceFile);
+        }
+    }
 }

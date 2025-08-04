@@ -1,16 +1,15 @@
 import { DateTime } from "luxon";
-import { StBuiltinType, StSourceFile, StType } from "../../core/types.js";
+import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
 import { LiteralContext } from "../../generated/StructuredTextParser.js";
 import { isDateInRange } from "../../core/utils.js";
 import { C0001 } from "../diagnostics.js";
 
 export function evaluateDateLiteral(
-    literal: LiteralContext,
-    sourceFile: StSourceFile,
+    literal: LiteralContext
 ): StType | undefined {
     
     const dateLiteral = literal.dateLiteral()!;
-    const requestedType = dateLiteral._prefix?.text as StBuiltinType;
+    const requestedType = dateLiteral._prefix?.text as StBuiltinTypeCode;
     const dateParts = dateLiteral._date!.text!.split("-");
 
     const year = Number.parseInt(dateParts[0]);
@@ -19,16 +18,15 @@ export function evaluateDateLiteral(
     const dateTime = DateTime.fromObject({ year, month, day });
 
     if (!dateTime.isValid) {
-        C0001(literal, StBuiltinType[requestedType], sourceFile);
+        C0001(literal, StBuiltinTypeCode[requestedType]);
         return undefined;
     }
 
-    let choosenType: StBuiltinType | undefined;
+    let choosenType: StBuiltinTypeCode | undefined;
 
     switch (requestedType) {
         
-        case StBuiltinType.DATE:
-        case StBuiltinType.D:
+        case StBuiltinTypeCode.DATE:
 
             if (
                 isDateInRange(
@@ -37,18 +35,17 @@ export function evaluateDateLiteral(
                     2106, 2, 7
                 )
             ) {
-                choosenType = StBuiltinType.DATE;
+                choosenType = StBuiltinTypeCode.DATE;
             }
 
             else {
-                C0001(literal, StBuiltinType[requestedType], sourceFile);
+                C0001(literal, StBuiltinTypeCode[requestedType]);
                 return undefined;
             }
 
             break;
         
-        case StBuiltinType.LDATE:
-        case StBuiltinType.LD:
+        case StBuiltinTypeCode.LDATE:
 
             if (
                 isDateInRange(
@@ -57,11 +54,11 @@ export function evaluateDateLiteral(
                     2554, 7, 21
                 )
             ) {
-                choosenType = StBuiltinType.LDATE;
+                choosenType = StBuiltinTypeCode.LDATE;
             }
 
             else {
-                C0001(literal, StBuiltinType[requestedType], sourceFile);
+                C0001(literal, StBuiltinTypeCode[requestedType]);
                 return undefined;
             }
 
@@ -72,7 +69,7 @@ export function evaluateDateLiteral(
     }
 
     const type = new StType();
-    type.builtinType = choosenType;
+    type.builtinType = new StBuiltinType(choosenType);
 
     return type;
 }

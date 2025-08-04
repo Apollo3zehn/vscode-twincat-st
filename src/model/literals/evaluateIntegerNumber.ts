@@ -1,10 +1,9 @@
-import { StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StType } from "../../core/types.js";
+import { StBuiltinType, StBuiltinTypeCode, StNativeTypeKind, StType } from "../../core/types.js";
 import { LiteralContext } from "../../generated/StructuredTextParser.js";
 import { C0001 } from "../diagnostics.js";
 
 export function evaluateIntegerNumber(
-    literal: LiteralContext,
-    sourceFile: StSourceFile
+    literal: LiteralContext
 ): StType | undefined {
     
     const integerLiteral = literal.INTEGER_LITERAL()!;
@@ -12,7 +11,7 @@ export function evaluateIntegerNumber(
 
     const splittedText = text.split('#');
 
-    let lhsType: StBuiltinType | undefined;
+    let lhsBuiltinType: StBuiltinType | undefined;
     let radix: number = 10;
     let value: number;
 
@@ -21,26 +20,24 @@ export function evaluateIntegerNumber(
      * to be uppercase, otherwise it is a syntax error.
      */
     if (splittedText.length === 3) {
-        lhsType = splittedText[0] as StBuiltinType;
+        lhsBuiltinType = new StBuiltinType(splittedText[0] as StBuiltinTypeCode);
         radix = parseInt(splittedText[1], 10);
     }
 
     else if (splittedText.length === 2) {
 
-        if (splittedText[0] in StBuiltinType)
-            lhsType = splittedText[0] as StBuiltinType;
+        if (splittedText[0] in StBuiltinTypeCode) {
+            lhsBuiltinType = new StBuiltinType(splittedText[0] as StBuiltinTypeCode);
+        }
             
-        else
+        else {
             radix = parseInt(splittedText[0], 10);
+        }
     }
-
-    const lhsTypeDetails = lhsType
-        ? StModel.nativeTypesDetails.get(lhsType)
-        : undefined;
     
     value = parseInt(splittedText[splittedText.length - 1], radix);
 
-    let rhsType: StBuiltinType;
+    let rhsType: StType;
 
     const integerType = getSmallestIntegerForValue(value, true, true);
 
@@ -50,43 +47,49 @@ export function evaluateIntegerNumber(
         
     else {
         
-        if (lhsType)
-            C0001(literal, StBuiltinType[lhsType], sourceFile);
+        if (lhsBuiltinType)
+            C0001(literal, StBuiltinTypeCode[lhsBuiltinType.code!]);
 
         else
-            C0001(literal, "ANY_INT", sourceFile);
+            C0001(literal, "ANY_INT");
 
         return undefined;
     }
 
-    if (lhsType) {
+    if (lhsBuiltinType) {
 
         if (
             value < 0 &&
-            lhsTypeDetails &&
-            lhsTypeDetails?.kind !== StNativeTypeKind.SignedInteger
+            lhsBuiltinType &&
+            lhsBuiltinType.details?.kind !== StNativeTypeKind.SignedInteger
         ) {
-            C0001(literal, StBuiltinType[lhsType], sourceFile);
+            C0001(literal, StBuiltinTypeCode[lhsBuiltinType.code!]);
             return undefined;
         }
 
-        const rhsTypeDetails = StModel.nativeTypesDetails.get(rhsType);
+        const rhsDetails = rhsType.builtinType?.details;
+        const lhsDetails = lhsBuiltinType.details;
 
         if (
-            rhsTypeDetails &&
-            lhsTypeDetails &&
-            lhsTypeDetails.max! < rhsTypeDetails.max!
+            rhsDetails &&
+            lhsDetails &&
+            lhsDetails.max! < rhsDetails.max!
         ) {
-            C0001(literal, StBuiltinType[lhsType], sourceFile);
+            C0001(literal, StBuiltinTypeCode[lhsBuiltinType.code!]);
             return undefined;
         }
     }
 
+    const builtinType = lhsBuiltinType?.code
+        ? lhsBuiltinType
+        : new StBuiltinType(null); // Return 'null' for untyped integer literals
+
+    builtinType.value = value;
+    builtinType.subRangeStart = value;
+    builtinType.subRangeStop = value;
+
     const type = new StType();
-    type.builtinType = lhsType ?? null; // Return 'null' for untyped integer literals
-    type.value = value;
-    type.subRangeStart = type.value;
-    type.subRangeStop = type.value;
+    type.builtinType = builtinType;
 
     return type;
 }
@@ -95,49 +98,57 @@ export function getSmallestIntegerForValue(
     value: number,
     allowSigned: boolean,
     allowUnsigned: boolean
-): StBuiltinType | undefined {
+): StType | undefined {
+
+    let code: StBuiltinTypeCode | undefined = undefined;
 
     if (value < 0) {
 
         if (value >= -Math.pow(2, 7))
-            return StBuiltinType.SINT;
+            code = StBuiltinTypeCode.SINT;
             
         else if (value >= -Math.pow(2, 15))
-            return StBuiltinType.INT;
+            code = StBuiltinTypeCode.INT;
             
         else if (value >= -Math.pow(2, 31))
-            return StBuiltinType.DINT;
+            code = StBuiltinTypeCode.DINT;
             
         else if (value >= -Math.pow(2, 63))
-            return StBuiltinType.LINT;
+            code = StBuiltinTypeCode.LINT;
     }
 
     else {
 
         if (allowSigned && value < Math.pow(2, 7))
-            return StBuiltinType.SINT;
+            code = StBuiltinTypeCode.SINT;
             
         else if (allowUnsigned && value < Math.pow(2, 8))
-            return StBuiltinType.USINT;
+            code = StBuiltinTypeCode.USINT;
             
         else if (allowSigned && value < Math.pow(2, 15))
-            return StBuiltinType.INT;
+            code = StBuiltinTypeCode.INT;
             
         else if (allowUnsigned && value < Math.pow(2, 16))
-            return StBuiltinType.UINT;
+            code = StBuiltinTypeCode.UINT;
             
         else if (allowSigned && value < Math.pow(2, 31))
-            return StBuiltinType.DINT;
+            code = StBuiltinTypeCode.DINT;
             
         else if (allowUnsigned && value < Math.pow(2, 32))
-            return StBuiltinType.UDINT;
+            code = StBuiltinTypeCode.UDINT;
             
         else if (allowSigned && value < Math.pow(2, 63))
-            return StBuiltinType.LINT;
+            code = StBuiltinTypeCode.LINT;
             
         else if (allowUnsigned && value < Math.pow(2, 64))
-            return StBuiltinType.ULINT;
+            code = StBuiltinTypeCode.ULINT;
     }
 
-    return undefined;
+    if (!code)
+        return undefined; // This can only happen when called via evaluateIntegerNumber, otherwise the type is always defined.
+
+    const type = new StType();
+    type.builtinType = new StBuiltinType(code);
+
+    return type;
 }

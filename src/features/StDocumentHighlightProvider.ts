@@ -1,6 +1,7 @@
 import { CancellationToken, DocumentHighlight, DocumentHighlightKind, DocumentHighlightProvider, Position, ProviderResult, TextDocument } from "vscode";
 import { StModel } from "../core/types.js";
 import { isInRange } from "../core/utils.js";
+import { StModelBuilder } from "../model/StModelBuilder.js";
 
 export class StDocumentHighlightProvider implements DocumentHighlightProvider {
     constructor(private model: StModel) {}
@@ -15,6 +16,8 @@ export class StDocumentHighlightProvider implements DocumentHighlightProvider {
 
         if (!sourceFile)
             return [];
+
+        StModelBuilder.currentSourceFile = sourceFile;
 
         // Find the symbol at the given position
         const targetSymbol = Array.from(sourceFile.symbolMap.values())
@@ -33,7 +36,6 @@ export class StDocumentHighlightProvider implements DocumentHighlightProvider {
             ?? declaringSymbol.range;
 
         if (declRange)
-
             highlights.push(new DocumentHighlight(declRange, DocumentHighlightKind.Write));
 
         // Highlight all references

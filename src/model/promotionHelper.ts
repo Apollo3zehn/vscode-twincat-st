@@ -1,38 +1,6 @@
-import { StBuiltinType, StModel, StNativeTypeKind, StType } from "../core/types.js";
-import { initializeIntegerType } from "../core/utils.js";
+import { nativeTypesDetails, StBuiltinTypeCode, StNativeTypeKind, StType } from "../core/types.js";
 import { ExprContext } from "../generated/StructuredTextParser.js";
 import { getSmallestIntegerForValue } from "./literals/evaluateIntegerNumber.js";
-
-
-export function promoteIntegerConstant(value: number): StType {
-
-    const type = new StType();
-    type.builtinType = getSmallestIntegerForValue(value, true, true);
-
-    initializeIntegerType(null, type, undefined);
-
-    return type;
-}
-
-export function promoteSignedIntegerConstant(value: number): StType {
-
-    const type = new StType();
-    type.builtinType = getSmallestIntegerForValue(value, true, false);
-
-    initializeIntegerType(null, type, undefined);
-
-    return type;
-}
-
-export function promoteUnsignedIntegerConstant(value: number) {
-
-    const type = new StType();
-    type.builtinType = getSmallestIntegerForValue(value, false, true);
-
-    initializeIntegerType(null, type, undefined);
-
-    return type;
-}
 
 export function promoteMathOperands(
     expression: ExprContext,
@@ -42,57 +10,52 @@ export function promoteMathOperands(
 
     const operator = expression._op!.text!;
 
-    const lhsIsUntypedLiteral = lhsType.builtinType === null;
-    const rhsIsUntypedLiteral = rhsType.builtinType === null;
+    const lhsBuiltinType = lhsType.builtinType;
+    const lhsIsUntypedLiteral = lhsBuiltinType?.code === null;
+
+    const rhsBuiltinType = rhsType.builtinType;
+    const rhsIsUntypedLiteral = rhsBuiltinType?.code === null;
 
     if (lhsIsUntypedLiteral && rhsIsUntypedLiteral) {
 
         // Promote both literals to the smallest signed integer type that can represent their values
-        if (operator === "-" || lhsType.value! < 0 || rhsType.value! < 0) {
-            lhsType = promoteSignedIntegerConstant(lhsType.value!);
-            rhsType = promoteSignedIntegerConstant(rhsType.value!);
+        if (operator === "-" || lhsBuiltinType.value! < 0 || rhsBuiltinType.value! < 0) {
+            lhsType = getSmallestIntegerForValue(lhsBuiltinType.value!, true, false)!;
+            rhsType = getSmallestIntegerForValue(rhsBuiltinType.value!, true, false)!;
         }
 
         // Promote both literals to the smallest unsigned integer type that can represent their values
         else {
-            lhsType = promoteUnsignedIntegerConstant(lhsType.value!);
-            rhsType = promoteUnsignedIntegerConstant(rhsType.value!);
+            lhsType = getSmallestIntegerForValue(lhsBuiltinType.value!, false, true)!;
+            rhsType = getSmallestIntegerForValue(rhsBuiltinType.value!, false, true)!;
         }
     }
 
     else {
 
-        const lhsTypeDetails = lhsType.builtinType
-            ? StModel.nativeTypesDetails.get(lhsType.builtinType)
-            : undefined;
-
-        const rhsTypeDetails = rhsType.builtinType
-            ? StModel.nativeTypesDetails.get(rhsType.builtinType)
-            : undefined;
-
-        const lhsIsSigned = lhsTypeDetails?.kind === StNativeTypeKind.SignedInteger;
-        const rhsIsSigned = rhsTypeDetails?.kind === StNativeTypeKind.SignedInteger;
+        const lhsIsSigned = lhsBuiltinType?.details?.signed;
+        const rhsIsSigned = rhsBuiltinType?.details?.signed;
 
         if (lhsIsSigned || rhsIsSigned) {
 
             // Promote the lhs type to the smallest signed integer type that can represent its value
-            if (lhsType.value !== undefined && lhsIsUntypedLiteral)
-                lhsType = promoteSignedIntegerConstant(lhsType.value);
+            if (lhsBuiltinType!.value !== undefined && lhsIsUntypedLiteral)
+                lhsType = getSmallestIntegerForValue(lhsBuiltinType.value, true, false)!;
 
             // Promote the rhs type to the smallest signed integer type that can represent its value
-            if (rhsType.value !== undefined && rhsIsUntypedLiteral)
-                rhsType = promoteSignedIntegerConstant(rhsType.value);
+            if (rhsBuiltinType!.value !== undefined && rhsIsUntypedLiteral)
+                rhsType = getSmallestIntegerForValue(rhsBuiltinType.value, true, false)!;
         }
 
         else {
 
             // Promote the lhs type to the smallest unsigned integer type that can represent its value
-            if (lhsType.value !== undefined && lhsIsUntypedLiteral)
-                lhsType = promoteUnsignedIntegerConstant(lhsType.value);
+            if (lhsBuiltinType?.value !== undefined && lhsIsUntypedLiteral)
+                lhsType = getSmallestIntegerForValue(lhsBuiltinType.value, false, true)!;
 
             // Promote the rhs type to the smallest unsigned integer type that can represent its value
-            if (rhsType.value !== undefined && rhsIsUntypedLiteral)
-                rhsType = promoteUnsignedIntegerConstant(rhsType.value);
+            if (rhsBuiltinType?.value !== undefined && rhsIsUntypedLiteral)
+                rhsType = getSmallestIntegerForValue(rhsBuiltinType.value, false, true)!;
         }
     }
     
@@ -105,13 +68,10 @@ export function promoteAssignmentOperand(
     expression: ExprContext | undefined
 ): StType {
 
-    const lhsTypeDetails = lhsType.builtinType
-        ? StModel.nativeTypesDetails.get(lhsType.builtinType)
-        : undefined;
-
-    let rhsIsUntypedLiteral = rhsType.builtinType === null;
+    let rhsBuiltinType = rhsType.builtinType;
+    let rhsIsUntypedLiteral = rhsBuiltinType?.code === null;
     
-    switch (lhsTypeDetails?.kind) {
+    switch (lhsType.builtinType?.details?.kind) {
 
         case StNativeTypeKind.Logical:
 
@@ -119,7 +79,7 @@ export function promoteAssignmentOperand(
             
             if (
                 // Only allow 0 or 1, and nothing else! No type prefix etc
-                rhsType.isLiteral /* ONLY literals are allowed here! */ &&
+                rhsBuiltinType?.isLiteral /* ONLY literals are allowed here! */ &&
                 (
                     literalText === "0" ||
                     literalText === "1"
@@ -134,24 +94,24 @@ export function promoteAssignmentOperand(
         case StNativeTypeKind.UnsignedInteger:
            
             // Promote the rhs type to the smallest unsigned integer type that can represent its value
-                if (rhsType.value !== undefined && rhsIsUntypedLiteral)
-                    rhsType = promoteUnsignedIntegerConstant(rhsType.value);
+            if (rhsBuiltinType?.value !== undefined && rhsIsUntypedLiteral)
+                rhsType = getSmallestIntegerForValue(rhsBuiltinType.value, false, true)!;
+
+            break;
         
         case StNativeTypeKind.SignedInteger:
            
             // Promote the rhs type to the smallest signed integer type that can represent its value
-                if (rhsType.value !== undefined && rhsIsUntypedLiteral)
-                    rhsType = promoteSignedIntegerConstant(rhsType.value);
+            if (rhsBuiltinType?.value !== undefined && rhsIsUntypedLiteral)
+                rhsType = getSmallestIntegerForValue(rhsBuiltinType.value, true, false)!;
+
+            break;
             
         case StNativeTypeKind.Float:
-
-            const typeDetails = rhsType
-                ? StModel.nativeTypesDetails.get(rhsType.builtinType!)
-                : undefined;
+           
+            const isFloat = rhsBuiltinType?.details?.kind === StNativeTypeKind.Float;
             
-            const isFloat = typeDetails?.kind === StNativeTypeKind.Float;
-            
-            if (isFloat && Math.abs(rhsType.value!) <= 3.402823e+38)
+            if (isFloat && Math.abs(rhsBuiltinType!.value!) <= 3.402823e+38)
                 return lhsType;
         
         default:
@@ -159,13 +119,14 @@ export function promoteAssignmentOperand(
     }
 
     // Fallback
-    rhsIsUntypedLiteral = rhsType.builtinType === null;
+    rhsBuiltinType = rhsType.builtinType;
+    rhsIsUntypedLiteral = rhsBuiltinType?.code === null;
 
     if (rhsIsUntypedLiteral) {
         
         // Promote the rhs type to the smallest integer type that can represent its value
-        if (rhsType.value !== undefined && rhsIsUntypedLiteral)
-            rhsType = promoteIntegerConstant(rhsType.value);
+        if (rhsBuiltinType?.value !== undefined && rhsIsUntypedLiteral)
+            rhsType = getSmallestIntegerForValue(rhsBuiltinType.value, true, true)!;
     }
 
     return rhsType;
@@ -174,21 +135,21 @@ export function promoteAssignmentOperand(
 export function getLowestCommonDenominator(
     lhsType: StType,
     rhsType: StType
-): StBuiltinType | undefined {
+): StBuiltinTypeCode | undefined {
 
     /* The calling method ensures that both values are defined */
-    const left = lhsType.builtinType!;
-    const right = rhsType.builtinType!;
+    const leftCode = lhsType.builtinType?.code!;
+    const rightCode = rhsType.builtinType?.code!;
 
     // Prefer REAL / LREAL
-    if (left === StBuiltinType.LREAL || right === StBuiltinType.LREAL)
-        return StBuiltinType.LREAL;
+    if (leftCode === StBuiltinTypeCode.LREAL || rightCode === StBuiltinTypeCode.LREAL)
+        return StBuiltinTypeCode.LREAL;
 
-    if (left === StBuiltinType.REAL || right === StBuiltinType.REAL)
-        return StBuiltinType.REAL;
+    if (leftCode === StBuiltinTypeCode.REAL || rightCode === StBuiltinTypeCode.REAL)
+        return StBuiltinTypeCode.REAL;
 
-    const leftDetails = StModel.nativeTypesDetails.get(left);
-    const rightDetails = StModel.nativeTypesDetails.get(right);
+    const leftDetails = lhsType.builtinType?.details;
+    const rightDetails = rhsType.builtinType?.details;
 
     if (leftDetails && rightDetails) {
 
@@ -200,11 +161,11 @@ export function getLowestCommonDenominator(
 
         // If both are unsigned, promote to the larger unsigned type
         if (leftIsUnsignedInteger && rightIsUnsignedInteger)
-            return leftDetails.size >= rightDetails.size ? left : right;
+            return leftDetails.size >= rightDetails.size ? leftCode : rightCode;
 
         // If both are signed, promote to the larger signed type
         else if (leftIsSignedInteger && rightIsSignedInteger)
-            return leftDetails.size >= rightDetails.size ? left : right;
+            return leftDetails.size >= rightDetails.size ? leftCode : rightCode;
 
         // If one is signed and one is unsigned, promote to signed type with larger size
         else if (
@@ -213,7 +174,7 @@ export function getLowestCommonDenominator(
         ) {
             const maxSize = Math.max(leftDetails.size, rightDetails.size);
 
-            for (const [builtinType, details] of StModel.nativeTypesDetails.entries()) {
+            for (const [builtinType, details] of nativeTypesDetails.entries()) {
                 if (
                     details.kind === StNativeTypeKind.SignedInteger &&
                     details.size === maxSize
@@ -224,10 +185,10 @@ export function getLowestCommonDenominator(
         }
 
         // Default: fallback to the larger type
-        return leftDetails.size >= rightDetails.size ? left : right;
+        return leftDetails.size >= rightDetails.size ? leftCode : rightCode;
     }
     
     // Neither leftDetails or rightDetails is defined, so just return any type.
     // The type checking algorithm will then throw an appropriate error.
-    return left;
+    return leftCode;
 }

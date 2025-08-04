@@ -1,16 +1,15 @@
 import { DateTime } from "luxon";
-import { StBuiltinType, StSourceFile, StType } from "../../core/types.js";
+import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
 import { LiteralContext } from "../../generated/StructuredTextParser.js";
 import { isTimeOfDayInRange } from "../../core/utils.js";
 import { C0001 } from "../diagnostics.js";
 
 export function evaluateTimeOfDayLiteral(
-    literal: LiteralContext,
-    sourceFile: StSourceFile,
+    literal: LiteralContext
 ): StType | undefined {
     
     const timeOfDayLiteral = literal.timeOfDayLiteral()!;
-    const requestedType = timeOfDayLiteral._prefix?.text as StBuiltinType;
+    const requestedType = timeOfDayLiteral._prefix?.text as StBuiltinTypeCode;
     const timeOfDayParts = timeOfDayLiteral._timeOfDay!.text!.split(":");
 
     const hour = Number.parseInt(timeOfDayParts[0]);
@@ -37,16 +36,15 @@ export function evaluateTimeOfDayLiteral(
     });
 
     if (!dateTime.isValid) {
-        C0001(literal, StBuiltinType[requestedType], sourceFile);
+        C0001(literal, StBuiltinTypeCode[requestedType]);
         return undefined;
     }
 
-    let choosenType: StBuiltinType | undefined;
+    let choosenType: StBuiltinTypeCode | undefined;
 
     switch (requestedType) {
         
-        case StBuiltinType.TIME_OF_DAY:
-        case StBuiltinType.TOD:
+        case StBuiltinTypeCode.TIME_OF_DAY:
 
             if (
                 isTimeOfDayInRange(
@@ -54,18 +52,17 @@ export function evaluateTimeOfDayLiteral(
                     23, 59, 59, 999
                 )
             ) {
-                choosenType = StBuiltinType.TIME_OF_DAY;
+                choosenType = StBuiltinTypeCode.TIME_OF_DAY;
             }
 
             else {
-                C0001(literal, StBuiltinType[requestedType], sourceFile);
+                C0001(literal, StBuiltinTypeCode[requestedType]);
                 return undefined;
             }
 
             break;
         
-        case StBuiltinType.LTIME_OF_DAY:
-        case StBuiltinType.LTOD:
+        case StBuiltinTypeCode.LTIME_OF_DAY:
 
             if (
                 isTimeOfDayInRange(
@@ -73,11 +70,11 @@ export function evaluateTimeOfDayLiteral(
                     23, 59, 59, 999.999999
                 )
             ) {
-                choosenType = StBuiltinType.LTIME_OF_DAY;
+                choosenType = StBuiltinTypeCode.LTIME_OF_DAY;
             }
 
             else {
-                C0001(literal, StBuiltinType[requestedType], sourceFile);
+                C0001(literal, StBuiltinTypeCode[requestedType]);
                 return undefined;
             }
 
@@ -88,7 +85,7 @@ export function evaluateTimeOfDayLiteral(
     }
 
     const type = new StType();
-    type.builtinType = choosenType;
+    type.builtinType = new StBuiltinType(choosenType);
 
     return type;
 }

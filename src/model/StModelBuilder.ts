@@ -1,7 +1,7 @@
 import { CharStream, CommonTokenStream, ParserRuleContext } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vscode";
-import { logger, StBuiltinType, StModel, StModifier, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
-import { ConnectDeclaringSymbols, getContextRange, getNestedTypeOrSelf, initializeIntegerType } from "../core/utils.js";
+import { logger, StBuiltinType, StBuiltinTypeCode, StModel, StModifier, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
+import { ConnectDeclaringSymbols, getContextRange, getNestedTypeOrSelf } from "../core/utils.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
 import { AssignmentContext, CallStatementContext, EnumMemberContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
 import { StVisitor } from "./StVisitor.js";
@@ -18,7 +18,9 @@ import { evaluateTimeOfDayLiteral } from "./literals/evaluateTimeOfDayLiteral.js
 import { evaluateWStringLiteral } from "./literals/evaluateWStringLiteral.js";
 import { getLowestCommonDenominator, promoteAssignmentOperand, promoteMathOperands } from "./promotionHelper.js";
 
-export class SemanticModelBuilder {
+export class StModelBuilder {
+
+    public static currentSourceFile: StSourceFile;
 
     private _model = new StModel();
 
@@ -50,6 +52,8 @@ export class SemanticModelBuilder {
         // Resolve types first ...
         for (const sourceFile of this._model.sourceFileMap.values()) {
             
+            StModelBuilder.currentSourceFile = sourceFile;
+
             for (const [ctx, symbol] of sourceFile.symbolMap) {
                 
                 if (symbol.kind !== StSymbolKind.TypeUsage)
@@ -62,10 +66,7 @@ export class SemanticModelBuilder {
                     
                     for (const arrayLimitExpression of type.context!.expr()) {
 
-                        const rhsType = this.evaluateExpression(
-                            arrayLimitExpression,
-                            sourceFile
-                        );
+                        const rhsType = this.evaluateExpression(arrayLimitExpression);
 
                         // TODO: Ensure that result is constant / Validate value (LHS type = ANY_INT)
                     }
@@ -76,7 +77,7 @@ export class SemanticModelBuilder {
                     const underlyingType = type.referencedOrElementType;
 
                     if (underlyingType.isReference)
-                        C0261(symbol, sourceFile);
+                        C0261(symbol);
                 }
 
                 if (!(type.builtinType || isArrayOrPointerOrReference)) {
@@ -132,7 +133,7 @@ export class SemanticModelBuilder {
                     }
 
                     else {
-                        C0077(symbol, sourceFile);
+                        C0077(symbol);
                     }
                 }
             }
@@ -141,6 +142,8 @@ export class SemanticModelBuilder {
         // ... then evaluate all variable declaration initializers and enum member initializers
         for (const sourceFile of this._model.sourceFileMap.values()) {
             
+            StModelBuilder.currentSourceFile = sourceFile;
+
             for (const [ctx, symbol] of sourceFile.symbolMap) {
                 
                 if (symbol.kind === StSymbolKind.VariableDeclaration) {
@@ -159,11 +162,7 @@ export class SemanticModelBuilder {
                     let rhsType: StType | undefined;
 
                     if (rhsCtx) {
-
-                        rhsType = this.evaluateExpression(
-                            rhsCtx,
-                            sourceFile
-                        );
+                        rhsType = this.evaluateExpression(rhsCtx);
                     }
 
                     if (nestedLhsType && rhsType) {
@@ -173,8 +172,7 @@ export class SemanticModelBuilder {
                         this.CheckAssignment(
                             nestedLhsType, lhsCtx,
                             rhsType, rhsCtx!,
-                            false,
-                            sourceFile
+                            false
                         );
                     }
                 }
@@ -191,8 +189,7 @@ export class SemanticModelBuilder {
                     if (rhsCtx) {
 
                         rhsType = this.evaluateExpression(
-                            rhsCtx,
-                            sourceFile
+                            rhsCtx
                         );
                     }
 
@@ -203,8 +200,7 @@ export class SemanticModelBuilder {
                         this.CheckAssignment(
                             lhsType, undefined,
                             rhsType, rhsCtx!,
-                            false,
-                            sourceFile
+                            false
                         );
                     }
                 }
@@ -214,13 +210,15 @@ export class SemanticModelBuilder {
         // ... then evaluate all statements
         for (const sourceFile of this._model.sourceFileMap.values()) {
             
+            StModelBuilder.currentSourceFile = sourceFile;
+
             for (const statementContext of sourceFile.statements) {
                 
                 if (statementContext.callStatement())
-                    this.evaluateCallStatement(statementContext.callStatement()!, sourceFile);
+                    this.evaluateCallStatement(statementContext.callStatement()!);
                 
                 else if (statementContext.assignment())
-                    this.evaluateAssignment(statementContext.assignment()!, sourceFile);
+                    this.evaluateAssignment(statementContext.assignment()!);
             }
         }
 
@@ -243,8 +241,10 @@ export class SemanticModelBuilder {
         const tokenStream = new CommonTokenStream(lexer);
         const parser = new StructuredTextParser(tokenStream);
         const tree = parser.compilationUnit();
-        const sourceFile = this.getOrCreateSourceFile(uri, tokenStream);
-        const visitor = new StVisitor(sourceFile, uri, this._model.tcConfig.architecture);
+
+        StModelBuilder.currentSourceFile = this.getOrCreateSourceFile(uri, tokenStream);
+
+        const visitor = new StVisitor(uri, this._model.tcConfig.architecture);
 
         tree.accept(visitor);
     }
@@ -266,7 +266,7 @@ export class SemanticModelBuilder {
                 fileUriAsString,
                 tokenStream
             );
-            
+           
             this._model.sourceFileMap.set(fileUriAsString, sourceFile);
         }
 
@@ -390,17 +390,17 @@ export class SemanticModelBuilder {
 
     //#region Statements
 
-    private evaluateCallStatement(callStatement: CallStatementContext, sourceFile: StSourceFile) {
-        this.evaluateMemberExpression(callStatement.memberExpression(), sourceFile, false);
+    private evaluateCallStatement(callStatement: CallStatementContext) {
+        this.evaluateMemberExpression(callStatement.memberExpression(), false);
     }
 
-    private evaluateAssignment(assignment: AssignmentContext, sourceFile: StSourceFile) {
+    private evaluateAssignment(assignment: AssignmentContext) {
         
         const lhsCtx = assignment.memberExpression();
-        let lhsType = this.evaluateMemberExpression(lhsCtx, sourceFile, true);
+        let lhsType = this.evaluateMemberExpression(lhsCtx, true);
                 
         const rhsCtx = assignment.expr();
-        let rhsType = this.evaluateExpression(rhsCtx, sourceFile);
+        let rhsType = this.evaluateExpression(rhsCtx);
 
         const operatorCtx = assignment.assignmentOperator();
         const operatorText = operatorCtx.getText();
@@ -413,21 +413,19 @@ export class SemanticModelBuilder {
             this.CheckAssignment(
                 lhsType, lhsCtx,
                 rhsType, rhsCtx,
-                isRefAssignment,
-                sourceFile
+                isRefAssignment
             );
         }
     }
 
     private evaluateExpression(
-        expression: ExprContext,
-        sourceFile: StSourceFile
+        expression: ExprContext
     ): StType | undefined {
 
         const memberExpression = expression.memberExpression();
 
         if (memberExpression)
-            return this.evaluateMemberExpression(memberExpression, sourceFile, false);
+            return this.evaluateMemberExpression(memberExpression, false);
 
         const expressions = expression.expr();
         const literal = expression.literal();
@@ -435,15 +433,8 @@ export class SemanticModelBuilder {
         if (expressions.length == 2) {
 
             // Step 1: Evaluate both expressions
-            var lhsType = this.evaluateExpression(
-                expressions[0],
-                sourceFile
-            );
-
-            var rhsType = this.evaluateExpression(
-                expressions[1],
-                sourceFile
-            );
+            var lhsType = this.evaluateExpression(expressions[0]);
+            var rhsType = this.evaluateExpression(expressions[1]);
 
             if (!lhsType || !rhsType)
                 return undefined;
@@ -455,35 +446,28 @@ export class SemanticModelBuilder {
                 return undefined;
             
             // Step 3: Get lowest common denominator type
-            const lcdBuiltinType = getLowestCommonDenominator(
+            const lcdBuiltinTypeCode = getLowestCommonDenominator(
                 lhsType,
                 rhsType
             );
 
-            if (!lcdBuiltinType)
+            if (!lcdBuiltinTypeCode)
                 return undefined;
 
             const lcdType = new StType();
-            lcdType.builtinType = lcdBuiltinType;
-
-            // TODO: 
-            // - only do this for actual integer types
-            // - evaluate math operations involving only constants
-            initializeIntegerType(null, lcdType, sourceFile);
+            lcdType.builtinType = new StBuiltinType(lcdBuiltinTypeCode);
 
             // Step 4: Check assignments of lhs and rhs to LCD
             const lhsResult = this.CheckAssignment(
                 lcdType, expression,
                 lhsType, expressions[0],
-                false,
-                sourceFile
+                false
             );
 
             const rhsResult = this.CheckAssignment(
                 lcdType, expression,
                 rhsType, expressions[1],
-                false,
-                sourceFile
+                false
             );
 
             return lhsResult && rhsResult
@@ -494,8 +478,7 @@ export class SemanticModelBuilder {
         else if (expressions.length === 1) {
           
             const type = this.evaluateExpression(
-                expressions[0],
-                sourceFile
+                expressions[0]
             );
 
             if (expression.unaryOp()) {
@@ -508,18 +491,14 @@ export class SemanticModelBuilder {
         else if (literal) {
 
             return this.evaluateLiteral(
-                literal,
-                sourceFile
+                literal
             );
         }
 
         return undefined;
     }
 
-    private evaluateLiteral(
-        literal: LiteralContext,
-        sourceFile: StSourceFile
-    ): StType | undefined {
+    private evaluateLiteral(literal: LiteralContext): StType | undefined {
 
         let type: StType | undefined;
 
@@ -527,44 +506,43 @@ export class SemanticModelBuilder {
             type = evaluateBoolLiteral();
 
         else if (literal.INTEGER_LITERAL())
-            type = evaluateIntegerNumber(literal, sourceFile);
+            type = evaluateIntegerNumber(literal);
 
         else if (literal.REAL_LITERAL())
-            type = evaluateRealNumber(literal, sourceFile);
+            type = evaluateRealNumber(literal);
             
         else if (literal.TIME_LITERAL())
-            type = evaluateTimeLiteral(literal, sourceFile);
+            type = evaluateTimeLiteral(literal);
             
         else if (literal.LTIME_LITERAL())
-            type = evaluateLTimeLiteral(literal, sourceFile);
+            type = evaluateLTimeLiteral(literal);
 
         else if (literal.dateLiteral())
-            type = evaluateDateLiteral(literal, sourceFile);
+            type = evaluateDateLiteral(literal);
 
         else if (literal.timeOfDayLiteral())
-            type = evaluateTimeOfDayLiteral(literal, sourceFile);
+            type = evaluateTimeOfDayLiteral(literal);
 
         else if (literal.dateAndTimeLiteral())
-            type = evaluateDateAndTimeLiteral(literal, sourceFile);
+            type = evaluateDateAndTimeLiteral(literal);
 
         else if (literal.STRING_LITERAL())
-            type = evaluateStringLiteral(literal, sourceFile);
+            type = evaluateStringLiteral(literal);
 
         else if (literal.WSTRING_LITERAL())
-            type = evaluateWStringLiteral(literal, sourceFile);
+            type = evaluateWStringLiteral(literal);
 
         else
-            this.cannotEvaluateExpression(literal, sourceFile);
+            this.cannotEvaluateExpression(literal);
 
-        if (type)
-            type.isLiteral = true;
+        if (type?.builtinType)
+            type.builtinType.isLiteral = true;
 
         return type;
     }
 
     private evaluateMemberExpression(
         memberExpression: MemberExpressionContext,
-        sourceFile: StSourceFile,
         isAssignment: boolean
     ): StType | undefined {
 
@@ -578,11 +556,11 @@ export class SemanticModelBuilder {
         for (const memberAccess of memberAccesses) {
 
             if (noMoreOpsAllowed) {
-                C0185(memberAccess, sourceFile);
+                C0185(memberAccess);
                 return undefined;
             }
 
-            currentMember = sourceFile.symbolMap.get(memberAccess);
+            currentMember = StModelBuilder.currentSourceFile.symbolMap.get(memberAccess);
 
             if (!currentMember)
                 return undefined;
@@ -602,19 +580,18 @@ export class SemanticModelBuilder {
                         const getter = propertyBodyCtx.getter();
 
                         if (!getter)                           
-                            C0143(currentMember, sourceFile);
+                            C0143(currentMember);
                     }
                 }
 
                 [currentType, noMoreOpsAllowed] = this.evaluatePostOps(
                     currentMember,
-                    memberAccess.postfixOp(),
-                    sourceFile
+                    memberAccess.postfixOp()
                 );
             }
 
             else {
-                C0046(currentMember, sourceFile);
+                C0046(currentMember);
             }
 
             currentQualifier = currentMember;
@@ -637,11 +614,11 @@ export class SemanticModelBuilder {
                                 lastMemberDeclaration?.variableKind === StVariableScope.InOut
                             )
                         ) {
-                            C0037(lastMember, sourceFile);
+                            C0037(lastMember);
                         }
 
                         if (lastMemberDeclaration.modifier === StModifier.Constant)
-                            C0018(lastMember, sourceFile);
+                            C0018(lastMember);
 
                         break;
                         
@@ -652,12 +629,12 @@ export class SemanticModelBuilder {
                         const setter = propertyBodyCtx.setter();
 
                         if (!setter)
-                            C0018(lastMember, sourceFile);
+                            C0018(lastMember);
 
                         break;
                     
                     default:
-                        C0018(lastMember, sourceFile);
+                        C0018(lastMember);
                 }
             }
         }
@@ -667,8 +644,7 @@ export class SemanticModelBuilder {
 
     private evaluatePostOps(
         member: StSymbol,
-        postfixOps: PostfixOpContext[],
-        sourceFile: StSourceFile
+        postfixOps: PostfixOpContext[]
     ): [StType | undefined, boolean] {
 
         // The calling method ensures that declaration is defined
@@ -686,7 +662,7 @@ export class SemanticModelBuilder {
         for (const postfixOp of postfixOps) {
 
             if (noMoreOpsAllowed) {
-                C0185(postfixOp, sourceFile);
+                C0185(postfixOp);
                 return [undefined, noMoreOpsAllowed];
             }
 
@@ -699,7 +675,7 @@ export class SemanticModelBuilder {
                 else {
 
                     if (!currentType?.isPointer) {
-                        C0064(postfixOp, sourceFile);
+                        C0064(postfixOp);
                         return [undefined, noMoreOpsAllowed];
                     }
 
@@ -715,7 +691,7 @@ export class SemanticModelBuilder {
                         ? currentType.getId()
                         : memberDeclaration.id;
 
-                    C0047(postfixOp, id, sourceFile);
+                    C0047(postfixOp, id);
 
                     return [undefined, noMoreOpsAllowed];
                 }
@@ -742,7 +718,7 @@ export class SemanticModelBuilder {
                         continue;
                     }
 
-                    C0035(member, sourceFile);
+                    C0035(member);
                 }
 
                 // Member declaration is something else
@@ -764,15 +740,15 @@ export class SemanticModelBuilder {
                             break;
                             
                         case StSymbolKind.FunctionBlock:
-                            C0080(member, sourceFile);
+                            C0080(member);
                             return [undefined, noMoreOpsAllowed];
 
                         case StSymbolKind.EnumMember:
-                            C0035(member, sourceFile);
+                            C0035(member);
                             return [undefined, noMoreOpsAllowed];
                         
                         default:
-                            C0036(member, memberDeclaration, sourceFile);
+                            C0036(member, memberDeclaration);
                             return [undefined, noMoreOpsAllowed];
                     }
                 }
@@ -785,7 +761,7 @@ export class SemanticModelBuilder {
         return [currentType, noMoreOpsAllowed];
     }
 
-    private cannotEvaluateExpression(expression: ParserRuleContext, sourceFile: StSourceFile) {
+    private cannotEvaluateExpression(expression: ParserRuleContext) {
         
         const diagnostic = new Diagnostic(
             getContextRange(expression),
@@ -793,7 +769,7 @@ export class SemanticModelBuilder {
             DiagnosticSeverity.Error
         );
 
-        sourceFile.diagnostics.push(diagnostic);
+        StModelBuilder.currentSourceFile.diagnostics.push(diagnostic);
     }
 
     private CheckAssignment(
@@ -801,13 +777,12 @@ export class SemanticModelBuilder {
         lhsCtx: ParserRuleContext | undefined,
         rhsType: StType,
         rhsCtx: ParserRuleContext,
-        isRefAssignment: boolean,
-        sourceFile: StSourceFile
+        isRefAssignment: boolean
     ): boolean {
         
         if (isRefAssignment) {
             if (!lhsType.isReference)
-                C0140(lhsCtx, sourceFile);
+                C0140(lhsCtx);
         }
 
         if (lhsType.isReference)
@@ -819,43 +794,46 @@ export class SemanticModelBuilder {
         if (lhsType.declaration && lhsType.declaration === rhsType.declaration)
             return true;
         
-        if (lhsType.builtinType && rhsType.builtinType) {
+        if (lhsType.builtinType?.code && rhsType.builtinType?.code) {
 
-            const lhsNativeType = StModel.nativeTypesDetails.get(lhsType.builtinType);
-            const rhsNativeType = StModel.nativeTypesDetails.get(rhsType.builtinType);
+            const lhsBuiltinType = lhsType.builtinType;
+            const lhsDetails = lhsType.builtinType.details;
+
+            const rhsBuiltinType = rhsType.builtinType;
+            const rhsDetails = rhsType.builtinType.details;
             
-            if (!lhsNativeType || !rhsNativeType)
+            if (!lhsDetails || !rhsDetails)
                 return false;
 
-            if (lhsType.builtinType === rhsType.builtinType) {
+            if (lhsBuiltinType.code === rhsBuiltinType.code) {
 
                 if (
-                    rhsNativeType.kind === StNativeTypeKind.String &&
-                    lhsType.stringLength! < rhsType.stringLength!
+                    rhsDetails.kind === StNativeTypeKind.String &&
+                    lhsBuiltinType.stringLength! < rhsBuiltinType.stringLength!
                 ) {
 
                     const warning = new Diagnostic(
                         getContextRange(rhsCtx),
-                        `String type '${StBuiltinType[rhsType.builtinType]}(${rhsType.stringLength})' too long for string type '${StBuiltinType[lhsType.builtinType]}(${lhsType.stringLength})': The string will be truncated`,
+                        `String type '${StBuiltinTypeCode[rhsBuiltinType.code!]}(${rhsBuiltinType.stringLength})' too long for string type '${StBuiltinTypeCode[lhsBuiltinType.code!]}(${rhsBuiltinType.stringLength})': The string will be truncated`,
                         DiagnosticSeverity.Warning
                     );
 
-                    sourceFile.diagnostics.push(warning);
+                    StModelBuilder.currentSourceFile.diagnostics.push(warning);
                 }
 
                 return true;
             }
 
             const rhsIsInteger =
-                rhsNativeType.kind === StNativeTypeKind.Bitfield ||
-                rhsNativeType.kind === StNativeTypeKind.UnsignedInteger ||
-                rhsNativeType.kind === StNativeTypeKind.SignedInteger;
+                rhsDetails.kind === StNativeTypeKind.Bitfield ||
+                rhsDetails.kind === StNativeTypeKind.UnsignedInteger ||
+                rhsDetails.kind === StNativeTypeKind.SignedInteger;
 
-            switch (lhsNativeType.kind) {
+            switch (lhsDetails.kind) {
 
                 case StNativeTypeKind.Logical:
 
-                    if (rhsNativeType.kind === StNativeTypeKind.Logical)
+                    if (rhsDetails.kind === StNativeTypeKind.Logical)
                         return true;
 
                     break;
@@ -866,27 +844,27 @@ export class SemanticModelBuilder {
 
                     if (rhsIsInteger) {
 
-                        if (rhsNativeType.size <= lhsNativeType.size) {
+                        if (rhsDetails.size <= lhsDetails.size) {
 
-                            let subRangeIsOK = lhsType.isFullRange && rhsType.isFullRange;
+                            let subRangeIsOK = lhsBuiltinType.isFullRange && rhsBuiltinType.isFullRange;
 
                             if (!subRangeIsOK) {
 
-                                const lhsStart = lhsType.subRangeStart! < lhsType.subRangeStop!
-                                    ? lhsType.subRangeStart!
-                                    : lhsType.subRangeStop!;
+                                const lhsStart = lhsBuiltinType.subRangeStart! < lhsBuiltinType.subRangeStop!
+                                    ? lhsBuiltinType.subRangeStart!
+                                    : lhsBuiltinType.subRangeStop!;
                                 
-                                const lhsStop = lhsType.subRangeStart! < lhsType.subRangeStop!
-                                    ? lhsType.subRangeStop!
-                                    : lhsType.subRangeStart!;
+                                const lhsStop = lhsBuiltinType.subRangeStart! < lhsBuiltinType.subRangeStop!
+                                    ? lhsBuiltinType.subRangeStop!
+                                    : lhsBuiltinType.subRangeStart!;
                                 
-                                const rhsStart = rhsType.subRangeStart! < rhsType.subRangeStop!
-                                    ? rhsType.subRangeStart!
-                                    : rhsType.subRangeStop!;
+                                const rhsStart = rhsBuiltinType.subRangeStart! < rhsBuiltinType.subRangeStop!
+                                    ? rhsBuiltinType.subRangeStart!
+                                    : rhsBuiltinType.subRangeStop!;
                                 
-                                const rhsStop = rhsType.subRangeStart! < rhsType.subRangeStop!
-                                    ? rhsType.subRangeStop!
-                                    : rhsType.subRangeStart!;
+                                const rhsStop = rhsBuiltinType.subRangeStart! < rhsBuiltinType.subRangeStop!
+                                    ? rhsBuiltinType.subRangeStop!
+                                    : rhsBuiltinType.subRangeStart!;
 
                                 subRangeIsOK =
                                     lhsStart <= rhsStart && rhsStart <= lhsStop &&
@@ -895,26 +873,26 @@ export class SemanticModelBuilder {
 
                             if (subRangeIsOK) {
 
-                                if (rhsNativeType.signed && !lhsNativeType.signed) {
+                                if (rhsDetails.signed && !lhsDetails.signed) {
 
                                     const warning = new Diagnostic(
                                         getContextRange(rhsCtx),
-                                        `Implicit conversion from signed type '${StBuiltinType[rhsType.builtinType]}' to unsigned type '${StBuiltinType[lhsType.builtinType]}': Possible change of sign`,
+                                        `Implicit conversion from signed type '${StBuiltinTypeCode[rhsBuiltinType.code!]}' to unsigned type '${StBuiltinTypeCode[lhsBuiltinType.code!]}': Possible change of sign`,
                                         DiagnosticSeverity.Warning
                                     );
 
-                                    sourceFile.diagnostics.push(warning);
+                                    StModelBuilder.currentSourceFile.diagnostics.push(warning);
                                 }
 
-                                else if (!rhsNativeType.signed && lhsNativeType.signed) {
+                                else if (!rhsDetails.signed && lhsDetails.signed) {
 
                                     const warning = new Diagnostic(
                                         getContextRange(rhsCtx),
-                                        `Implicit conversion from unsigned type '${StBuiltinType[rhsType.builtinType]}' to signed type '${StBuiltinType[lhsType.builtinType]}': Possible change of sign`,
+                                        `Implicit conversion from unsigned type '${StBuiltinTypeCode[rhsBuiltinType.code!]}' to signed type '${StBuiltinTypeCode[lhsBuiltinType.code!]}': Possible change of sign`,
                                         DiagnosticSeverity.Warning
                                     );
 
-                                    sourceFile.diagnostics.push(warning);
+                                    StModelBuilder.currentSourceFile.diagnostics.push(warning);
                                 }
 
                                 return true;
@@ -927,26 +905,26 @@ export class SemanticModelBuilder {
                 case StNativeTypeKind.Float:
 
                     if (
-                        rhsNativeType.kind === StNativeTypeKind.Float ||
+                        rhsDetails.kind === StNativeTypeKind.Float ||
                         rhsIsInteger
                     ) {
                         if (
                             (
-                                rhsNativeType.kind === StNativeTypeKind.Float &&
-                                rhsNativeType.size > lhsNativeType.size
+                                rhsDetails.kind === StNativeTypeKind.Float &&
+                                rhsDetails.size > lhsDetails.size
                             ) ||
                             (
                                 rhsIsInteger &&
-                                rhsNativeType.size >= lhsNativeType.size
+                                rhsDetails.size >= lhsDetails.size
                             )
                         ) {
                             const warning = new Diagnostic(
                                 getContextRange(rhsCtx),
-                                `Implicit conversion from '${StBuiltinType[rhsType.builtinType]}' to '${StBuiltinType[lhsType?.builtinType]}': Possible loss of information`,
+                                `Implicit conversion from '${StBuiltinTypeCode[rhsBuiltinType.code!]}' to '${StBuiltinTypeCode[rhsBuiltinType.code!]}': Possible loss of information`,
                                 DiagnosticSeverity.Warning
                             );
 
-                            sourceFile.diagnostics.push(warning);
+                            StModelBuilder.currentSourceFile.diagnostics.push(warning);
                         }
 
                         return true;
@@ -956,7 +934,7 @@ export class SemanticModelBuilder {
             }
         }
 
-        C0032(rhsCtx, rhsType.getId(), lhsType.getId(), sourceFile);
+        C0032(rhsCtx, rhsType.getId(), lhsType.getId());
         return false;
     }
 

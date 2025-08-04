@@ -1,13 +1,13 @@
-import { ParserRuleContext, TerminalNode, Token } from "antlr4ng";
+import { ParserRuleContext, Token } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Uri } from "vscode";
-import { Architecture, StAccessModifier, StBuiltinType, StModel, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StTypeDeclarationDetails, StVariableScope } from "../core/types.js";
-import { convertTypeText, getContextRange, getModifier, getOriginalText, getTokenRange, initializeIntegerType } from "../core/utils.js";
+import { Architecture, nativeTypesDetails, StAccessModifier, StBuiltinType, StBuiltinTypeCode, StModel, StNativeTypeKind, StSymbol, StSymbolKind, StType, StTypeDeclarationDetails, StVariableScope } from "../core/types.js";
+import { convertToPlatformSpecificTypeText, getContextRange, getModifier, getOriginalText, getTokenRange } from "../core/utils.js";
 import { AccessModifierContext, DutDeclContext, EnumMemberContext, EnumTypeContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ModifierContext, ProgramContext, PropertyContext, StatementContext, TypeContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
+import { StModelBuilder } from "./StModelBuilder.js";
 
 export class StVisitor extends StructuredTextVisitor<void> {
 
-    private _sourceFile: StSourceFile;
     private _documentUri: Uri;
     private _arch: Architecture;
     private _parent: StSymbol | undefined;
@@ -15,9 +15,8 @@ export class StVisitor extends StructuredTextVisitor<void> {
     private _type: StType | undefined;
     private _variableKind: StVariableScope = StVariableScope.None;
 
-    constructor(sourceFile: StSourceFile, documentUri: Uri, arch: Architecture) {
+    constructor(documentUri: Uri, arch: Architecture) {
         super();
-        this._sourceFile = sourceFile;
         this._documentUri = documentUri;
         this._arch = arch;
     }
@@ -40,8 +39,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
             
             let type: StType | undefined = this._type;
 
-            if (!this._type && symbol.kind === StSymbolKind.Enum)
-                type = StModel.defaultTypes.get(StBuiltinType.INT);
+            if (!this._type && symbol.kind === StSymbolKind.Enum) {
+                type = new StType();
+                type.builtinType = new StBuiltinType(StBuiltinTypeCode.INT);
+            }
 
             symbol.typeDeclarationDetails.underlyingType = type;
         }
@@ -118,7 +119,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
     };
 
     public override visitStatement = (ctx: StatementContext): void => {
-        this._sourceFile.statements.push(ctx);
+        StModelBuilder.currentSourceFile.statements.push(ctx);
         this.visitChildren(ctx);
     };
 
@@ -347,14 +348,16 @@ export class StVisitor extends StructuredTextVisitor<void> {
             if (builtinType) {
 
                 const typeText = builtinType.start!.text!.toUpperCase();
-                const convertedTypeText = convertTypeText(typeText, this._arch);
+                const convertedTypeText = convertToPlatformSpecificTypeText(typeText, this._arch);
 
-                if (convertedTypeText in StBuiltinType) {
+                if (convertedTypeText in StBuiltinTypeCode) {
 
-                    type.builtinType = convertedTypeText as StBuiltinType;
+                    const code = convertedTypeText as StBuiltinTypeCode;
 
-                    const nativeTypeDetails = type.builtinType
-                        ? StModel.nativeTypesDetails.get(type.builtinType)
+                    type.builtinType = new StBuiltinType(code, builtinType.SUBRANGE_PARAM() ?? undefined);
+                    
+                    const nativeTypeDetails = code
+                        ? nativeTypesDetails.get(code)
                         : undefined;
 
                     const builtinTypeKind = nativeTypeDetails?.kind;
@@ -366,24 +369,10 @@ export class StVisitor extends StructuredTextVisitor<void> {
                             const stringLengthParam = builtinType
                                 .STRING_LEN_PARAM()?.getText();
 
-                            type.stringLength = stringLengthParam
+                            type.builtinType.stringLength = stringLengthParam
                                 ? Number.parseInt(stringLengthParam.slice(1, -1))
                                 : 80;
-                            
-                            break;
-                        
-                        case StNativeTypeKind.Bitfield:
-                        case StNativeTypeKind.UnsignedInteger:
-                        case StNativeTypeKind.SignedInteger:
-
-                            const subRangeParamToken = builtinType.SUBRANGE_PARAM();
-
-                            initializeIntegerType(
-                                subRangeParamToken,
-                                type,
-                                this._sourceFile
-                            );
-
+                         
                             break;
                     }
                 }
@@ -395,7 +384,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
             type.referencedOrElementType = this._type;
 
             if (ctx.POINTER_TO())
-                type.builtinType = convertTypeText("PVOID", this._arch) as StBuiltinType;
+                type.builtinType = new StBuiltinType(convertToPlatformSpecificTypeText("PVOID", this._arch) as StBuiltinTypeCode);
         }
 
         if (this._declaration) {
@@ -429,20 +418,11 @@ export class StVisitor extends StructuredTextVisitor<void> {
         const typeText = ctx._enumTypeId?.text;
         
         const convertedTypeText = typeText
-            ? convertTypeText(typeText, this._arch)
+            ? convertToPlatformSpecificTypeText(typeText, this._arch)
             : undefined;
 
-        if (convertedTypeText && convertedTypeText in StBuiltinType) {
-
-            type.builtinType = convertedTypeText as StBuiltinType;
-            const subRangeParamToken = ctx.SUBRANGE_PARAM();
-
-            initializeIntegerType(
-                subRangeParamToken,
-                type,
-                this._sourceFile
-            );
-        }
+        if (convertedTypeText && convertedTypeText in StBuiltinTypeCode)
+            type.builtinType = new StBuiltinType(convertedTypeText as StBuiltinTypeCode, ctx.SUBRANGE_PARAM() ?? undefined);
 
         symbol.type = type;
 
@@ -483,7 +463,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
             this._parent.addChild(symbol);
 
         // Add symbol to source file
-        this._sourceFile.symbolMap.set(ctx, symbol);
+        StModelBuilder.currentSourceFile.symbolMap.set(ctx, symbol);
 
         return symbol;
     }
@@ -546,11 +526,11 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
     private addGlobalObject(symbol: StSymbol) {
 
-        if (this._sourceFile.globalObjects.has(symbol.id))
+        if (StModelBuilder.currentSourceFile.globalObjects.has(symbol.id))
             this.SA0027(symbol);
         
         else
-            this._sourceFile.globalObjects.set(symbol.id, symbol);
+            StModelBuilder.currentSourceFile.globalObjects.set(symbol.id, symbol);
     }
 
     public addLocalObject<K extends 'variablesAndProperties' | 'methods'>(
@@ -579,7 +559,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         );
 
         diagnostic.code = "C0142";
-        this._sourceFile.diagnostics.push(diagnostic);
+        StModelBuilder.currentSourceFile.diagnostics.push(diagnostic);
     }
 
     // SA0027: Object name '{name}' already used in this application
@@ -592,7 +572,7 @@ export class StVisitor extends StructuredTextVisitor<void> {
         );
 
         diagnostic.code = "SA0027";
-        this._sourceFile.diagnostics.push(diagnostic);
+        StModelBuilder.currentSourceFile.diagnostics.push(diagnostic);
     }
 
     //#endregion

@@ -1,6 +1,7 @@
 import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, TextDocument } from "vscode";
 import { StAccessModifier, StModel, StSymbolKind } from "../core/types.js";
 import { getNestedTypeOrSelf, getTypeOfType } from "../core/utils.js";
+import { StModelBuilder } from "../model/StModelBuilder.js";
 
 export class StDiagnosticsProvider {
 
@@ -21,6 +22,8 @@ export class StDiagnosticsProvider {
             this._diagnosticCollection.set(document.uri, []);
             return;
         }
+
+        StModelBuilder.currentSourceFile = sourceFile;
 
         // TODO: Do not make full evaluation every file change
         const seen = new Set<string>();

@@ -1,11 +1,10 @@
-import { StBuiltinType, StSourceFile, StType } from "../../core/types.js";
+import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
 import { LiteralContext } from "../../generated/StructuredTextParser.js";
 import { findOverflowComponent, isTimeInRange, TIME_COMPONENTS } from "../../core/utils.js";
 import { C0001 } from "../diagnostics.js";
 
 export function evaluateTimeLiteral(
-    literal: LiteralContext,
-    sourceFile: StSourceFile,
+    literal: LiteralContext
 ): StType | undefined {
     
     const timeLiteral = literal.TIME_LITERAL()!;
@@ -41,12 +40,13 @@ export function evaluateTimeLiteral(
         )
     ) {
         const type = new StType();
-        type.builtinType = StBuiltinType.TIME;
+        type.builtinType = new StBuiltinType(StBuiltinTypeCode.TIME);
+
         return type;
     }
     
     else {
-        C0001(literal, StBuiltinType.TIME, sourceFile);
+        C0001(literal, StBuiltinTypeCode.TIME);
         return undefined;
     }
 }

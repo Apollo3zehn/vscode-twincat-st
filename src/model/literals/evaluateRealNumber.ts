@@ -1,10 +1,9 @@
-import { StBuiltinType, StModel, StSourceFile, StType } from "../../core/types.js";
+import { nativeTypesDetails, StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
 import { LiteralContext } from "../../generated/StructuredTextParser.js";
 import { C0001 } from "../diagnostics.js";
 
 export function evaluateRealNumber(
-    literal: LiteralContext,
-    sourceFile: StSourceFile
+    literal: LiteralContext
 ): StType | undefined {
     
     const realLiteral = literal.REAL_LITERAL()!;
@@ -12,7 +11,7 @@ export function evaluateRealNumber(
 
     const splittedText = text.split('#');
 
-    let requestedType: StBuiltinType | undefined;
+    let lhsTypeCode: StBuiltinTypeCode | undefined;
     let value: number;
 
     /* Important: Do not convert type to uppercase
@@ -20,29 +19,29 @@ export function evaluateRealNumber(
         * to be uppercase, otherwise it is a syntax error.
         */
     if (splittedText.length === 2)
-        requestedType = splittedText[0] as StBuiltinType;
+        lhsTypeCode = splittedText[0] as StBuiltinTypeCode;
 
     value = parseFloat(splittedText[splittedText.length - 1]);
 
-    let fittingType: StBuiltinType;
+    let rhsTypeCode: StBuiltinTypeCode;
 
     // https://infosys.beckhoff.com/english.php?content=../content/1033/tc3_plc_intro/2529405067.html&id=
 
     if (value < 0) {
 
         if (-value >= -3.402823e+38)
-            fittingType = StBuiltinType.REAL;
+            rhsTypeCode = StBuiltinTypeCode.REAL;
 
         else if (-value >= -1.7976931348623158e+308)
-            fittingType = StBuiltinType.LREAL;
+            rhsTypeCode = StBuiltinTypeCode.LREAL;
             
         else {
             
-            if (requestedType)
-                C0001(literal, StBuiltinType[requestedType], sourceFile);
+            if (lhsTypeCode)
+                C0001(literal, StBuiltinTypeCode[lhsTypeCode]);
 
             else
-                C0001(literal, "ANY_REAL", sourceFile);
+                C0001(literal, "ANY_REAL");
 
             return undefined;
         }
@@ -51,51 +50,51 @@ export function evaluateRealNumber(
     else {
 
         if (value <= 3.402823e+38)
-            fittingType = StBuiltinType.REAL;
+            rhsTypeCode = StBuiltinTypeCode.REAL;
 
         else if (value <= 1.7976931348623158e+308)
-            fittingType = StBuiltinType.LREAL;
+            rhsTypeCode = StBuiltinTypeCode.LREAL;
                                 
         else {
             
-            if (requestedType)
-                C0001(literal, StBuiltinType[requestedType], sourceFile);
+            if (lhsTypeCode)
+                C0001(literal, StBuiltinTypeCode[lhsTypeCode]);
 
             else
-                C0001(literal, "ANY_REAL", sourceFile);
+                C0001(literal, "ANY_REAL");
 
             return undefined;
         }
     }
 
-    let choosenType: StBuiltinType | undefined = fittingType;
+    let choosenType: StBuiltinTypeCode | undefined = rhsTypeCode;
     
-    if (requestedType) {
+    if (lhsTypeCode) {
 
-        const requestedTypeDetails = StModel.nativeTypesDetails.get(requestedType);
-        const fittingTypeDetails = StModel.nativeTypesDetails.get(fittingType);
+        const lhsTypeDetails = nativeTypesDetails.get(lhsTypeCode);
+        const rhsTypeDetails = nativeTypesDetails.get(rhsTypeCode);
 
         if (
-            requestedTypeDetails &&
-            fittingTypeDetails &&
-            requestedTypeDetails.max! < fittingTypeDetails.max!
+            lhsTypeDetails &&
+            rhsTypeDetails &&
+            lhsTypeDetails.max! < rhsTypeDetails.max!
         ) {
-            C0001(literal, StBuiltinType[requestedType], sourceFile);
+            C0001(literal, StBuiltinTypeCode[lhsTypeCode]);
             return undefined;
         }
 
         else {
-            choosenType = requestedType;
+            choosenType = lhsTypeCode;
         }
     }
 
     else {
-        choosenType = StBuiltinType.LREAL;
+        choosenType = StBuiltinTypeCode.LREAL;
     }
 
     const type = new StType();
-    type.builtinType = choosenType;
-    type.value = value;
+    type.builtinType = new StBuiltinType(choosenType);
+    type.builtinType.value = value;
 
     return type;
 }

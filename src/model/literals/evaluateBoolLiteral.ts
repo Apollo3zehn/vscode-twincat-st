@@ -1,9 +1,9 @@
-import { StBuiltinType, StType } from "../../core/types.js";
+import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
 
 export function evaluateBoolLiteral(): StType | undefined {
     
     const type = new StType();
-    type.builtinType = StBuiltinType.BOOL;
+    type.builtinType = new StBuiltinType(StBuiltinTypeCode.BOOL);
 
     return type;
 }

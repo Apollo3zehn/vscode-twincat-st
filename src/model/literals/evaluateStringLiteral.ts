@@ -1,11 +1,11 @@
 import { Diagnostic, DiagnosticSeverity } from "vscode";
-import { StBuiltinType, StSourceFile, StType } from "../../core/types.js";
+import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
 import { LiteralContext } from "../../generated/StructuredTextParser.js";
 import { getContextRange } from "../../core/utils.js";
+import { StModelBuilder } from "../StModelBuilder.js";
 
 export function evaluateStringLiteral(
-    literal: LiteralContext,
-    sourceFile: StSourceFile,
+    literal: LiteralContext
 ): StType | undefined {
     
     const stringLiteral = literal.STRING_LITERAL()!;
@@ -21,12 +21,12 @@ export function evaluateStringLiteral(
             DiagnosticSeverity.Warning
         );
 
-        sourceFile.diagnostics.push(warning);
+        StModelBuilder.currentSourceFile.diagnostics.push(warning);
     }
 
     const type = new StType();
-    type.builtinType = StBuiltinType.STRING;
-    type.stringLength = text.length;
+    type.builtinType = new StBuiltinType(StBuiltinTypeCode.STRING);
+    type.builtinType.stringLength = text.length;
 
     return type;
 }

@@ -11,12 +11,12 @@ import { StRenameProvider } from './features/StRenameProvider.js';
 import { StSemanticTokenProvider } from './features/StSemanticTokenProvider.js';
 import { StTypeDefinitionProvider } from './features/StTypeDefinitionProvider.js';
 import { StTypeHierarchyProvider } from './features/StTypeHierarchyProvider.js';
-import { SemanticModelBuilder } from './model/StModelBuilder.js';
+import { StModelBuilder } from './model/StModelBuilder.js';
 import { StDocumentHighlightProvider } from './features/StDocumentHighlightProvider.js';
 
 export async function activate(context: ExtensionContext) {
 
-    const modelBuilder = new SemanticModelBuilder();
+    const modelBuilder = new StModelBuilder();
     const model = await modelBuilder.build();
 
     // TODO: move this into the StEndBlockDecorationProvider.ts file

@@ -61,35 +61,35 @@ FUNCTION_BLOCK Literals
         time_firstover:         TIME            := TIME#90H10MS;
         time_alt:               TIME            := T#05H10MS;
 
-        // => DATE: Nothing is optional
-        date_min:               DATE            := DATE#1970-01-01;
-        date_max:               DATE            := DATE#2106-02-07;
-        date_min_alt:           DATE            := D#1970-01-001;
-
-        // => TIME_OF_DAY: Milliseconds and seconds are optional
-        time_of_day_min:        TIME_OF_DAY     := TIME_OF_DAY#0:0:0;
-        time_of_day_max:        TIME_OF_DAY     := TIME_OF_DAY#23:59:59.999;
-        time_of_day_alt:        TOD             := TOD#0:0;
-
-        // => DATE_AND_TIME: Seconds are optional
-        date_and_time_min:      DATE_AND_TIME   := DATE_AND_TIME#1970-1-1-0:0:0;
-        date_and_time_max:      DATE_AND_TIME   := DATE_AND_TIME#2106-02-07-06:28:15;
-        date_and_time_alt:      DT              := DT#1970-1-001-0:0;
-
         // => LTIME
         l_time_max:             LTIME           := LTIME#213503D23H34M33S709MS551US615NS;
         l_time_firstover:       LTIME           := LTIME#90H10MS;
         l_time_alt:             LTIME           := LTIME#05H10MS;
+
+        // => DATE: Nothing is optional
+        date_min:               DATE            := DATE#1970-01-01;
+        date_max:               DATE            := DATE#2106-02-07;
+        date_min_alt:           DATE            := D#1970-01-001;
 
         // => LDATE: Nothing is optional
         l_date_min:             LDATE           := LDATE#1970-01-01;
         l_date_max:             LDATE           := LDATE#2554-7-21;
         l_date_min_alt:         LDATE           := LD#1970-1-001;
 
+        // => TIME_OF_DAY: Milliseconds and seconds are optional
+        time_of_day_min:        TIME_OF_DAY     := TIME_OF_DAY#0:0:0;
+        time_of_day_max:        TIME_OF_DAY     := TIME_OF_DAY#23:59:59.999;
+        time_of_day_alt:        TOD             := TOD#0:0;
+
         // => LTIME_OF_DAY: Milliseconds and seconds are optional
         l_time_of_day_min:      LTIME_OF_DAY    := LTIME_OF_DAY#0:0:0;
         l_time_of_day_max:      LTIME_OF_DAY    := LTIME_OF_DAY#23:59:59.999999999;
         l_time_of_day_alt:      LTOD            := LTOD#0:0;
+
+        // => DATE_AND_TIME: Seconds are optional
+        date_and_time_min:      DATE_AND_TIME   := DATE_AND_TIME#1970-1-1-0:0:0;
+        date_and_time_max:      DATE_AND_TIME   := DATE_AND_TIME#2106-02-07-06:28:15;
+        date_and_time_alt:      DT              := DT#1970-1-001-0:0;
 
         // => LDATE_AND_TIME: Milliseconds and seconds are optional
         l_date_and_time_min:    LDATE_AND_TIME  := LDATE_AND_TIME#1970-01-01-00:00:00;

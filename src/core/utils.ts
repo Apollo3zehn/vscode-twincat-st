@@ -270,7 +270,7 @@ export function getTcConfig(): TcConfig | undefined {
     }
 }
 
-export function convertTypeText(typeText: string, arch: Architecture) {
+export function convertToPlatformSpecificTypeText(typeText: string, arch: Architecture) {
 
     switch (typeText) {
 
@@ -301,6 +301,18 @@ export function convertTypeText(typeText: string, arch: Architecture) {
                 ? "LWORD"
                 : "DWORD";
         
+        case "TOD":
+            return "TIME_OF_DAY";
+        
+        case "LTOD":
+            return "LTIME_OF_DAY";
+        
+        case "DT":
+            return "DATE_AND_TIME";
+        
+        case "LDT":
+            return "LDATE_AND_TIME";
+        
         default:
             return typeText;
     }
@@ -323,61 +335,4 @@ export function getModifier(modifierCtx: ModifierContext | null): StModifier | u
     return (normalized in StModifier)
         ? StModifier[normalized as keyof typeof StModifier]
         : undefined;
-}
-
-export function initializeIntegerType(
-    subRangeParamToken: TerminalNode | null,
-    type: StType,
-    sourceFile: StSourceFile | undefined
-) {
-    const nativeTypeDetails = type.builtinType
-        ? StModel.nativeTypesDetails.get(type.builtinType)
-        : undefined;
-       
-    if (!nativeTypeDetails)
-        return;
-    
-    const subRangeParam = subRangeParamToken?.getText();
-    const subRangeParts = subRangeParam?.split('..');
-
-    if (subRangeParts) {
-
-        type.subRangeStart = Number.parseInt(subRangeParts[0].slice(1));
-        type.subRangeStop = Number.parseInt(subRangeParts[1].slice(0, -1));
-        type.isFullRange = false;
-
-        const min = nativeTypeDetails.min!;
-        const max = nativeTypeDetails.max!;
-
-        if (
-            type.subRangeStart !== undefined &&
-            type.subRangeStop !== undefined &&
-            (
-                !(min <= type.subRangeStart && type.subRangeStart <= max) ||
-                !(min <= type.subRangeStop && type.subRangeStop <= max)
-            )
-        ) {
-            if (sourceFile)
-                M0001(subRangeParamToken!, sourceFile);
-        }
-    }
-
-    else {
-        type.subRangeStart = nativeTypeDetails.min;
-        type.subRangeStop = nativeTypeDetails.max;
-        type.isFullRange = true;
-    }
-}
-
-// M0001: The subrange parameters are not within the valid range
-function M0001(subRangeToken: TerminalNode, sourceFile: StSourceFile) {
-
-    const diagnostic = new Diagnostic(
-        getTokenRange(subRangeToken.symbol)!,
-        `The subrange parameters are not within the valid range`,
-        DiagnosticSeverity.Error
-    );
-
-    diagnostic.code = "M0001";
-    sourceFile.diagnostics.push(diagnostic);
 }

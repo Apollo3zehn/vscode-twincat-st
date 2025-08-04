@@ -1,16 +1,15 @@
 import { DateTime } from "luxon";
-import { StBuiltinType, StSourceFile, StType } from "../../core/types.js";
+import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
 import { LiteralContext } from "../../generated/StructuredTextParser.js";
 import { isDateAndTimeInRange } from "../../core/utils.js";
 import { C0001 } from "../diagnostics.js";
 
 export function evaluateDateAndTimeLiteral(
-    literal: LiteralContext,
-    sourceFile: StSourceFile,
+    literal: LiteralContext
 ): StType | undefined {
     
     const dateAndTimeLiteral = literal.dateAndTimeLiteral()!;
-    const requestedType = dateAndTimeLiteral._prefix?.text as StBuiltinType;
+    const requestedType = dateAndTimeLiteral._prefix?.text as StBuiltinTypeCode;
     const dateAndTimeParts = dateAndTimeLiteral._dateAndTime!.text!.split("-");
 
     const year = Number.parseInt(dateAndTimeParts[0]);
@@ -48,16 +47,15 @@ export function evaluateDateAndTimeLiteral(
     });
 
     if (!dateTime.isValid) {
-        C0001(literal, StBuiltinType[requestedType], sourceFile);
+        C0001(literal, StBuiltinTypeCode[requestedType]);
         return undefined;
     }
 
-    let choosenType: StBuiltinType | undefined;
+    let choosenType: StBuiltinTypeCode | undefined;
 
     switch (requestedType) {
         
-        case StBuiltinType.DATE_AND_TIME:
-        case StBuiltinType.DT:
+        case StBuiltinTypeCode.DATE_AND_TIME:
 
             if (
                 isDateAndTimeInRange(
@@ -66,18 +64,17 @@ export function evaluateDateAndTimeLiteral(
                     2106, 2, 7, 6, 28, 15, 0,
                 )
             ) {
-                choosenType = StBuiltinType.TIME_OF_DAY;
+                choosenType = StBuiltinTypeCode.DATE_AND_TIME;
             }
 
             else {
-                C0001(literal, StBuiltinType[requestedType], sourceFile);
+                C0001(literal, StBuiltinTypeCode[requestedType]);
                 return undefined;
             }
 
             break;
         
-        case StBuiltinType.LDATE_AND_TIME:
-        case StBuiltinType.LDT:
+        case StBuiltinTypeCode.LDATE_AND_TIME:
 
             if (
                 isDateAndTimeInRange(
@@ -86,11 +83,11 @@ export function evaluateDateAndTimeLiteral(
                     2554, 7, 21, 23, 34, 33, 709.551615
                 )
             ) {
-                choosenType = StBuiltinType.LTIME_OF_DAY;
+                choosenType = StBuiltinTypeCode.LDATE_AND_TIME;
             }
 
             else {
-                C0001(literal, StBuiltinType[requestedType], sourceFile);
+                C0001(literal, StBuiltinTypeCode[requestedType]);
                 return undefined;
             }
 
@@ -101,7 +98,7 @@ export function evaluateDateAndTimeLiteral(
     }
 
     const type = new StType();
-    type.builtinType = choosenType;
+    type.builtinType = new StBuiltinType(choosenType);
 
     return type;
 }

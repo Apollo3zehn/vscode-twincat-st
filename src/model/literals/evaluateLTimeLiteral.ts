@@ -1,14 +1,11 @@
 import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
-import { LiteralContext } from "../../generated/StructuredTextParser.js";
 import { findOverflowComponent, isTimeInRange, TIME_COMPONENTS } from "../../core/utils.js";
-import { C0001 } from "../diagnostics.js";
 
 export function evaluateLTimeLiteral(
-    literal: LiteralContext
-): StType | undefined {
+    literal: string
+): [StType | undefined, string | undefined] {
     
-    const ltimeLiteral = literal.LTIME_LITERAL()!;
-    const ltimeText = ltimeLiteral.getText().split('#')[1];
+    const ltimeText = literal.split('#')[1];
 
     // Regex to extract D, H, M, S, MS, US, NS values
     const ltimeRegex = /(?:([0-9_]+)D)?(?:([0-9_]+)H)?(?:([0-9_]+)M)?(?:([0-9_]+)S)?(?:([0-9_]+)MS)?(?:([0-9_]+)US)?(?:([0-9_]+)NS)?/;
@@ -38,11 +35,11 @@ export function evaluateLTimeLiteral(
     ) {
         const type = new StType();
         type.builtinType = new StBuiltinType(StBuiltinTypeCode.LTIME);
-        return type;
+
+        return [type, undefined];
     }
     
     else {
-        C0001(literal, StBuiltinTypeCode.LTIME);
-        return undefined;
+        return [undefined, StBuiltinTypeCode.LTIME];
     }
 }

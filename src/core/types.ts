@@ -2,7 +2,7 @@ import { CommonTokenStream, ParserRuleContext, TerminalNode } from "antlr4ng";
 import { Diagnostic, Range, Uri, window } from "vscode";
 import { StatementContext, TypeContext } from "../generated/StructuredTextParser.js";
 import { getOriginalText, getTcConfig } from "./utils.js";
-import { M0001 } from "../model/diagnostics.js"
+import { M0001 } from "../model/diagnostics.js";
 
 export const logger = window.createOutputChannel("TwinCAT Structured Text");
 

@@ -1,15 +1,10 @@
 import { nativeTypesDetails, StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
-import { LiteralContext } from "../../generated/StructuredTextParser.js";
-import { C0001 } from "../diagnostics.js";
 
 export function evaluateRealNumber(
-    literal: LiteralContext
-): StType | undefined {
+    literal: string
+): [StType | undefined, string | undefined] {
     
-    const realLiteral = literal.REAL_LITERAL()!;
-    let text = realLiteral.getText();
-
-    const splittedText = text.split('#');
+    const splittedText = literal.split('#');
 
     let lhsTypeCode: StBuiltinTypeCode | undefined;
     let value: number;
@@ -36,14 +31,10 @@ export function evaluateRealNumber(
             rhsTypeCode = StBuiltinTypeCode.LREAL;
             
         else {
-            
-            if (lhsTypeCode)
-                C0001(literal, StBuiltinTypeCode[lhsTypeCode]);
-
-            else
-                C0001(literal, "ANY_REAL");
-
-            return undefined;
+            return [
+                undefined,
+                lhsTypeCode ?? "ANY_REAL"
+            ];
         }
     }
 
@@ -56,14 +47,10 @@ export function evaluateRealNumber(
             rhsTypeCode = StBuiltinTypeCode.LREAL;
                                 
         else {
-            
-            if (lhsTypeCode)
-                C0001(literal, StBuiltinTypeCode[lhsTypeCode]);
-
-            else
-                C0001(literal, "ANY_REAL");
-
-            return undefined;
+            return [
+                undefined,
+                lhsTypeCode ?? "ANY_REAL"
+            ];
         }
     }
 
@@ -79,8 +66,7 @@ export function evaluateRealNumber(
             rhsTypeDetails &&
             lhsTypeDetails.max! < rhsTypeDetails.max!
         ) {
-            C0001(literal, StBuiltinTypeCode[lhsTypeCode]);
-            return undefined;
+            return [undefined, lhsTypeCode];
         }
 
         else {
@@ -96,5 +82,5 @@ export function evaluateRealNumber(
     type.builtinType = new StBuiltinType(choosenType);
     type.builtinType.value = value;
 
-    return type;
+    return [type, undefined];
 }

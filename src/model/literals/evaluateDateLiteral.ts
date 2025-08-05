@@ -1,30 +1,26 @@
 import { DateTime } from "luxon";
 import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
-import { LiteralContext } from "../../generated/StructuredTextParser.js";
 import { isDateInRange } from "../../core/utils.js";
-import { C0001 } from "../diagnostics.js";
 
 export function evaluateDateLiteral(
-    literal: LiteralContext
-): StType | undefined {
+    prefix: string,
+    date: string
+): [StType | undefined, string | undefined] {
     
-    const dateLiteral = literal.dateLiteral()!;
-    const requestedType = dateLiteral._prefix?.text as StBuiltinTypeCode;
-    const dateParts = dateLiteral._date!.text!.split("-");
+    const lhsBuiltinType = prefix as StBuiltinTypeCode;
+    const dateParts = date.split("-");
 
     const year = Number.parseInt(dateParts[0]);
     const month = Number.parseInt(dateParts[1]);
     const day = Number.parseInt(dateParts[2]);
     const dateTime = DateTime.fromObject({ year, month, day });
 
-    if (!dateTime.isValid) {
-        C0001(literal, StBuiltinTypeCode[requestedType]);
-        return undefined;
-    }
+    if (!dateTime.isValid)
+        return [undefined, lhsBuiltinType];
 
     let choosenType: StBuiltinTypeCode | undefined;
 
-    switch (requestedType) {
+    switch (lhsBuiltinType) {
         
         case StBuiltinTypeCode.DATE:
 
@@ -39,8 +35,7 @@ export function evaluateDateLiteral(
             }
 
             else {
-                C0001(literal, StBuiltinTypeCode[requestedType]);
-                return undefined;
+                return [undefined, lhsBuiltinType];
             }
 
             break;
@@ -58,18 +53,17 @@ export function evaluateDateLiteral(
             }
 
             else {
-                C0001(literal, StBuiltinTypeCode[requestedType]);
-                return undefined;
+                return [undefined, lhsBuiltinType];
             }
 
             break;
         
         default:
-            return undefined;
+            return [undefined, lhsBuiltinType];
     }
 
     const type = new StType();
     type.builtinType = new StBuiltinType(choosenType);
 
-    return type;
+    return [type, undefined];
 }

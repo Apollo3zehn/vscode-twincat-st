@@ -1,15 +1,10 @@
 import { StBuiltinType, StBuiltinTypeCode, StNativeTypeKind, StType } from "../../core/types.js";
-import { LiteralContext } from "../../generated/StructuredTextParser.js";
-import { C0001 } from "../diagnostics.js";
 
 export function evaluateIntegerNumber(
-    literal: LiteralContext
-): StType | undefined {
+    literal: string
+): [StType | undefined, string | undefined] {
     
-    const integerLiteral = literal.INTEGER_LITERAL()!;
-    let text = integerLiteral.getText();
-
-    const splittedText = text.split('#');
+    const splittedText = literal.split('#');
 
     let lhsBuiltinType: StBuiltinType | undefined;
     let radix: number = 10;
@@ -46,14 +41,10 @@ export function evaluateIntegerNumber(
     }
         
     else {
-        
-        if (lhsBuiltinType)
-            C0001(literal, StBuiltinTypeCode[lhsBuiltinType.code!]);
-
-        else
-            C0001(literal, "ANY_INT");
-
-        return undefined;
+        return [
+            undefined,
+            lhsBuiltinType?.code ?? "ANY_INT"
+        ];
     }
 
     if (lhsBuiltinType) {
@@ -63,8 +54,10 @@ export function evaluateIntegerNumber(
             lhsBuiltinType &&
             lhsBuiltinType.details?.kind !== StNativeTypeKind.SignedInteger
         ) {
-            C0001(literal, StBuiltinTypeCode[lhsBuiltinType.code!]);
-            return undefined;
+            return [
+                undefined,
+                lhsBuiltinType?.code ?? undefined
+            ];
         }
 
         const rhsDetails = rhsType.builtinType?.details;
@@ -75,8 +68,10 @@ export function evaluateIntegerNumber(
             lhsDetails &&
             lhsDetails.max! < rhsDetails.max!
         ) {
-            C0001(literal, StBuiltinTypeCode[lhsBuiltinType.code!]);
-            return undefined;
+            return [
+                undefined,
+                lhsBuiltinType?.code ?? undefined
+            ];
         }
     }
 
@@ -91,7 +86,7 @@ export function evaluateIntegerNumber(
     const type = new StType();
     type.builtinType = builtinType;
 
-    return type;
+    return [type, undefined];
 }
 
 export function getSmallestIntegerForValue(

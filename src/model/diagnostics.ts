@@ -1,8 +1,8 @@
 import { ParserRuleContext, TerminalNode } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity } from "vscode";
-import { StSourceFile, StSymbol } from "../core/types.js";
+import { StSymbol } from "../core/types.js";
+import { getContextRange, getTokenRange, getTypeOfType } from "../core/utils.js";
 import { LiteralContext, PostfixOpContext } from "../generated/StructuredTextParser.js";
-import { getContextRange, getOriginalText, getTokenRange, getTypeOfType } from "../core/utils.js";
 import { StModelBuilder } from "./StModelBuilder.js";
 
 // M0001: The subrange parameters are not within the valid range
@@ -23,7 +23,7 @@ export function C0001(literal: LiteralContext, typeName: string) {
     
     const diagnostic = new Diagnostic(
         getContextRange(literal),
-        `Constant '${getOriginalText(literal)}' too large for type '${typeName}'`,
+        `Constant '${literal.getText()}' too large for type '${typeName}'`,
         DiagnosticSeverity.Error
     );
 

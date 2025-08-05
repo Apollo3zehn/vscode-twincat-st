@@ -1,11 +1,11 @@
 import { CharStream, CommonTokenStream, ParserRuleContext } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, TextDocument, Uri, workspace } from "vscode";
-import { logger, StBuiltinType, StBuiltinTypeCode, StModel, StModifier, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
+import { logger, StBuiltinTypeCode, StModel, StModifier, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
 import { ConnectDeclaringSymbols, getContextRange, getNestedTypeOrSelf } from "../core/utils.js";
 import { StructuredTextLexer } from "../generated/StructuredTextLexer.js";
 import { AssignmentContext, CallStatementContext, EnumMemberContext, ExprContext, ExtendsClauseContext, ImplementsClauseContext, LiteralContext, MemberExpressionContext, MethodContext, PostfixOpContext, PropertyContext, StructuredTextParser, VarDeclContext } from "../generated/StructuredTextParser.js";
 import { StVisitor } from "./StVisitor.js";
-import { C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0077, C0080, C0140, C0143, C0185, C0261 } from "./diagnostics.js";
+import { C0001, C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0077, C0080, C0140, C0143, C0185, C0261 } from "./diagnostics.js";
 import { evaluateBoolLiteral } from "./literals/evaluateBoolLiteral.js";
 import { evaluateDateAndTimeLiteral } from "./literals/evaluateDateAndTimeLiteral.js";
 import { evaluateDateLiteral } from "./literals/evaluateDateLiteral.js";
@@ -16,7 +16,7 @@ import { evaluateStringLiteral } from "./literals/evaluateStringLiteral.js";
 import { evaluateTimeLiteral } from "./literals/evaluateTimeLiteral.js";
 import { evaluateTimeOfDayLiteral } from "./literals/evaluateTimeOfDayLiteral.js";
 import { evaluateWStringLiteral } from "./literals/evaluateWStringLiteral.js";
-import { getLowestCommonDenominator, promoteAssignmentOperand, promoteMathOperands } from "./promotionHelper.js";
+import { evaluateExpressionWith2Arguments, promoteAssignmentOperand } from "./promotionHelper.js";
 
 export class StModelBuilder {
 
@@ -424,34 +424,22 @@ export class StModelBuilder {
         const expressions = expression.expr();
         const literal = expression.literal();
 
-        if (expressions.length == 2) {
+        if (expressions.length === 2) {
 
-            // Step 1: Evaluate both expressions
+            // Step 1: Evaluate expressions
             var lhsType = this.evaluateExpression(expressions[0]);
             var rhsType = this.evaluateExpression(expressions[1]);
 
             if (!lhsType || !rhsType)
                 return undefined;
                
-            // Step 2: Promote possible constants (literals and constant expressions)
-            [lhsType, rhsType] = promoteMathOperands(expression, lhsType, rhsType);
+            // Step 2: Get lowest common denominator
+            const lcdType = evaluateExpressionWith2Arguments(lhsType, rhsType, expression._op!.text!);
 
-            if (!lhsType.builtinType || !rhsType.builtinType)
-                return undefined;
-            
-            // Step 3: Get lowest common denominator type
-            const lcdBuiltinTypeCode = getLowestCommonDenominator(
-                lhsType,
-                rhsType
-            );
-
-            if (!lcdBuiltinTypeCode)
+            if (!lcdType)
                 return undefined;
 
-            const lcdType = new StType();
-            lcdType.builtinType = new StBuiltinType(lcdBuiltinTypeCode);
-
-            // Step 4: Check assignments of lhs and rhs to LCD
+            // Step 3: Check assignments of lhs and rhs to LCD
             const lhsResult = this.CheckAssignment(
                 lcdType, expression,
                 lhsType, expressions[0],
@@ -495,30 +483,31 @@ export class StModelBuilder {
     private evaluateLiteral(literal: LiteralContext): StType | undefined {
 
         let type: StType | undefined;
+        let lhsType: string | undefined;
 
         if (literal.BOOL_LITERAL())
             type = evaluateBoolLiteral();
 
         else if (literal.INTEGER_LITERAL())
-            type = evaluateIntegerNumber(literal);
+            [type, lhsType] = evaluateIntegerNumber(literal.INTEGER_LITERAL()?.getText()!);
 
         else if (literal.REAL_LITERAL())
-            type = evaluateRealNumber(literal);
+            [type, lhsType] = evaluateRealNumber(literal.REAL_LITERAL()?.getText()!);
             
         else if (literal.TIME_LITERAL())
-            type = evaluateTimeLiteral(literal);
+            [type, lhsType] = evaluateTimeLiteral(literal.TIME_LITERAL()?.getText()!);
             
         else if (literal.LTIME_LITERAL())
-            type = evaluateLTimeLiteral(literal);
+            [type, lhsType] = evaluateLTimeLiteral(literal.LTIME_LITERAL()?.getText()!);
 
         else if (literal.dateLiteral())
-            type = evaluateDateLiteral(literal);
+            [type, lhsType] = evaluateDateLiteral(literal.dateLiteral()?._prefix?.text!, literal.dateLiteral()?.getText()!);
 
         else if (literal.timeOfDayLiteral())
-            type = evaluateTimeOfDayLiteral(literal);
+            [type, lhsType] = evaluateTimeOfDayLiteral(literal.timeOfDayLiteral()?._prefix?.text!, literal.timeOfDayLiteral()?.getText()!);
 
         else if (literal.dateAndTimeLiteral())
-            type = evaluateDateAndTimeLiteral(literal);
+            [type, lhsType] = evaluateDateAndTimeLiteral(literal.dateAndTimeLiteral()?._prefix?.text!, literal.dateAndTimeLiteral()?.getText()!);
 
         else if (literal.STRING_LITERAL())
             type = evaluateStringLiteral(literal);
@@ -529,6 +518,9 @@ export class StModelBuilder {
         else
             this.cannotEvaluateExpression(literal);
 
+        if (!type && lhsType)
+            C0001(literal, lhsType);
+        
         if (type?.builtinType)
             type.builtinType.isLiteral = true;
 

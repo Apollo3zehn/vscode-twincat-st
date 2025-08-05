@@ -1,16 +1,14 @@
 import { DateTime } from "luxon";
 import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
-import { LiteralContext } from "../../generated/StructuredTextParser.js";
 import { isTimeOfDayInRange } from "../../core/utils.js";
-import { C0001 } from "../diagnostics.js";
 
 export function evaluateTimeOfDayLiteral(
-    literal: LiteralContext
-): StType | undefined {
+    prefix: string,
+    timeOfDay: string
+): [StType | undefined, string | undefined] {
     
-    const timeOfDayLiteral = literal.timeOfDayLiteral()!;
-    const requestedType = timeOfDayLiteral._prefix?.text as StBuiltinTypeCode;
-    const timeOfDayParts = timeOfDayLiteral._timeOfDay!.text!.split(":");
+    const lhsBuiltinType = prefix as StBuiltinTypeCode;
+    const timeOfDayParts = timeOfDay.split(":");
 
     const hour = Number.parseInt(timeOfDayParts[0]);
     const minute = Number.parseInt(timeOfDayParts[1]);
@@ -35,14 +33,12 @@ export function evaluateTimeOfDayLiteral(
         millisecond: millisecond_rounded
     });
 
-    if (!dateTime.isValid) {
-        C0001(literal, StBuiltinTypeCode[requestedType]);
-        return undefined;
-    }
+    if (!dateTime.isValid)
+        return [undefined, lhsBuiltinType];
 
     let choosenType: StBuiltinTypeCode | undefined;
 
-    switch (requestedType) {
+    switch (lhsBuiltinType) {
         
         case StBuiltinTypeCode.TIME_OF_DAY:
 
@@ -56,8 +52,7 @@ export function evaluateTimeOfDayLiteral(
             }
 
             else {
-                C0001(literal, StBuiltinTypeCode[requestedType]);
-                return undefined;
+                return [undefined, lhsBuiltinType];
             }
 
             break;
@@ -74,18 +69,17 @@ export function evaluateTimeOfDayLiteral(
             }
 
             else {
-                C0001(literal, StBuiltinTypeCode[requestedType]);
-                return undefined;
+                return [undefined, lhsBuiltinType];
             }
 
             break;
         
         default:
-            return undefined;
+            return [undefined, lhsBuiltinType];
     }
 
     const type = new StType();
     type.builtinType = new StBuiltinType(choosenType);
 
-    return type;
+    return [type, undefined];
 }

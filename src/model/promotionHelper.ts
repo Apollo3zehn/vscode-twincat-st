@@ -1,65 +1,32 @@
-import { nativeTypesDetails, StBuiltinTypeCode, StNativeTypeKind, StType } from "../core/types.js";
+import { nativeTypesDetails, StBuiltinType, StBuiltinTypeCode, StNativeTypeKind, StType } from "../core/types.js";
 import { ExprContext } from "../generated/StructuredTextParser.js";
 import { getSmallestIntegerForValue } from "./literals/evaluateIntegerNumber.js";
 
-export function promoteMathOperands(
-    expression: ExprContext,
+export function evaluateExpressionWith2Arguments(
     lhsType: StType,
-    rhsType: StType
-): [StType, StType] {
+    rhsType: StType,
+    operator: string
+): StType | undefined {
 
-    const operator = expression._op!.text!;
+    // Step 1: Promote possible constants (literals and constant expressions)
+    [lhsType, rhsType] = promoteMathOperands(operator, lhsType, rhsType);
 
-    const lhsBuiltinType = lhsType.builtinType;
-    const lhsIsUntypedLiteral = lhsBuiltinType?.code === null;
-
-    const rhsBuiltinType = rhsType.builtinType;
-    const rhsIsUntypedLiteral = rhsBuiltinType?.code === null;
-
-    if (lhsIsUntypedLiteral && rhsIsUntypedLiteral) {
-
-        // Promote both literals to the smallest signed integer type that can represent their values
-        if (operator === "-" || lhsBuiltinType.value! < 0 || rhsBuiltinType.value! < 0) {
-            lhsType = getSmallestIntegerForValue(lhsBuiltinType.value!, true, false)!;
-            rhsType = getSmallestIntegerForValue(rhsBuiltinType.value!, true, false)!;
-        }
-
-        // Promote both literals to the smallest unsigned integer type that can represent their values
-        else {
-            lhsType = getSmallestIntegerForValue(lhsBuiltinType.value!, false, true)!;
-            rhsType = getSmallestIntegerForValue(rhsBuiltinType.value!, false, true)!;
-        }
-    }
-
-    else {
-
-        const lhsIsSigned = lhsBuiltinType?.details?.signed;
-        const rhsIsSigned = rhsBuiltinType?.details?.signed;
-
-        if (lhsIsSigned || rhsIsSigned) {
-
-            // Promote the lhs type to the smallest signed integer type that can represent its value
-            if (lhsBuiltinType!.value !== undefined && lhsIsUntypedLiteral)
-                lhsType = getSmallestIntegerForValue(lhsBuiltinType.value, true, false)!;
-
-            // Promote the rhs type to the smallest signed integer type that can represent its value
-            if (rhsBuiltinType!.value !== undefined && rhsIsUntypedLiteral)
-                rhsType = getSmallestIntegerForValue(rhsBuiltinType.value, true, false)!;
-        }
-
-        else {
-
-            // Promote the lhs type to the smallest unsigned integer type that can represent its value
-            if (lhsBuiltinType?.value !== undefined && lhsIsUntypedLiteral)
-                lhsType = getSmallestIntegerForValue(lhsBuiltinType.value, false, true)!;
-
-            // Promote the rhs type to the smallest unsigned integer type that can represent its value
-            if (rhsBuiltinType?.value !== undefined && rhsIsUntypedLiteral)
-                rhsType = getSmallestIntegerForValue(rhsBuiltinType.value, false, true)!;
-        }
-    }
+    if (!lhsType.builtinType || !rhsType.builtinType)
+        return undefined;
     
-    return [lhsType, rhsType];
+    // Step 2: Get lowest common denominator
+    const lcdBuiltinTypeCode = getLowestCommonDenominator(
+        lhsType,
+        rhsType
+    );
+
+    if (!lcdBuiltinTypeCode)
+        return undefined;
+
+    const lcdType = new StType();
+    lcdType.builtinType = new StBuiltinType(lcdBuiltinTypeCode);
+
+    return lcdType;
 }
 
 export function promoteAssignmentOperand(
@@ -132,7 +99,65 @@ export function promoteAssignmentOperand(
     return rhsType;
 }
 
-export function getLowestCommonDenominator(
+function promoteMathOperands(
+    operator: string,
+    lhsType: StType,
+    rhsType: StType
+): [StType, StType] {
+
+    const lhsBuiltinType = lhsType.builtinType;
+    const lhsIsUntypedLiteral = lhsBuiltinType?.code === null;
+
+    const rhsBuiltinType = rhsType.builtinType;
+    const rhsIsUntypedLiteral = rhsBuiltinType?.code === null;
+
+    if (lhsIsUntypedLiteral && rhsIsUntypedLiteral) {
+
+        // Promote both literals to the smallest signed integer type that can represent their values
+        if (operator === "-" || lhsBuiltinType.value! < 0 || rhsBuiltinType.value! < 0) {
+            lhsType = getSmallestIntegerForValue(lhsBuiltinType.value!, true, false)!;
+            rhsType = getSmallestIntegerForValue(rhsBuiltinType.value!, true, false)!;
+        }
+
+        // Promote both literals to the smallest unsigned integer type that can represent their values
+        else {
+            lhsType = getSmallestIntegerForValue(lhsBuiltinType.value!, false, true)!;
+            rhsType = getSmallestIntegerForValue(rhsBuiltinType.value!, false, true)!;
+        }
+    }
+
+    else {
+
+        const lhsIsSigned = lhsBuiltinType?.details?.signed;
+        const rhsIsSigned = rhsBuiltinType?.details?.signed;
+
+        if (lhsIsSigned || rhsIsSigned) {
+
+            // Promote the lhs type to the smallest signed integer type that can represent its value
+            if (lhsBuiltinType!.value !== undefined && lhsIsUntypedLiteral)
+                lhsType = getSmallestIntegerForValue(lhsBuiltinType.value, true, false)!;
+
+            // Promote the rhs type to the smallest signed integer type that can represent its value
+            if (rhsBuiltinType!.value !== undefined && rhsIsUntypedLiteral)
+                rhsType = getSmallestIntegerForValue(rhsBuiltinType.value, true, false)!;
+        }
+
+        else {
+
+            // Promote the lhs type to the smallest unsigned integer type that can represent its value
+            if (lhsBuiltinType?.value !== undefined && lhsIsUntypedLiteral)
+                lhsType = getSmallestIntegerForValue(lhsBuiltinType.value, false, true)!;
+
+            // Promote the rhs type to the smallest unsigned integer type that can represent its value
+            if (rhsBuiltinType?.value !== undefined && rhsIsUntypedLiteral)
+                rhsType = getSmallestIntegerForValue(rhsBuiltinType.value, false, true)!;
+        }
+    }
+    
+    return [lhsType, rhsType];
+}
+
+function getLowestCommonDenominator(
     lhsType: StType,
     rhsType: StType
 ): StBuiltinTypeCode | undefined {

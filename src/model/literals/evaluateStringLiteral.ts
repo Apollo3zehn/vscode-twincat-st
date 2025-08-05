@@ -6,7 +6,7 @@ import { StModelBuilder } from "../StModelBuilder.js";
 
 export function evaluateStringLiteral(
     literal: LiteralContext
-): StType | undefined {
+): StType {
     
     const stringLiteral = literal.STRING_LITERAL()!;
     const text = stringLiteral.getText().slice(1, -1);

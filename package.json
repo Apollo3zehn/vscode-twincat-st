@@ -56,7 +56,7 @@
     "watch": "tsc -watch -p ./",
     "pretest": "pnpm run compile && pnpm run lint",
     "lint": "eslint src",
-    "test": "mocha --loader ts-node/esm src/test/**/*.test.ts"
+    "test": "vscode-test"
   },
   "devDependencies": {
     "@types/luxon": "^3.6.2",
@@ -65,9 +65,9 @@
     "@types/vscode": "^1.101.0",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
     "@typescript-eslint/parser": "^8.31.1",
+    "@vscode/test-cli": "^0.0.10",
+    "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.25.1",
-    "mocha": "^11.7.1",
-    "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },
   "dependencies": {

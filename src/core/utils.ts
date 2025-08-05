@@ -1,9 +1,9 @@
-import { Interval, ParserRuleContext, TerminalNode, Token } from "antlr4ng";
+import { Interval, ParserRuleContext, Token } from "antlr4ng";
 import * as fs from "fs";
 import path from "path";
-import { Diagnostic, DiagnosticSeverity, Position, Range, workspace } from "vscode";
-import { Architecture, StModel, StModifier, StNativeTypeKind, StSourceFile, StSymbol, StSymbolKind, StType, TcConfig } from "./types.js";
+import { Position, Range, workspace } from "vscode";
 import { ModifierContext } from "../generated/StructuredTextParser.js";
+import { Architecture, StModifier, StSymbol, StSymbolKind, StType, TcConfig } from "./types.js";
 
 export const TIME_COMPONENTS = [
     { value: 0, max: undefined },   // days
@@ -270,7 +270,7 @@ export function getTcConfig(): TcConfig | undefined {
     }
 }
 
-export function convertToPlatformSpecificTypeText(typeText: string, arch: Architecture) {
+export function convertToPlatformSpecificTypeText(typeText: string, arch?: Architecture) {
 
     switch (typeText) {
 
@@ -300,6 +300,12 @@ export function convertToPlatformSpecificTypeText(typeText: string, arch: Archit
             return arch === Architecture.x64
                 ? "LWORD"
                 : "DWORD";
+        
+        case "D":
+            return "DATE";
+        
+        case "LD":
+            return "LDATE";
         
         case "TOD":
             return "TIME_OF_DAY";

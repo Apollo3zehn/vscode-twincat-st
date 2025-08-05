@@ -1,13 +1,13 @@
 import { DateTime } from "luxon";
 import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
-import { isTimeOfDayInRange } from "../../core/utils.js";
+import { convertToPlatformSpecificTypeText, isTimeOfDayInRange } from "../../core/utils.js";
 
 export function evaluateTimeOfDayLiteral(
     prefix: string,
     timeOfDay: string
 ): [StType | undefined, string | undefined] {
     
-    const lhsBuiltinType = prefix as StBuiltinTypeCode;
+    const lhsBuiltinType = convertToPlatformSpecificTypeText(prefix) as StBuiltinTypeCode;
     const timeOfDayParts = timeOfDay.split(":");
 
     const hour = Number.parseInt(timeOfDayParts[0]);

@@ -6,13 +6,13 @@ export function evaluateExpressionWith2Arguments(
     lhsType: StType,
     rhsType: StType,
     operator: string
-): StType | undefined {
+): [StType, StType, StType | undefined] {
 
     // Step 1: Promote possible constants (literals and constant expressions)
     [lhsType, rhsType] = promoteMathOperands(operator, lhsType, rhsType);
 
     if (!lhsType.builtinType || !rhsType.builtinType)
-        return undefined;
+        return [lhsType, rhsType, undefined];
     
     // Step 2: Get lowest common denominator
     const lcdBuiltinTypeCode = getLowestCommonDenominator(
@@ -21,12 +21,12 @@ export function evaluateExpressionWith2Arguments(
     );
 
     if (!lcdBuiltinTypeCode)
-        return undefined;
+        return [lhsType, rhsType, undefined];
 
     const lcdType = new StType();
     lcdType.builtinType = new StBuiltinType(lcdBuiltinTypeCode);
 
-    return lcdType;
+    return [lhsType, rhsType, lcdType];
 }
 
 export function promoteAssignmentOperand(

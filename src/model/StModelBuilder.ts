@@ -157,9 +157,8 @@ export class StModelBuilder {
 
                     let rhsType: StType | undefined;
 
-                    if (rhsCtx) {
+                    if (rhsCtx)
                         rhsType = this.evaluateExpression(rhsCtx);
-                    }
 
                     if (nestedLhsType && rhsType) {
 
@@ -434,7 +433,8 @@ export class StModelBuilder {
                 return undefined;
                
             // Step 2: Get lowest common denominator
-            const lcdType = evaluateExpressionWith2Arguments(lhsType, rhsType, expression._op!.text!);
+            let lcdType: StType | undefined = undefined;
+            [lhsType, rhsType, lcdType] = evaluateExpressionWith2Arguments(lhsType, rhsType, expression._op!.text!);
 
             if (!lcdType)
                 return undefined;
@@ -500,14 +500,35 @@ export class StModelBuilder {
         else if (literal.LTIME_LITERAL())
             [type, lhsType] = evaluateLTimeLiteral(literal.LTIME_LITERAL()?.getText()!);
 
-        else if (literal.dateLiteral())
-            [type, lhsType] = evaluateDateLiteral(literal.dateLiteral()?._prefix?.text!, literal.dateLiteral()?.getText()!);
+        else if (literal.dateLiteral()) {
 
-        else if (literal.timeOfDayLiteral())
-            [type, lhsType] = evaluateTimeOfDayLiteral(literal.timeOfDayLiteral()?._prefix?.text!, literal.timeOfDayLiteral()?.getText()!);
+            const dateLiteral = literal.dateLiteral();
 
-        else if (literal.dateAndTimeLiteral())
-            [type, lhsType] = evaluateDateAndTimeLiteral(literal.dateAndTimeLiteral()?._prefix?.text!, literal.dateAndTimeLiteral()?.getText()!);
+            [type, lhsType] = evaluateDateLiteral(
+                dateLiteral!._prefix?.text!,
+                dateLiteral!._date!.text!
+            );
+        }
+
+        else if (literal.timeOfDayLiteral()) {
+
+            const timeOfDayLiteral = literal.timeOfDayLiteral();
+
+            [type, lhsType] = evaluateTimeOfDayLiteral(
+                timeOfDayLiteral!._prefix?.text!,
+                timeOfDayLiteral!._timeOfDay!.text!
+            );
+        }
+
+        else if (literal.dateAndTimeLiteral()) {
+
+            const dateAndTimeLiteral = literal.dateAndTimeLiteral();
+
+            [type, lhsType] = evaluateDateAndTimeLiteral(
+                dateAndTimeLiteral!._prefix?.text!,
+                dateAndTimeLiteral!._dateAndTime?.text!
+            );
+        }
 
         else if (literal.STRING_LITERAL())
             type = evaluateStringLiteral(literal);
@@ -518,13 +539,19 @@ export class StModelBuilder {
         else
             this.cannotEvaluateExpression(literal);
 
-        if (!type && lhsType)
-            C0001(literal, lhsType);
-        
-        if (type?.builtinType)
-            type.builtinType.isLiteral = true;
+        if (!type) {
 
-        return type;
+            if (lhsType)
+                C0001(literal, lhsType);
+
+            return undefined;
+        }
+
+        else {
+            type.builtinType!.isLiteral = true;
+
+            return type;
+        }
     }
 
     private evaluateMemberExpression(

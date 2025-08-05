@@ -1,13 +1,13 @@
 import { DateTime } from "luxon";
 import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
-import { isDateAndTimeInRange } from "../../core/utils.js";
+import { convertToPlatformSpecificTypeText, isDateAndTimeInRange } from "../../core/utils.js";
 
 export function evaluateDateAndTimeLiteral(
     prefix: string,
     dateAndTime: string
 ): [StType | undefined, string | undefined] {
     
-    const lhsBuiltinType = prefix as StBuiltinTypeCode;
+    const lhsBuiltinType = convertToPlatformSpecificTypeText(prefix) as StBuiltinTypeCode;
     const dateAndTimeParts = dateAndTime.split("-");
 
     const year = Number.parseInt(dateAndTimeParts[0]);

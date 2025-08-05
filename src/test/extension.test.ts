@@ -1,10 +1,10 @@
 import assert from 'assert';
-import { evaluateExpressionWith2Arguments } from '../model/promotionHelper.js';
+import { evaluateAssignmentOperand, evaluateExpressionWith2Arguments } from '../model/evaluationHelper.js';
 import { StBuiltinType, StBuiltinTypeCode, StType } from '../core/types.js';
+import { evaluateIntegerLiteral } from '../model/literals/evaluateIntegerLiteral.js';
 
 // Left operand: typed variable, right operand: typed variable
-const cases_typed_var = [
-    // ['BYTE', '-BYTE', '+', 'INT'],
+const cases_typed_variables = [
     ['BYTE', 'REAL', '+', 'REAL'],
     ['BYTE', 'UINT', '+', 'UINT'],
     ['BYTE', 'UDINT', '+', 'UDINT'],
@@ -13,21 +13,19 @@ const cases_typed_var = [
     ['INT', 'UDINT', '+', 'DINT'],
     ['INT', 'LINT', '+', 'LINT'],
     ['INT', 'LREAL', '+', 'LREAL'],
-    // ['INT_SUBRANGE', 'BYTE', '+', 'INT'],
     ['UDINT', 'DINT', '+', 'DINT'],
     ['ULINT', 'LINT', '+', 'LINT'],
     ['REAL', 'LREAL', '+', 'LREAL'],
 ];
 
 // Left operand: typed literal, right operand: typed literal
-const cases_typed_literal = [
+const cases_typed_literals = [
     ['BYTE#1', 'UINT#1', '+', 'UINT'],
-    ['UINT#1', 'BYTE#1', '+', 'UINT'],
-    // ['USINT#1', '-BYTE#1', '+', 'SINT'],
+    ['UINT#1', 'BYTE#1', '+', 'UINT']
 ];
 
 // Left operand: typed literal, right operand: untyped literal
-const cases_typed_untyped = [
+const cases_typed_untyped_literals = [
     ['SINT#1', '1', '+', 'SINT'],
     ['SINT#1', '127', '+', 'SINT'],
     ['SINT#1', '128', '+', 'INT'],
@@ -48,8 +46,8 @@ const cases_typed_untyped = [
     ['USINT#1', '-129', '+', 'INT'],
 ];
 
-// Left operand: untyped, right operand: untyped
-const cases_untyped = [
+// Left operand: untyped literal, right operand: untyped literal
+const cases_untyped_literals = [
 
     // Plus
     ['-128', '1', '+', 'SINT'],
@@ -67,7 +65,6 @@ const cases_untyped = [
     ['0', '0', '+', 'USINT'],
     ['-1', '0', '+', 'SINT'],
     ['127', '1', '+', 'USINT'],
-    ['255', '1', '+', 'USINT'],
 
     // Minus
     ['-128', '1', '-', 'SINT'],
@@ -79,11 +76,18 @@ const cases_untyped = [
     ['0', '0', '-', 'SINT'],
 ];
 
-suite('promotion', () => {
+// Assignment of untyped literals to bit
+const cases_assignment = [
+    ['BIT', '2', 'SINT'],
+    ['BIT', '128', 'USINT']
+];
 
-	cases_typed_var.forEach(([lhs, rhs, operator, expectedType], idx) => {
+suite('Type promotion', () => {
+
+    // Left operand: typed variable, right operand: typed variable
+	cases_typed_variables.forEach(([lhs, rhs, operator, expectedType]) => {
 		
-		test(`Case ${idx + 1}: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
+		test(`Typed variables: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
 			
             // Arrange
             const lhsType = getType(lhs);
@@ -91,7 +95,83 @@ suite('promotion', () => {
 			const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
 			
             assert(result);
-            // assert.strictEqual(result.getId(), expectedType);
+            assert.strictEqual(result[2]?.getId(), expectedType);
+        });
+    });
+
+    // Left operand: typed literal, right operand: typed literal
+	cases_typed_literals.forEach(([lhs, rhs, operator, expectedType]) => {
+		
+		test(`Typed literals: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
+			
+            // Arrange
+            const [lhsType, _1] = evaluateIntegerLiteral(lhs);
+            const [rhsType, _2] = evaluateIntegerLiteral(rhs);
+
+            assert(lhsType);
+            assert(rhsType);
+
+			const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
+			
+            assert(result);
+            assert.strictEqual(result[2]?.getId(), expectedType);
+        });
+    });
+
+    // Left operand: typed literal, right operand: untyped literal
+	cases_typed_untyped_literals.forEach(([lhs, rhs, operator, expectedType]) => {
+		
+		test(`Typed + untyped literals: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
+			
+            // Arrange
+            const [lhsType, _1] = evaluateIntegerLiteral(lhs);
+            const [rhsType, _2] = evaluateIntegerLiteral(rhs);
+
+            assert(lhsType);
+            assert(rhsType);
+
+			const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
+			
+            assert(result);
+            assert.strictEqual(result[2]?.getId(), expectedType);
+        });
+    });
+
+    // Left operand: untyped literal, right operand: untyped literal
+	cases_untyped_literals.forEach(([lhs, rhs, operator, expectedType]) => {
+		
+		test(`Untyped literals: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
+			
+            // Arrange
+            const [lhsType, _1] = evaluateIntegerLiteral(lhs);
+            const [rhsType, _2] = evaluateIntegerLiteral(rhs);
+
+            assert(lhsType);
+            assert(rhsType);
+
+			const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
+			
+            assert(result);
+            assert.strictEqual(result[2]?.getId(), expectedType);
+        });
+    });
+
+    // Assignment of untyped literal to bit
+    cases_assignment.forEach(([lhs, rhs, expectedType]) => {
+		
+		test(`Assignment: ${lhs} := ${rhs} => ${expectedType}`, () => {
+			
+            // Arrange
+            const lhsType = getType(lhs);
+            const [rhsType, _] = evaluateIntegerLiteral(rhs);
+
+            assert(lhsType);
+            assert(rhsType);
+
+			const result = evaluateAssignmentOperand(lhsType, rhsType, undefined);
+			
+            assert(result);
+            assert.strictEqual(result.getId(), expectedType);
         });
     });
 });

@@ -1,6 +1,6 @@
 import { nativeTypesDetails, StBuiltinType, StBuiltinTypeCode, StNativeTypeKind, StType } from "../core/types.js";
 import { ExprContext } from "../generated/StructuredTextParser.js";
-import { getSmallestIntegerForValue } from "./literals/evaluateIntegerNumber.js";
+import { getSmallestIntegerForValue } from "./literals/evaluateIntegerLiteral.js";
 
 export function evaluateExpressionWith2Arguments(
     lhsType: StType,
@@ -29,7 +29,7 @@ export function evaluateExpressionWith2Arguments(
     return [lhsType, rhsType, lcdType];
 }
 
-export function promoteAssignmentOperand(
+export function evaluateAssignmentOperand(
     lhsType: StType,
     rhsType: StType,
     expression: ExprContext | undefined

@@ -9,14 +9,14 @@ import { C0001, C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0077, C
 import { evaluateBoolLiteral } from "./literals/evaluateBoolLiteral.js";
 import { evaluateDateAndTimeLiteral } from "./literals/evaluateDateAndTimeLiteral.js";
 import { evaluateDateLiteral } from "./literals/evaluateDateLiteral.js";
-import { evaluateIntegerNumber } from "./literals/evaluateIntegerNumber.js";
+import { evaluateIntegerLiteral } from "./literals/evaluateIntegerLiteral.js";
 import { evaluateLTimeLiteral } from "./literals/evaluateLTimeLiteral.js";
-import { evaluateRealNumber } from "./literals/evaluateRealNumber.js";
+import { evaluateRealLiteral } from "./literals/evaluateRealLiteral.js";
 import { evaluateStringLiteral } from "./literals/evaluateStringLiteral.js";
 import { evaluateTimeLiteral } from "./literals/evaluateTimeLiteral.js";
 import { evaluateTimeOfDayLiteral } from "./literals/evaluateTimeOfDayLiteral.js";
 import { evaluateWStringLiteral } from "./literals/evaluateWStringLiteral.js";
-import { evaluateExpressionWith2Arguments, promoteAssignmentOperand } from "./promotionHelper.js";
+import { evaluateExpressionWith2Arguments, evaluateAssignmentOperand } from "./evaluationHelper.js";
 
 export class StModelBuilder {
 
@@ -162,7 +162,7 @@ export class StModelBuilder {
 
                     if (nestedLhsType && rhsType) {
 
-                        rhsType = promoteAssignmentOperand(nestedLhsType, rhsType, rhsCtx);
+                        rhsType = evaluateAssignmentOperand(nestedLhsType, rhsType, rhsCtx);
 
                         this.CheckAssignment(
                             nestedLhsType, lhsCtx,
@@ -190,7 +190,7 @@ export class StModelBuilder {
 
                     if (lhsType && rhsType) {
 
-                        rhsType = promoteAssignmentOperand(lhsType, rhsType, rhsCtx);
+                        rhsType = evaluateAssignmentOperand(lhsType, rhsType, rhsCtx);
 
                         this.CheckAssignment(
                             lhsType, undefined,
@@ -401,7 +401,7 @@ export class StModelBuilder {
 
         if (lhsType && rhsType) {
 
-            rhsType = promoteAssignmentOperand(lhsType, rhsType, rhsCtx);
+            rhsType = evaluateAssignmentOperand(lhsType, rhsType, rhsCtx);
 
             this.CheckAssignment(
                 lhsType, lhsCtx,
@@ -489,10 +489,10 @@ export class StModelBuilder {
             type = evaluateBoolLiteral();
 
         else if (literal.INTEGER_LITERAL())
-            [type, lhsType] = evaluateIntegerNumber(literal.INTEGER_LITERAL()?.getText()!);
+            [type, lhsType] = evaluateIntegerLiteral(literal.INTEGER_LITERAL()?.getText()!);
 
         else if (literal.REAL_LITERAL())
-            [type, lhsType] = evaluateRealNumber(literal.REAL_LITERAL()?.getText()!);
+            [type, lhsType] = evaluateRealLiteral(literal.REAL_LITERAL()?.getText()!);
             
         else if (literal.TIME_LITERAL())
             [type, lhsType] = evaluateTimeLiteral(literal.TIME_LITERAL()?.getText()!);

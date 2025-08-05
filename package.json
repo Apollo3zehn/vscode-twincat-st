@@ -11,7 +11,7 @@
     "Snippets",
     "Formatters"
   ],
-  "type": "module",
+  "type": "commonjs",
   "main": "./out/extension.js",
   "contributes": {
     "languages": [
@@ -56,7 +56,8 @@
     "watch": "tsc -watch -p ./",
     "pretest": "pnpm run compile && pnpm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "postinstall": "node scripts/fix-antlr4ng.js"
   },
   "devDependencies": {
     "@types/luxon": "^3.6.2",

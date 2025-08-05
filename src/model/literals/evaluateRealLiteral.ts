@@ -1,6 +1,6 @@
 import { nativeTypesDetails, StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
 
-export function evaluateRealNumber(
+export function evaluateRealLiteral(
     literal: string
 ): [StType | undefined, string | undefined] {
     

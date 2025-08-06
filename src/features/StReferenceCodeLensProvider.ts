@@ -1,17 +1,12 @@
 import { CodeLens, CodeLensProvider, Location, TextDocument } from 'vscode';
-import { StAccessModifier, StModel, StSymbolKind, StVariableScope } from '../core/types.js';
+import { StAccessModifier, StSymbolKind, StVariableScope } from '../core/types.js';
+import { StModelBuilder } from '../model/StModelBuilder.js';
 
 export class StReferencesCodeLensProvider implements CodeLensProvider {
     
-    private _model: StModel;
-
-    constructor(model: StModel) {
-        this._model = model;
-    }
-
     provideCodeLenses(document: TextDocument): CodeLens[] {
 
-        const sourceFile = this._model.sourceFileMap.get(document.uri.toString());
+        const sourceFile = StModelBuilder.model.sourceFileMap.get(document.uri.toString());
 
         if (!sourceFile)
             return [];

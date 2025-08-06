@@ -1,19 +1,14 @@
 import { Hover, HoverProvider, MarkdownString, Position, ProviderResult, TextDocument } from "vscode";
-import { StAccessModifier, StModel, StModifier, StSymbol, StSymbolKind } from "../core/types.js";
-import { EnumMemberContext, StructDeclContext, UnionDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { StAccessModifier, StModifier, StSymbol, StSymbolKind } from "../core/types.js";
 import { isInRange } from "../core/utils.js";
+import { EnumMemberContext, StructDeclContext, UnionDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
+import { StModelBuilder } from "../model/StModelBuilder.js";
 
 export class StHoverProvider implements HoverProvider {
 
-    private _model: StModel;
-    
-    constructor(model: StModel) {
-        this._model = model;
-    }
-
     provideHover(document: TextDocument, position: Position): ProviderResult<Hover> {
         
-        const sourceFile = this._model.sourceFileMap.get(document.uri.toString());
+        const sourceFile = StModelBuilder.model.sourceFileMap.get(document.uri.toString());
 
         if (!sourceFile)
             return;

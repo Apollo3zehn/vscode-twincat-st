@@ -2,7 +2,7 @@ import { ParserRuleContext, TerminalNode } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity } from "vscode";
 import { StSymbol } from "../core/types.js";
 import { getContextRange, getTokenRange, getTypeOfType } from "../core/utils.js";
-import { LiteralContext, PostfixOpContext } from "../generated/StructuredTextParser.js";
+import { ArrayInitContext, LiteralContext, PostfixOpContext } from "../generated/StructuredTextParser.js";
 import { StModelBuilder } from "./StModelBuilder.js";
 
 // M0001: The subrange parameters are not within the valid range
@@ -44,7 +44,7 @@ export function C0018(lastMember: StSymbol) {
     StModelBuilder.currentSourceFile.diagnostics.push(diagnostic);
 }
 
-// Cannot convert type '{name}' to type '{name}'
+// C0032: Cannot convert type '{name}' to type '{name}'
 export function C0032(
     rhsCtx: ParserRuleContext | undefined,
     rhsTypeId: string | undefined,
@@ -136,6 +136,19 @@ export function C0064(postfixOp: PostfixOpContext) {
     );
 
     diagnostic.code = "C0064";
+    StModelBuilder.currentSourceFile.diagnostics.push(diagnostic);
+}
+
+// C0074: Unexpected array initialisation
+export function C0074(ctx: ArrayInitContext) {
+    
+    const diagnostic = new Diagnostic(
+        getContextRange(ctx),
+        "Unexpected array initialisation",
+        DiagnosticSeverity.Error
+    );
+
+    diagnostic.code = "C0074";
     StModelBuilder.currentSourceFile.diagnostics.push(diagnostic);
 }
 

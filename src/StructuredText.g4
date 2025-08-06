@@ -86,7 +86,7 @@ varSectionType
     ;
 
 varDecl
-    : attribute? ID ':' type (('REF=' | ':=') exprOrArrayInit)? ';'
+    : attribute? ID ':' type (assignmentOperator exprOrArrayInit)? ';'
     ;
 
 exprOrArrayInit
@@ -164,7 +164,7 @@ statement
 // Assignments and calls
 // =======================
 assignment
-    : memberExpression assignmentOperator expr ';'
+    : memberExpression assignmentOperator exprOrArrayInit ';'
     ;
 
 assignmentOperator

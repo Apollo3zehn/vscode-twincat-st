@@ -17,7 +17,7 @@ import { StDocumentHighlightProvider } from './features/StDocumentHighlightProvi
 export async function activate(context: ExtensionContext) {
 
     const modelBuilder = new StModelBuilder();
-    const model = await modelBuilder.build();
+    await modelBuilder.build();
 
     // TODO: move this into the StEndBlockDecorationProvider.ts file
     const decorationProvider = new StCStyleDecorationProvider();
@@ -50,35 +50,35 @@ export async function activate(context: ExtensionContext) {
         decorationProvider.provideDecorations(window.activeTextEditor.document, window.activeTextEditor);
 
     context.subscriptions.push(languages.registerHoverProvider(
-        documentSelector, new StHoverProvider(model)
+        documentSelector, new StHoverProvider()
     ));
 
     context.subscriptions.push(languages.registerTypeHierarchyProvider(
-        documentSelector, new StTypeHierarchyProvider(model)
+        documentSelector, new StTypeHierarchyProvider()
     ));
 
     context.subscriptions.push(languages.registerDefinitionProvider(
-        documentSelector, new StDefinitionProvider(model)
+        documentSelector, new StDefinitionProvider()
     ));
 
     context.subscriptions.push(languages.registerTypeDefinitionProvider(
-        documentSelector, new StTypeDefinitionProvider(model))
+        documentSelector, new StTypeDefinitionProvider())
     );
 
     context.subscriptions.push(languages.registerDocumentSymbolProvider(
-        documentSelector, new StDocumentSymbolProvider(model)
+        documentSelector, new StDocumentSymbolProvider()
     ));
 
     context.subscriptions.push(languages.registerCodeLensProvider(
-        documentSelector, new StReferenceCodeLensProvider(model)
+        documentSelector, new StReferenceCodeLensProvider()
     ));
 
     context.subscriptions.push(languages.registerReferenceProvider(
-        documentSelector, new StReferenceProvider(model))
+        documentSelector, new StReferenceProvider())
     );
 
     context.subscriptions.push(languages.registerDocumentHighlightProvider(
-        documentSelector, new StDocumentHighlightProvider(model))
+        documentSelector, new StDocumentHighlightProvider())
     );
 
     context.subscriptions.push(
@@ -92,7 +92,7 @@ export async function activate(context: ExtensionContext) {
         })
     );
 
-    const diagnosticsProvider = new StDiagnosticsProvider(model);
+    const diagnosticsProvider = new StDiagnosticsProvider();
     workspace.onDidOpenTextDocument(doc => diagnosticsProvider.updateDiagnostics(doc));
     workspace.onDidChangeTextDocument(e => diagnosticsProvider.updateDiagnostics(e.document));
     workspace.textDocuments.forEach(doc => diagnosticsProvider.updateDiagnostics(doc));
@@ -104,7 +104,7 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(
         languages.registerRenameProvider(
             documentSelector,
-            new StRenameProvider(model)
+            new StRenameProvider()
         )
     );
 
@@ -123,7 +123,7 @@ export async function activate(context: ExtensionContext) {
     context.subscriptions.push(
         languages.registerDocumentSemanticTokensProvider(
             { language: "st" },
-            new StSemanticTokenProvider(model),
+            new StSemanticTokenProvider(),
             legend
         )
     );

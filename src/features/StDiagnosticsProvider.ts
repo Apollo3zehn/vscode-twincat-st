@@ -1,5 +1,5 @@
 import { Diagnostic, DiagnosticCollection, DiagnosticSeverity, DiagnosticTag, languages, TextDocument } from "vscode";
-import { StAccessModifier, StModel, StSymbolKind } from "../core/types.js";
+import { StAccessModifier, StSymbolKind } from "../core/types.js";
 import { getNestedTypeOrSelf, getTypeOfType } from "../core/utils.js";
 import { StModelBuilder } from "../model/StModelBuilder.js";
 
@@ -7,16 +7,14 @@ export class StDiagnosticsProvider {
 
     private _diagnosticCollection: DiagnosticCollection;
 
-    constructor(
-        private model: StModel
-    ) {
+    constructor() {
         this._diagnosticCollection = languages.createDiagnosticCollection("twincat-st");
     }
 
     public updateDiagnostics(document: TextDocument): void {
 
         const diagnostics: Diagnostic[] = [];
-        const sourceFile = this.model.sourceFileMap.get(document.uri.toString());
+        const sourceFile = StModelBuilder.model.sourceFileMap.get(document.uri.toString());
         
         if (!sourceFile) {
             this._diagnosticCollection.set(document.uri, []);
@@ -26,7 +24,7 @@ export class StDiagnosticsProvider {
         // TODO: Do not make full evaluation every file change
         const seen = new Set<string>();
 
-        for (const currentSourceFile of this.model.sourceFileMap.values()) {
+        for (const currentSourceFile of StModelBuilder.model.sourceFileMap.values()) {
 
             for (const globalObject of currentSourceFile.globalObjects.values()) {
 

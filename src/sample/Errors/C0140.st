@@ -3,7 +3,8 @@ FUNCTION_BLOCK FB_C0140
     
     VAR
         _a: INT;
+        _b: INT REF= _a;
     END_VAR
 
-    _a REF= _a;
+    _b REF= _a;
 END_FUNCTION_BLOCK

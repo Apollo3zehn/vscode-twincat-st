@@ -1,9 +1,8 @@
 import { CancellationToken, DocumentHighlight, DocumentHighlightKind, DocumentHighlightProvider, Position, ProviderResult, TextDocument } from "vscode";
-import { StModel } from "../core/types.js";
 import { isInRange } from "../core/utils.js";
+import { StModelBuilder } from "../model/StModelBuilder.js";
 
 export class StDocumentHighlightProvider implements DocumentHighlightProvider {
-    constructor(private model: StModel) {}
 
     provideDocumentHighlights(
         document: TextDocument,
@@ -11,7 +10,7 @@ export class StDocumentHighlightProvider implements DocumentHighlightProvider {
         token: CancellationToken
     ): ProviderResult<DocumentHighlight[]> {
 
-        const sourceFile = this.model.sourceFileMap.get(document.uri.toString());
+        const sourceFile = StModelBuilder.model.sourceFileMap.get(document.uri.toString());
 
         if (!sourceFile)
             return [];

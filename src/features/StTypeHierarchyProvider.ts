@@ -7,24 +7,19 @@ import {
     TypeHierarchyItem,
     TypeHierarchyProvider
 } from "vscode";
-import { StModel, StSymbol, StSymbolKind } from "../core/types.js";
+import { StSymbol, StSymbolKind } from "../core/types.js";
 import { isInRange } from "../core/utils.js";
+import { StModelBuilder } from "../model/StModelBuilder.js";
 
 export class StTypeHierarchyProvider implements TypeHierarchyProvider {
     
-    private _model: StModel;
-
-    constructor(model: StModel) {
-        this._model = model;
-    }
-
     prepareTypeHierarchy(
         document: TextDocument,
         position: Position,
         token: CancellationToken
     ): ProviderResult<TypeHierarchyItem | TypeHierarchyItem[]> {
 
-        const sourceFile = this._model.sourceFileMap.get(document.uri.toString());
+        const sourceFile = StModelBuilder.model.sourceFileMap.get(document.uri.toString());
 
         if (!sourceFile)
             return [];
@@ -108,7 +103,7 @@ export class StTypeHierarchyProvider implements TypeHierarchyProvider {
 
     private findSymbolByItem(item: TypeHierarchyItem): StSymbol | undefined {
 
-        for (const sourceFile of this._model.sourceFileMap.values()) {
+        for (const sourceFile of StModelBuilder.model.sourceFileMap.values()) {
 
             for (const symbol of sourceFile.symbolMap.values()) {
                 

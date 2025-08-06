@@ -1,14 +1,8 @@
 import { CancellationToken, Location, Position, ProviderResult, ReferenceContext, ReferenceProvider, TextDocument } from "vscode";
-import { StModel } from "../core/types.js";
 import { isInRange } from "../core/utils.js";
+import { StModelBuilder } from "../model/StModelBuilder.js";
 
 export class StReferenceProvider implements ReferenceProvider {
-
-    private _model: StModel;
-
-    constructor(model: StModel) {
-        this._model = model;
-    }
 
     provideReferences(
         document: TextDocument,
@@ -17,7 +11,7 @@ export class StReferenceProvider implements ReferenceProvider {
         token: CancellationToken
     ): ProviderResult<Location[]> {
 
-        const sourceFile = this._model.sourceFileMap.get(document.uri.toString());
+        const sourceFile = StModelBuilder.model.sourceFileMap.get(document.uri.toString());
 
         if (!sourceFile)
             return;

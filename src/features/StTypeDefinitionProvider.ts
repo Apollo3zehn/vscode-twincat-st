@@ -1,14 +1,9 @@
 import { CancellationToken, Location, Position, ProviderResult, TextDocument, TypeDefinitionProvider } from "vscode";
-import { StModel, StSymbol, StSymbolKind } from "../core/types.js";
+import { StSymbol, StSymbolKind } from "../core/types.js";
 import { isInRange } from "../core/utils.js";
+import { StModelBuilder } from "../model/StModelBuilder.js";
 
 export class StTypeDefinitionProvider implements TypeDefinitionProvider {
-
-    private _model: StModel;
-
-    constructor(model: StModel) {
-        this._model = model;
-    }
 
     public provideTypeDefinition(
         document: TextDocument,
@@ -17,7 +12,7 @@ export class StTypeDefinitionProvider implements TypeDefinitionProvider {
     ): ProviderResult<Location | Location[]> {
 
         // Find the source file
-        const sourceFile = this._model.sourceFileMap.get(document.uri.toString());
+        const sourceFile = StModelBuilder.model.sourceFileMap.get(document.uri.toString());
 
         if (!sourceFile)
             return;

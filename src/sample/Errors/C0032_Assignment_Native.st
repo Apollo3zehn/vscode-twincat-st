@@ -40,6 +40,9 @@ FUNCTION_BLOCK C0032_Assignment_Native
         // Time-Related Types
     END_VAR
 
+    _bit := 2;      // SINT
+    _bit := 128;    // USINT
+
     _bool := _byte;
     _bool := _word;
     _bool := _dword;

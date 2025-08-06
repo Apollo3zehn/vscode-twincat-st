@@ -1,6 +1,6 @@
 import assert from 'assert';
-import { evaluateAssignmentOperand, evaluateExpressionWith2Arguments } from '../model/evaluationHelper.js';
 import { StBuiltinType, StBuiltinTypeCode, StType } from '../core/types.js';
+import { evaluateExpressionWith2Arguments } from '../model/evaluation.js';
 import { evaluateIntegerLiteral } from '../model/literals/evaluateIntegerLiteral.js';
 
 // Left operand: typed variable, right operand: typed variable
@@ -76,12 +76,6 @@ const cases_untyped_literals = [
     ['0', '0', '-', 'SINT'],
 ];
 
-// Assignment of untyped literals to bit
-const cases_assignment = [
-    ['BIT', '2', 'SINT'],
-    ['BIT', '128', 'USINT']
-];
-
 suite('Type promotion', () => {
 
     // Left operand: typed variable, right operand: typed variable
@@ -153,25 +147,6 @@ suite('Type promotion', () => {
 			
             assert(result);
             assert.strictEqual(result[2]?.getId(), expectedType);
-        });
-    });
-
-    // Assignment of untyped literal to bit
-    cases_assignment.forEach(([lhs, rhs, expectedType]) => {
-		
-		test(`Assignment: ${lhs} := ${rhs} => ${expectedType}`, () => {
-			
-            // Arrange
-            const lhsType = getType(lhs);
-            const [rhsType, _] = evaluateIntegerLiteral(rhs);
-
-            assert(lhsType);
-            assert(rhsType);
-
-			const result = evaluateAssignmentOperand(lhsType, rhsType, undefined);
-			
-            assert(result);
-            assert.strictEqual(result.getId(), expectedType);
         });
     });
 });

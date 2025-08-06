@@ -230,7 +230,7 @@ export function findOverflowComponent(startIdx: number): boolean {
     return false;
 }
 
-export function ConnectDeclaringSymbols(symbol: StSymbol, declaringSymbol: StSymbol) {
+export function connectDeclaringSymbols(symbol: StSymbol, declaringSymbol: StSymbol) {
 
     symbol.declaration = declaringSymbol;
 

@@ -6,17 +6,10 @@ import {
     SemanticTokensBuilder,
     TextDocument
 } from "vscode";
-import { StModel, StModifier, StSymbolKind } from "../core/types.js";
+import { StModifier, StSymbolKind } from "../core/types.js";
+import { StModelBuilder } from "../model/StModelBuilder.js";
 
 export class StSemanticTokenProvider implements DocumentSemanticTokensProvider {
-
-    readonly abC: number = 1;
-
-    private _model: StModel;
-
-    constructor(model: StModel) {
-        this._model = model;
-    }
 
     provideDocumentSemanticTokens(
         document: TextDocument,
@@ -24,7 +17,7 @@ export class StSemanticTokenProvider implements DocumentSemanticTokensProvider {
     ): ProviderResult<SemanticTokens> {
 
         const builder = new SemanticTokensBuilder();
-        const sourceFile = this._model.sourceFileMap.get(document.uri.toString());
+        const sourceFile = StModelBuilder.model.sourceFileMap.get(document.uri.toString());
 
         if (!sourceFile)
             return builder.build();

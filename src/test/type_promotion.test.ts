@@ -166,13 +166,13 @@ suite('type promotion', () => {
 		test(`Assignment: ${lhs} := ${rhs} => ${expectedType}`, () => {
 			
             // Arrange
-            const lhsType = getType(lhs);
-            let [rhsType, _] = evaluateIntegerLiteral(rhs);
+            let lhsType: StType | undefined = getType(lhs);
+            let [rhsType, _1] = evaluateIntegerLiteral(rhs);
 
             assert(lhsType);
             assert(rhsType);
 
-            [_, rhsType] = internalEvaluateAssignment(
+            [lhsType, rhsType] = internalEvaluateAssignment(
                 lhsType, undefined,
                 rhsType, undefined,
                 false

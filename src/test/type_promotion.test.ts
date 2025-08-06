@@ -1,9 +1,15 @@
 import assert from 'assert';
+import { Uri } from 'vscode';
 import { StBuiltinType, StBuiltinTypeCode, StSourceFile, StType } from '../core/types.js';
-import { evaluateAssignment, evaluateExpressionWith2Arguments, internalEvaluateAssignment } from '../model/evaluation.js';
+import { evaluateExpressionWith2Arguments, internalEvaluateAssignment } from '../model/evaluation.js';
 import { evaluateIntegerLiteral } from '../model/literals/evaluateIntegerLiteral.js';
 import { StModelBuilder } from '../model/StModelBuilder.js';
-import { Uri } from 'vscode';
+
+// Assignment of untyped literals to bit
+const cases_assignment = [
+    ['BIT', '2', 'SINT'],
+    ['BIT', '128', 'USINT']
+];
 
 // Left operand: typed variable, right operand: typed variable
 const cases_typed_variables = [
@@ -78,14 +84,35 @@ const cases_untyped_literals = [
     ['0', '0', '-', 'SINT'],
 ];
 
-// Assignment of untyped literals to bit
-const cases_assignment = [
-    ['BIT', '2', 'SINT'],
-    ['BIT', '128', 'USINT']
-];
-
 suite('type promotion', () => {
 
+    // Assignment of untyped literal to bit
+    cases_assignment.forEach(([lhs, rhs, expectedType]) => {
+        
+        StModelBuilder.currentSourceFile = new StSourceFile(Uri.parse("file:///dummy"));
+
+        test(`Assignment: ${lhs} := ${rhs} => ${expectedType}`, () => {
+            
+            // Arrange
+            let lhsType: StType | undefined = getType(lhs);
+            let [rhsType, _1] = evaluateIntegerLiteral(rhs);
+
+            assert(lhsType);
+            assert(rhsType);
+
+            // Act
+            [lhsType, rhsType] = internalEvaluateAssignment(
+                lhsType, undefined,
+                rhsType, undefined,
+                false
+            );
+
+            // Assert
+            assert(rhsType);
+            assert.strictEqual(rhsType.getId(), expectedType);
+        });
+    });
+    
     // Left operand: typed variable, right operand: typed variable
     cases_typed_variables.forEach(([lhs, rhs, operator, expectedType]) => {
         
@@ -94,8 +121,11 @@ suite('type promotion', () => {
             // Arrange
             const lhsType = getType(lhs);
             const rhsType = getType(rhs);
+
+            // Act
             const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
             
+            // Assert
             assert(result);
             assert.strictEqual(result[2]?.getId(), expectedType);
         });
@@ -113,8 +143,10 @@ suite('type promotion', () => {
             assert(lhsType);
             assert(rhsType);
 
+            // Act
             const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
             
+            // Assert
             assert(result);
             assert.strictEqual(result[2]?.getId(), expectedType);
         });
@@ -132,8 +164,10 @@ suite('type promotion', () => {
             assert(lhsType);
             assert(rhsType);
 
+            // Act
             const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
             
+            // Assert
             assert(result);
             assert.strictEqual(result[2]?.getId(), expectedType);
         });
@@ -151,35 +185,12 @@ suite('type promotion', () => {
             assert(lhsType);
             assert(rhsType);
 
+            // Act
             const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
             
+            // Assert
             assert(result);
             assert.strictEqual(result[2]?.getId(), expectedType);
-        });
-    });
-
-    // Assignment of untyped literal to bit
-    cases_assignment.forEach(([lhs, rhs, expectedType]) => {
-		
-        StModelBuilder.currentSourceFile = new StSourceFile(Uri.parse("file:///dummy"));
-
-		test(`Assignment: ${lhs} := ${rhs} => ${expectedType}`, () => {
-			
-            // Arrange
-            let lhsType: StType | undefined = getType(lhs);
-            let [rhsType, _1] = evaluateIntegerLiteral(rhs);
-
-            assert(lhsType);
-            assert(rhsType);
-
-            [lhsType, rhsType] = internalEvaluateAssignment(
-                lhsType, undefined,
-                rhsType, undefined,
-                false
-            );
-			
-            assert(rhsType);
-            assert.strictEqual(rhsType.getId(), expectedType);
         });
     });
 });

@@ -29,7 +29,7 @@ export class StHoverProvider implements HoverProvider {
 
         let comment: String | undefined;
 
-        if (declarationSymbol.context.start) {
+        if (tokenStream && declarationSymbol.context.start) {
             
             const startTokenIndex = declarationSymbol.context.start.tokenIndex;
             const endTokenIndex = declarationSymbol.context.stop?.tokenIndex;

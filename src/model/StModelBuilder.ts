@@ -226,7 +226,7 @@ export class StModelBuilder {
     private getOrCreateSourceFile(fileUri: Uri, tokenStream: CommonTokenStream): StSourceFile {
         
         let sourceFile: StSourceFile;
-        let fileUriAsString = fileUri.toString();
+        const fileUriAsString = fileUri.toString();
 
         if (StModelBuilder.model.sourceFileMap.has(fileUriAsString)) {
             sourceFile = StModelBuilder.model.sourceFileMap.get(fileUriAsString)!;
@@ -235,11 +235,8 @@ export class StModelBuilder {
         else {
             logger.appendLine(`Create source file ${fileUri}`);
 
-            sourceFile = new StSourceFile(
-                fileUri,
-                fileUriAsString,
-                tokenStream
-            );
+            sourceFile = new StSourceFile(fileUri);
+            sourceFile.tokenStream = tokenStream;
            
             StModelBuilder.model.sourceFileMap.set(fileUriAsString, sourceFile);
         }

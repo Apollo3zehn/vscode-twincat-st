@@ -22,13 +22,11 @@ export const documentSelector = [
 ];
 
 export class StSourceFile {
-    constructor(
-        public readonly uri: Uri,
-        public readonly uriAsString: string,
-        public readonly tokenStream: CommonTokenStream) {
+    constructor(public readonly uri: Uri) {
         //
     }
 
+    public tokenStream: CommonTokenStream | undefined;
     public readonly symbolMap = new Map<ParserRuleContext, StSymbol>();
     public readonly globalObjects = new Map<string, StSymbol>();
     public readonly statements: StatementContext[] = [];

@@ -1,7 +1,9 @@
 import assert from 'assert';
-import { StBuiltinType, StBuiltinTypeCode, StType } from '../core/types.js';
-import { evaluateExpressionWith2Arguments } from '../model/evaluation.js';
+import { StBuiltinType, StBuiltinTypeCode, StSourceFile, StType } from '../core/types.js';
+import { evaluateAssignment, evaluateExpressionWith2Arguments, internalEvaluateAssignment } from '../model/evaluation.js';
 import { evaluateIntegerLiteral } from '../model/literals/evaluateIntegerLiteral.js';
+import { StModelBuilder } from '../model/StModelBuilder.js';
+import { Uri } from 'vscode';
 
 // Left operand: typed variable, right operand: typed variable
 const cases_typed_variables = [
@@ -76,28 +78,34 @@ const cases_untyped_literals = [
     ['0', '0', '-', 'SINT'],
 ];
 
-suite('Type promotion', () => {
+// Assignment of untyped literals to bit
+const cases_assignment = [
+    ['BIT', '2', 'SINT'],
+    ['BIT', '128', 'USINT']
+];
+
+suite('type promotion', () => {
 
     // Left operand: typed variable, right operand: typed variable
-	cases_typed_variables.forEach(([lhs, rhs, operator, expectedType]) => {
-		
-		test(`Typed variables: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
-			
+    cases_typed_variables.forEach(([lhs, rhs, operator, expectedType]) => {
+        
+        test(`Typed variables: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
+            
             // Arrange
             const lhsType = getType(lhs);
             const rhsType = getType(rhs);
-			const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
-			
+            const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
+            
             assert(result);
             assert.strictEqual(result[2]?.getId(), expectedType);
         });
     });
 
     // Left operand: typed literal, right operand: typed literal
-	cases_typed_literals.forEach(([lhs, rhs, operator, expectedType]) => {
-		
-		test(`Typed literals: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
-			
+    cases_typed_literals.forEach(([lhs, rhs, operator, expectedType]) => {
+        
+        test(`Typed literals: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
+            
             // Arrange
             const [lhsType, _1] = evaluateIntegerLiteral(lhs);
             const [rhsType, _2] = evaluateIntegerLiteral(rhs);
@@ -105,18 +113,18 @@ suite('Type promotion', () => {
             assert(lhsType);
             assert(rhsType);
 
-			const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
-			
+            const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
+            
             assert(result);
             assert.strictEqual(result[2]?.getId(), expectedType);
         });
     });
 
     // Left operand: typed literal, right operand: untyped literal
-	cases_typed_untyped_literals.forEach(([lhs, rhs, operator, expectedType]) => {
-		
-		test(`Typed + untyped literals: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
-			
+    cases_typed_untyped_literals.forEach(([lhs, rhs, operator, expectedType]) => {
+        
+        test(`Typed + untyped literals: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
+            
             // Arrange
             const [lhsType, _1] = evaluateIntegerLiteral(lhs);
             const [rhsType, _2] = evaluateIntegerLiteral(rhs);
@@ -124,18 +132,18 @@ suite('Type promotion', () => {
             assert(lhsType);
             assert(rhsType);
 
-			const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
-			
+            const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
+            
             assert(result);
             assert.strictEqual(result[2]?.getId(), expectedType);
         });
     });
 
     // Left operand: untyped literal, right operand: untyped literal
-	cases_untyped_literals.forEach(([lhs, rhs, operator, expectedType]) => {
-		
-		test(`Untyped literals: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
-			
+    cases_untyped_literals.forEach(([lhs, rhs, operator, expectedType]) => {
+        
+        test(`Untyped literals: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
+            
             // Arrange
             const [lhsType, _1] = evaluateIntegerLiteral(lhs);
             const [rhsType, _2] = evaluateIntegerLiteral(rhs);
@@ -143,10 +151,35 @@ suite('Type promotion', () => {
             assert(lhsType);
             assert(rhsType);
 
-			const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
-			
+            const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
+            
             assert(result);
             assert.strictEqual(result[2]?.getId(), expectedType);
+        });
+    });
+
+    // Assignment of untyped literal to bit
+    cases_assignment.forEach(([lhs, rhs, expectedType]) => {
+		
+        StModelBuilder.currentSourceFile = new StSourceFile(Uri.parse("file:///dummy"));
+
+		test(`Assignment: ${lhs} := ${rhs} => ${expectedType}`, () => {
+			
+            // Arrange
+            const lhsType = getType(lhs);
+            let [rhsType, _] = evaluateIntegerLiteral(rhs);
+
+            assert(lhsType);
+            assert(rhsType);
+
+            [_, rhsType] = internalEvaluateAssignment(
+                lhsType, undefined,
+                rhsType, undefined,
+                false
+            );
+			
+            assert(rhsType);
+            assert.strictEqual(rhsType.getId(), expectedType);
         });
     });
 });

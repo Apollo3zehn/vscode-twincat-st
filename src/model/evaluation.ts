@@ -30,7 +30,7 @@ export function evaluateAssignment(
         : false;
 
     if (lhsType && rhsType) {
-        evaluateAssignmentOperand(
+        internalEvaluateAssignment(
             lhsType, lhsCtx,
             rhsType, rhsCtx,
             isRefAssignment
@@ -235,13 +235,14 @@ export function evaluateExpressionWith2Arguments(
     return [lhsType, rhsType, lcdType];
 }
 
-function evaluateAssignmentOperand(
+export function internalEvaluateAssignment(
     lhsType: StType,
     lhsCtx: ParserRuleContext | undefined,
     rhsType: StType,
     rhsCtx: ParserRuleContext | undefined,
     isRefAssignment: boolean
-) {
+): [StType | undefined, StType | undefined] {
+
     let rhsBuiltinType = rhsType.builtinType;
     let rhsIsUntypedLiteral = rhsBuiltinType?.code === null;
     
@@ -256,7 +257,7 @@ function evaluateAssignmentOperand(
                 
                 // Only allow 0 or 1, and nothing else! No type prefix etc
                 if (literalText === "0" || literalText === "1")
-                    return;
+                    return [lhsType, lhsType];
             }
             
             break;
@@ -283,7 +284,7 @@ function evaluateAssignmentOperand(
             const isFloat = rhsBuiltinType?.details?.kind === StNativeTypeKind.Float;
             
             if (isFloat && Math.abs(rhsBuiltinType!.value!) <= 3.402823e+38)
-                return;
+                return [lhsType, lhsType];
         
         default:
             break;
@@ -306,6 +307,8 @@ function evaluateAssignmentOperand(
         rhsType, rhsCtx,
         isRefAssignment
     );
+
+    return [lhsType, rhsType];
 }
 
 function checkAssignment(

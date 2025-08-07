@@ -142,6 +142,8 @@ export function evaluateUnaryOperator(
             kind === StNativeTypeKind.Float
         )
     ) {
+        let newTypeCode = builtinType.code;
+
         if (unaryOpText === "-") {
 
             if (kind === StNativeTypeKind.Bitfield || kind === StNativeTypeKind.UnsignedInteger) {
@@ -160,8 +162,6 @@ export function evaluateUnaryOperator(
                     // It seems that TwinCAT is translating negated bitfields
                     // or unsigned integer in an irregular and potentially
                     // lossy way:
-
-                    let newTypeCode = builtinType.code;
 
                     switch (builtinType.code) {
 
@@ -185,12 +185,12 @@ export function evaluateUnaryOperator(
                         default:
                             throw Error(`Unexpected type code ${builtinType.code}`);
                     }
-
-                    type = new StType();
-                    type.builtinType = new StBuiltinType(newTypeCode);
                 }
             }
         }
+
+        type = new StType();
+        type.builtinType = new StBuiltinType(newTypeCode);
 
         return type;
     }

@@ -33,6 +33,11 @@ suite("unary operators", () => {
             actualType?.builtinType?.code,
             "BYTE"
         );
+
+        assert.strictEqual(
+            actualType?.builtinType.value,
+            -255
+        );
     });
 
     // Variable

@@ -30,7 +30,7 @@ END_TYPE
 TYPE C0032_OuterAlias : C0032_InnerAlias;
 END_TYPE
 
-FUNCTION_BLOCK C0032_Enums_Aliases
+FUNCTION_BLOCK C0032_DUTs
 
     VAR
         _enum_default:      E_C0032_Default     := 32768;

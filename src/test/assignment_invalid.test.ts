@@ -5,10 +5,31 @@ import { internalEvaluateAssignment } from "../model/evaluation.js";
 import { evaluateIntegerLiteral } from "../model/literals/evaluateIntegerLiteral.js";
 import { StModelBuilder } from "../model/StModelBuilder.js";
 import { createType } from "./test_helper.js";
+import { evaluateRealLiteral } from "../model/literals/evaluateRealLiteral.js";
 
 const cases_literal = [
-    ['2', 'SINT'],
-    ['128', 'USINT']
+
+    // BOOL assignments
+    ["BOOL", "-1", "SINT"],
+    ["BOOL", "1", "SINT"],
+    ["BOOL", "128", "USINT"],
+    ["BOOL", "1.0", "LREAL"],
+
+    // BIT assignments
+    ["BIT", "-1", "SINT"],
+    ["BIT", "1", "SINT"],
+    ["BIT", "128", "USINT"],
+    ["BIT", "1.0", "LREAL"],
+
+    // WORD assignments
+    ["WORD", "16#FFFFFF", "UDINT"], // DINT in TwinCAT
+
+    // UINT assignments
+    ["UINT", "16#FFFFFF", "UDINT"], // DINT in TwinCAT
+
+    // INT assignments
+    ["INT", "16#FFFFFFFF", "LINT"], // UDINT in TwinCAT
+    // ["INT", "18446744073709551615", "ULINT"] // currently broken because of typescript
 ];
 
 const cases_variable = [
@@ -187,18 +208,17 @@ suite('assignment (invalid)', () => {
     });
 
     // Literals
-    cases_literal.forEach(([rhs, expectedType]) => {
+    cases_literal.forEach(([lhs, rhs, expectedType]) => {
         
-        StModelBuilder.currentSourceFile = new StSourceFile(Uri.parse("file:///dummy"));
-        const lhs = "BIT";
-
         test(`assignment: ${lhs} := ${rhs} => ${expectedType}`, () => {
             
             // Arrange
             let lhsType: StType | undefined = createType(lhs);
-            let [rhsType, _1] = evaluateIntegerLiteral(rhs);
 
-            assert(lhsType);
+            let [rhsType, _2] = rhs.includes(".")
+                ? evaluateRealLiteral(rhs)
+                : evaluateIntegerLiteral(rhs);
+
             assert(rhsType);
 
             // Act

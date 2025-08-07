@@ -1,4 +1,8 @@
-- unary minus: https://gist.github.com/mattmcd/5277890#file-expr-g4-L8
+
+- C0004: '-' is no component of 'SBYTE'
+  	_bit := SBYTE#-1;
+
+- implement unary "NOT"
 
 - implement M0002
 

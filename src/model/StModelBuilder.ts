@@ -153,7 +153,7 @@ export class StModelBuilder {
 
                         if (nestedLhsType && rhsCtx) {
                             evaluateAssignment(
-                                lhsType,
+                                nestedLhsType,
                                 lhsCtx,
                                 rhsCtx,
                                 varDeclCtx.assignmentOperator()!
@@ -252,10 +252,14 @@ export class StModelBuilder {
         
         const lhsCtx = assignment.memberExpression();
         const lhsType = evaluateMemberExpression(lhsCtx, true);
+
+        if (!lhsType)
+            return;
+
         const exprOrArrayInit = assignment.exprOrArrayInit();
         const rhsCtx = exprOrArrayInit.expr();
 
-        if (lhsType && rhsCtx) {
+        if (rhsCtx) {
             evaluateAssignment(
                 lhsType,
                 lhsCtx,

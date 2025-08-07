@@ -210,8 +210,7 @@ export class StNativeTypeDetails {
         public readonly size: number,
         public readonly signed?: boolean,
         public readonly min?: number,
-        public readonly max?: number,
-        public readonly nextLargerType?: StBuiltinTypeCode
+        public readonly max?: number
     ) {
         //
     }
@@ -349,25 +348,25 @@ export const nativeTypesDetails = new Map<StBuiltinTypeCode, StNativeTypeDetails
     [StBuiltinTypeCode.BIT,             new StNativeTypeDetails(StNativeTypeKind.Logical, 1)],
 
     // Bitstring Types
-    [StBuiltinTypeCode.BYTE,            new StNativeTypeDetails(StNativeTypeKind.Bitfield, 1, false, 0, 0xFF, StBuiltinTypeCode.INT)],
-    [StBuiltinTypeCode.WORD,            new StNativeTypeDetails(StNativeTypeKind.Bitfield, 2, false, 0, 0xFFFF, StBuiltinTypeCode.DINT)],
-    [StBuiltinTypeCode.DWORD,           new StNativeTypeDetails(StNativeTypeKind.Bitfield, 4, false, 0, 0xFFFFFFFF, StBuiltinTypeCode.LINT)],
+    [StBuiltinTypeCode.BYTE,            new StNativeTypeDetails(StNativeTypeKind.Bitfield, 1, false, 0, 0xFF)],
+    [StBuiltinTypeCode.WORD,            new StNativeTypeDetails(StNativeTypeKind.Bitfield, 2, false, 0, 0xFFFF)],
+    [StBuiltinTypeCode.DWORD,           new StNativeTypeDetails(StNativeTypeKind.Bitfield, 4, false, 0, 0xFFFFFFFF)],
     [StBuiltinTypeCode.LWORD,           new StNativeTypeDetails(StNativeTypeKind.Bitfield, 8, false, 0, Number.MAX_SAFE_INTEGER)],
 
     // Unsigned Integer Types
-    [StBuiltinTypeCode.USINT,           new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 1, false, 0, 0xFF, StBuiltinTypeCode.INT)],
-    [StBuiltinTypeCode.UINT,            new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 2, false, 0, 0xFFFF, StBuiltinTypeCode.DINT)],
-    [StBuiltinTypeCode.UDINT,           new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 4, false, 0, 0xFFFFFFFF, StBuiltinTypeCode.LINT)],
+    [StBuiltinTypeCode.USINT,           new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 1, false, 0, 0xFF)],
+    [StBuiltinTypeCode.UINT,            new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 2, false, 0, 0xFFFF)],
+    [StBuiltinTypeCode.UDINT,           new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 4, false, 0, 0xFFFFFFFF)],
     [StBuiltinTypeCode.ULINT,           new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 8, false, 0, Number.MAX_SAFE_INTEGER)],
 
     // Signed Integer Types
-    [StBuiltinTypeCode.SINT,            new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 1, true, -0x80, 0x7F, StBuiltinTypeCode.UINT)],
-    [StBuiltinTypeCode.INT,             new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 2, true, -0x8000, 0x7FFF, StBuiltinTypeCode.UDINT)],
-    [StBuiltinTypeCode.DINT,            new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 4, true, -0x80000000, 0x7FFFFFFF, StBuiltinTypeCode.ULINT)],
+    [StBuiltinTypeCode.SINT,            new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 1, true, -0x80, 0x7F)],
+    [StBuiltinTypeCode.INT,             new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 2, true, -0x8000, 0x7FFF)],
+    [StBuiltinTypeCode.DINT,            new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 4, true, -0x80000000, 0x7FFFFFFF)],
     [StBuiltinTypeCode.LINT,            new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 8, true, Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)],
 
     // Floating Point Types
-    [StBuiltinTypeCode.REAL,            new StNativeTypeDetails(StNativeTypeKind.Float, 4, undefined, -3.402823e+38, 3.402823e+38, StBuiltinTypeCode.LREAL)],
+    [StBuiltinTypeCode.REAL,            new StNativeTypeDetails(StNativeTypeKind.Float, 4, undefined, -3.402823e+38, 3.402823e+38)],
     [StBuiltinTypeCode.LREAL,           new StNativeTypeDetails(StNativeTypeKind.Float, 8, undefined, -1.7976931348623158e+308, 1.7976931348623158e+308)],
 
     // String Types

@@ -1,6 +1,6 @@
 import { ParserRuleContext } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity } from "vscode";
-import { nativeTypesDetails, StBuiltinType, StBuiltinTypeCode, StModifier, StNativeTypeKind, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
+import { StBuiltinType, StBuiltinTypeCode, StModifier, StNativeTypeKind, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
 import { getContextRange, getNestedTypeOrSelf } from "../core/utils.js";
 import { AssignmentOperatorContext, ExprContext, LiteralContext, MemberExpressionContext, PostfixOpContext, PropertyContext } from "../generated/StructuredTextParser.js";
 import { StModelBuilder } from "./StModelBuilder.js";
@@ -236,8 +236,10 @@ export function evaluateMemberExpression(
                     const propertyBodyCtx = propertyCtx.propertyBody();
                     const getter = propertyBodyCtx.getter();
 
-                    if (!getter)                           
+                    if (!getter) {
                         C0143(currentMember);
+                        return undefined;
+                    }
                 }
             }
 
@@ -249,6 +251,7 @@ export function evaluateMemberExpression(
 
         else {
             C0046(currentMember);
+            return undefined;
         }
 
         currentQualifier = currentMember;
@@ -272,10 +275,13 @@ export function evaluateMemberExpression(
                         )
                     ) {
                         C0037(lastMember);
+                        return undefined;
                     }
 
-                    if (lastMemberDeclaration.modifier === StModifier.Constant)
+                    if (lastMemberDeclaration.modifier === StModifier.Constant) {
                         C0018(lastMember);
+                        return undefined;
+                    }
 
                     break;
                     
@@ -285,13 +291,16 @@ export function evaluateMemberExpression(
                     const propertyBodyCtx = propertyCtx.propertyBody();
                     const setter = propertyBodyCtx.setter();
 
-                    if (!setter)
+                    if (!setter) {
                         C0018(lastMember);
+                        return undefined;
+                    }
 
                     break;
                 
                 default:
                     C0018(lastMember);
+                    return undefined;
             }
         }
     }

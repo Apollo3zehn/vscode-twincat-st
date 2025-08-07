@@ -274,15 +274,15 @@ literal
     ;
 
 dateLiteral
-    : prefix=(DATE_TYPE | 'D' | 'LD') '#' date=DATE_LITERAL
+    : prefix=(DATE_TYPE | 'D' | 'LD') '#' value=DATE_LITERAL
     ;
 
 dateAndTimeLiteral
-    : prefix=DATE_AND_TIME_TYPE '#' dateAndTime=DATETIME_LITERAL
+    : prefix=DATE_AND_TIME_TYPE '#' value=DATETIME_LITERAL
     ;
 
 timeOfDayLiteral
-    : prefix=TIME_OF_DAY_TYPE '#' timeOfDay=TIME_OF_DAY_LITERAL
+    : prefix=TIME_OF_DAY_TYPE '#' value=TIME_OF_DAY_LITERAL
     ;
 
 expr

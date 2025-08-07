@@ -1,16 +1,18 @@
 import assert from "assert";
 import { Uri } from "vscode";
-import { StBuiltinType, StBuiltinTypeCode, StSourceFile, StType } from "../core/types.js";
+import { StSourceFile, StType } from "../core/types.js";
 import { internalEvaluateAssignment } from "../model/evaluation.js";
+import { evaluateIntegerLiteral } from "../model/literals/evaluateIntegerLiteral.js";
 import { StModelBuilder } from "../model/StModelBuilder.js";
+import { createType } from "./test_helper.js";
 
-function createType(code: string): StType {
-    const type = new StType();
-    type.builtinType = new StBuiltinType(StBuiltinTypeCode[code as keyof typeof StBuiltinTypeCode]);
-    return type;
-}
+const cases_literal = [
+    ['2', 'SINT'],
+    ['128', 'USINT']
+];
 
-const cases: [string, string][] = [
+const cases_variable = [
+    
     // BOOL assignments
     ["BOOL", "BYTE"],
     ["BOOL", "WORD"],
@@ -178,13 +180,42 @@ const cases: [string, string][] = [
     ["LREAL", "BIT"],
 ];
 
-suite('assignment', () => {
+suite('assignment (invalid)', () => {
 
     setup(() => {
         StModelBuilder.currentSourceFile = new StSourceFile(Uri.parse("file:///dummy"));
     });
 
-    cases.forEach(([lhs, rhs]) => {
+    // Literals
+    cases_literal.forEach(([rhs, expectedType]) => {
+        
+        StModelBuilder.currentSourceFile = new StSourceFile(Uri.parse("file:///dummy"));
+        const lhs = "BIT";
+
+        test(`assignment: ${lhs} := ${rhs} => ${expectedType}`, () => {
+            
+            // Arrange
+            let lhsType: StType | undefined = createType(lhs);
+            let [rhsType, _1] = evaluateIntegerLiteral(rhs);
+
+            assert(lhsType);
+            assert(rhsType);
+
+            // Act
+            [lhsType, rhsType] = internalEvaluateAssignment(
+                lhsType, undefined,
+                rhsType, undefined,
+                false
+            );
+
+            // Assert
+            assert(rhsType);
+            assert.strictEqual(rhsType.getId(), expectedType);
+        });
+    });
+
+    // Variables
+    cases_variable.forEach(([lhs, rhs]) => {
 
         test(`assignment ${lhs} := ${rhs}`, () => {
             

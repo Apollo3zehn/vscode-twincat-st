@@ -1,18 +1,11 @@
 import assert from 'assert';
-import { Uri } from 'vscode';
-import { StBuiltinType, StBuiltinTypeCode, StSourceFile, StType } from '../core/types.js';
-import { evaluateExpressionWith2Arguments, internalEvaluateAssignment } from '../model/evaluation.js';
+import { evaluateExpressionWith2Arguments } from '../model/evaluation.js';
 import { evaluateIntegerLiteral } from '../model/literals/evaluateIntegerLiteral.js';
-import { StModelBuilder } from '../model/StModelBuilder.js';
-
-// Assignment of untyped literals to bit
-const cases_assignment = [
-    ['BIT', '2', 'SINT'],
-    ['BIT', '128', 'USINT']
-];
+import { createType } from './test_helper.js';
 
 // Left operand: typed variable, right operand: typed variable
 const cases_typed_variables = [
+    ['BYTE', 'BYTE', '+', 'USINT'],
     ['BYTE', 'REAL', '+', 'REAL'],
     ['BYTE', 'UINT', '+', 'UINT'],
     ['BYTE', 'UDINT', '+', 'UDINT'],
@@ -84,34 +77,7 @@ const cases_untyped_literals = [
     ['0', '0', '-', 'SINT'],
 ];
 
-suite('type promotion', () => {
-
-    // Assignment of untyped literal to bit
-    cases_assignment.forEach(([lhs, rhs, expectedType]) => {
-        
-        StModelBuilder.currentSourceFile = new StSourceFile(Uri.parse("file:///dummy"));
-
-        test(`Assignment: ${lhs} := ${rhs} => ${expectedType}`, () => {
-            
-            // Arrange
-            let lhsType: StType | undefined = getType(lhs);
-            let [rhsType, _1] = evaluateIntegerLiteral(rhs);
-
-            assert(lhsType);
-            assert(rhsType);
-
-            // Act
-            [lhsType, rhsType] = internalEvaluateAssignment(
-                lhsType, undefined,
-                rhsType, undefined,
-                false
-            );
-
-            // Assert
-            assert(rhsType);
-            assert.strictEqual(rhsType.getId(), expectedType);
-        });
-    });
+suite('binary operators', () => {
     
     // Left operand: typed variable, right operand: typed variable
     cases_typed_variables.forEach(([lhs, rhs, operator, expectedType]) => {
@@ -119,8 +85,8 @@ suite('type promotion', () => {
         test(`Typed variables: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
             
             // Arrange
-            const lhsType = getType(lhs);
-            const rhsType = getType(rhs);
+            const lhsType = createType(lhs);
+            const rhsType = createType(rhs);
 
             // Act
             const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
@@ -194,13 +160,3 @@ suite('type promotion', () => {
         });
     });
 });
-
-function getType(typeCodeString: string): StType {
-
-    const type = new StType();
-    const typeCode = StBuiltinTypeCode[typeCodeString as keyof typeof StBuiltinTypeCode];
-
-    type.builtinType = new StBuiltinType(typeCode);
-
-    return type;
-}

@@ -1,8 +1,8 @@
 import { ParserRuleContext, TerminalNode } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity } from "vscode";
 import { StSymbol } from "../core/types.js";
-import { getContextRange, getTokenRange, getTypeOfType } from "../core/utils.js";
-import { ArrayInitContext, LiteralContext, PostfixOpContext } from "../generated/StructuredTextParser.js";
+import { getContextRange, getOriginalText, getTokenRange, getTypeOfType } from "../core/utils.js";
+import { ArrayInitContext, PostfixOpContext, UnaryOpContext } from "../generated/StructuredTextParser.js";
 import { StModelBuilder } from "./StModelBuilder.js";
 
 // M0001: The subrange parameters are not within the valid range
@@ -10,7 +10,7 @@ export function M0001(subRangeToken: TerminalNode) {
 
     const diagnostic = new Diagnostic(
         getTokenRange(subRangeToken.symbol)!,
-        `The subrange parameters are not within the valid range`,
+        "The subrange parameters are not within the valid range",
         DiagnosticSeverity.Error
     );
 
@@ -18,12 +18,25 @@ export function M0001(subRangeToken: TerminalNode) {
     StModelBuilder.currentSourceFile.diagnostics.push(diagnostic);
 }
 
+// M0003: The unary operator '{name}' is not defined for type '{name}'
+export function M0003(typeName: string, ctx: UnaryOpContext, unaryOpText: string) {
+
+    const diagnostic = new Diagnostic(
+        getContextRange(ctx)!,
+        `The unary operator '${unaryOpText}' is not defined for type '${typeName}'`,
+        DiagnosticSeverity.Error
+    );
+
+    diagnostic.code = "M0003";
+    StModelBuilder.currentSourceFile.diagnostics.push(diagnostic);
+}
+
 // C0001: Constant '{constant}' too large for type '{name}'
-export function C0001(literal: LiteralContext, typeName: string) {
+export function C0001(ctx: ParserRuleContext, typeName: string) {
     
     const diagnostic = new Diagnostic(
-        getContextRange(literal),
-        `Constant '${literal.getText()}' too large for type '${typeName}'`,
+        getContextRange(ctx),
+        `Constant '${getOriginalText(ctx)}' too large for type '${typeName}'`,
         DiagnosticSeverity.Error
     );
 

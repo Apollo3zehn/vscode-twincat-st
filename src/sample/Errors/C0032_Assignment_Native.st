@@ -7,5 +7,7 @@ FUNCTION_BLOCK C0032_Assignment_Native
         _byte:  BYTE;
     END_VAR
 
-    _bool := _byte;
+    _bool := _byte;     // Byte
+    _bool := -_byte;    // INT
+    _bool := -BYTE#1;   // SINT
 END_FUNCTION_BLOCK

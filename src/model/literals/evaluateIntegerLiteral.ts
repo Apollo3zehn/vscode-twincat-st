@@ -1,4 +1,4 @@
-import { StBuiltinType, StBuiltinTypeCode, StNativeTypeKind, StType } from "../../core/types.js";
+import { nativeTypesDetails, StBuiltinType, StBuiltinTypeCode, StNativeTypeKind, StType } from "../../core/types.js";
 
 export function evaluateIntegerLiteral(
     literal: string
@@ -146,4 +146,34 @@ export function getSmallestIntegerForValue(
     type.builtinType = new StBuiltinType(code);
 
     return type;
+}
+
+export function getSignedIntegerForSize(size: number): StBuiltinTypeCode {
+
+    for (const [code, nativeDetails] of nativeTypesDetails.entries()) {
+
+        if (
+            nativeDetails.kind === StNativeTypeKind.SignedInteger &&
+            nativeDetails.size === size
+        ) {
+            return code;
+        }
+    }
+
+    throw Error(`Unsupported unsigned integer size ${size}`);
+}
+
+export function getUnsignedIntegerForSize(size: number): StBuiltinTypeCode {
+
+    for (const [code, nativeDetails] of nativeTypesDetails.entries()) {
+
+        if (
+            nativeDetails.kind === StNativeTypeKind.UnsignedInteger &&
+            nativeDetails.size === size
+        ) {
+            return code;
+        }
+    }
+
+    throw Error(`Unsupported unsigned integer size ${size}`);
 }

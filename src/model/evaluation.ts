@@ -5,11 +5,11 @@ import { getContextRange, getNestedTypeOrSelf } from "../core/utils.js";
 import { AssignmentOperatorContext, ExprContext, LiteralContext, MemberExpressionContext, PostfixOpContext, PropertyContext } from "../generated/StructuredTextParser.js";
 import { StModelBuilder } from "./StModelBuilder.js";
 import { findDeclaration } from "./declaration.js";
-import { C0001, C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0080, C0140, C0143, C0185 } from "./diagnostics.js";
+import { C0001, C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0080, C0140, C0143, C0185, M0003 } from "./diagnostics.js";
 import { evaluateBoolLiteral } from "./literals/evaluateBoolLiteral.js";
 import { evaluateDateAndTimeLiteral } from "./literals/evaluateDateAndTimeLiteral.js";
 import { evaluateDateLiteral } from "./literals/evaluateDateLiteral.js";
-import { evaluateIntegerLiteral, getSmallestIntegerForValue } from "./literals/evaluateIntegerLiteral.js";
+import { evaluateIntegerLiteral, getSignedIntegerForSize, getSmallestIntegerForValue, getUnsignedIntegerForSize } from "./literals/evaluateIntegerLiteral.js";
 import { evaluateLTimeLiteral } from "./literals/evaluateLTimeLiteral.js";
 import { evaluateRealLiteral } from "./literals/evaluateRealLiteral.js";
 import { evaluateStringLiteral } from "./literals/evaluateStringLiteral.js";
@@ -86,22 +86,113 @@ export function evaluateExpression(
 
     else if (expressions.length === 1) {
         
-        const type = evaluateExpression(
-            expressions[0]
-        );
+        let type = evaluateExpression(expressions[0]);
 
-        if (expression.unaryOp()) {
-            // TODO: when minus sign and type = unsigned integer, convert the current type to the next larger integer type
+        if (!type)
+            return undefined;
+
+        const unaryOpCtx = expression.unaryOp();
+
+        if (unaryOpCtx) {
+
+            const unaryOpText = unaryOpCtx.getText();
+            const promotedType = evaluateUnaryOperator(type, unaryOpText);
+
+            if (promotedType) {
+                return promotedType;
+            } 
+
+            else {
+                M0003(type.getId(), unaryOpCtx, unaryOpText);
+                return undefined;
+            }
         }
 
-        return type;
+        else {
+            // TODO: evaluate bracketed expression
+        }
     }
 
     else if (literal) {
+        return evaluateLiteral(literal);
+    }
 
-        return evaluateLiteral(
-            literal
-        );
+    return undefined;
+}
+
+export function evaluateUnaryOperator(
+    type: StType,
+    unaryOpText: String
+): StType | undefined {
+
+    const builtinType = type.builtinType;
+
+    if (!builtinType)
+        return undefined;
+
+    const kind = builtinType.details?.kind;
+    
+    if (
+        (unaryOpText === "+" || unaryOpText === "-") &&
+        (
+            builtinType.code === null || // Untyped integer literal
+            kind === StNativeTypeKind.Bitfield ||
+            kind === StNativeTypeKind.UnsignedInteger ||
+            kind === StNativeTypeKind.SignedInteger ||
+            kind === StNativeTypeKind.Float
+        )
+    ) {
+        if (unaryOpText === "-") {
+
+            if (kind === StNativeTypeKind.Bitfield || kind === StNativeTypeKind.UnsignedInteger) {
+
+                if (builtinType.value) {
+
+                    builtinType.value = -builtinType.value;
+
+                    // It is strange but typed literals like -BYTE#255 
+                    // do not change their type in TwinCAT, so there
+                    // is nothing else to do here.
+                }
+
+                else {
+
+                    // It seems that TwinCAT is translating negated bitfields
+                    // or unsigned integer in an irregular and potentially
+                    // lossy way:
+
+                    let newTypeCode = builtinType.code;
+
+                    switch (builtinType.code) {
+
+                        case StBuiltinTypeCode.BYTE:
+                        case StBuiltinTypeCode.USINT:
+                        case StBuiltinTypeCode.WORD:
+                        case StBuiltinTypeCode.UINT:
+                            newTypeCode = StBuiltinTypeCode.INT;
+                            break;
+                        
+                        case StBuiltinTypeCode.DWORD:
+                        case StBuiltinTypeCode.UDINT:
+                            newTypeCode = StBuiltinTypeCode.DINT;
+                            break;
+                        
+                        case StBuiltinTypeCode.LWORD:
+                        case StBuiltinTypeCode.ULINT:
+                            newTypeCode = StBuiltinTypeCode.LINT;
+                            break;
+                        
+                        default:
+                            throw Error(`Unexpected type code ${builtinType.code}`);
+                    }
+
+                    type = new StType();
+                    type.builtinType = new StBuiltinType(newTypeCode);
+                }
+            }
+        }
+
+        return type;
     }
 
     return undefined;
@@ -485,7 +576,7 @@ function promoteMathOperands(
     lhsType: StType,
     rhsType: StType
 ): [StType, StType] {
-
+    
     const lhsBuiltinType = lhsType.builtinType;
     const lhsIsUntypedLiteral = lhsBuiltinType?.code === null;
 
@@ -567,27 +658,18 @@ function getLowestCommonDenominator(
 
         // If both are unsigned, promote to the larger unsigned type
         if (leftIsUnsignedInteger && rightIsUnsignedInteger)
-            return leftDetails.size >= rightDetails.size ? leftCode : rightCode;
+            return getUnsignedIntegerForSize(Math.max(leftDetails.size, rightDetails.size));
 
         // If both are signed, promote to the larger signed type
         else if (leftIsSignedInteger && rightIsSignedInteger)
-            return leftDetails.size >= rightDetails.size ? leftCode : rightCode;
+            return getSignedIntegerForSize(Math.max(leftDetails.size, rightDetails.size));
 
         // If one is signed and one is unsigned, promote to signed type with larger size
         else if (
             (leftIsSignedInteger && rightIsUnsignedInteger) ||
             (leftIsUnsignedInteger && rightIsSignedInteger)
         ) {
-            const maxSize = Math.max(leftDetails.size, rightDetails.size);
-
-            for (const [builtinType, details] of nativeTypesDetails.entries()) {
-                if (
-                    details.kind === StNativeTypeKind.SignedInteger &&
-                    details.size === maxSize
-                ) {
-                    return builtinType;
-                }
-            }
+            return getSignedIntegerForSize(Math.max(leftDetails.size, rightDetails.size));
         }
 
         // Default: fallback to the larger type
@@ -625,7 +707,7 @@ function evaluateLiteral(literal: LiteralContext): StType | undefined {
 
         [type, lhsType] = evaluateDateLiteral(
             dateLiteral!._prefix?.text!,
-            dateLiteral!._date!.text!
+            dateLiteral!._value!.text!
         );
     }
 
@@ -635,7 +717,7 @@ function evaluateLiteral(literal: LiteralContext): StType | undefined {
 
         [type, lhsType] = evaluateTimeOfDayLiteral(
             timeOfDayLiteral!._prefix?.text!,
-            timeOfDayLiteral!._timeOfDay!.text!
+            timeOfDayLiteral!._value!.text!
         );
     }
 
@@ -645,7 +727,7 @@ function evaluateLiteral(literal: LiteralContext): StType | undefined {
 
         [type, lhsType] = evaluateDateAndTimeLiteral(
             dateAndTimeLiteral!._prefix?.text!,
-            dateAndTimeLiteral!._dateAndTime?.text!
+            dateAndTimeLiteral!._value?.text!
         );
     }
 

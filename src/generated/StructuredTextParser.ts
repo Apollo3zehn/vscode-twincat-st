@@ -3038,7 +3038,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 685;
             this.match(StructuredTextParser.T__14);
             this.state = 686;
-            localContext._date = this.match(StructuredTextParser.DATE_LITERAL);
+            localContext._value = this.match(StructuredTextParser.DATE_LITERAL);
             }
         }
         catch (re) {
@@ -3065,7 +3065,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 689;
             this.match(StructuredTextParser.T__14);
             this.state = 690;
-            localContext._dateAndTime = this.match(StructuredTextParser.DATETIME_LITERAL);
+            localContext._value = this.match(StructuredTextParser.DATETIME_LITERAL);
             }
         }
         catch (re) {
@@ -3092,7 +3092,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 693;
             this.match(StructuredTextParser.T__14);
             this.state = 694;
-            localContext._timeOfDay = this.match(StructuredTextParser.TIME_OF_DAY_LITERAL);
+            localContext._value = this.match(StructuredTextParser.TIME_OF_DAY_LITERAL);
             }
         }
         catch (re) {
@@ -5706,7 +5706,7 @@ export class LiteralContext extends antlr.ParserRuleContext {
 
 export class DateLiteralContext extends antlr.ParserRuleContext {
     public _prefix?: Token | null;
-    public _date?: Token | null;
+    public _value?: Token | null;
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }
@@ -5731,7 +5731,7 @@ export class DateLiteralContext extends antlr.ParserRuleContext {
 
 export class DateAndTimeLiteralContext extends antlr.ParserRuleContext {
     public _prefix?: Token | null;
-    public _dateAndTime?: Token | null;
+    public _value?: Token | null;
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }
@@ -5756,7 +5756,7 @@ export class DateAndTimeLiteralContext extends antlr.ParserRuleContext {
 
 export class TimeOfDayLiteralContext extends antlr.ParserRuleContext {
     public _prefix?: Token | null;
-    public _timeOfDay?: Token | null;
+    public _value?: Token | null;
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }

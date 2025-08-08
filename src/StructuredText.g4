@@ -290,7 +290,7 @@ expr
     | expr op=('*'|'/'|MOD) expr
     | expr op=('+'|'-') expr
     | expr op=('='|'<'|'>'|'<='|'>='|'<>') expr
-    | expr op=('AND'|'OR'|'XOR') expr
+    | expr op=(AND | AND_THEN | OR | OR_ELSE | XOR ) expr
     | literal
     | memberExpression
     | '(' expr ')'
@@ -396,7 +396,9 @@ RETURN              : 'RETURN' ;
 EXIT                : 'EXIT' ;
 CONTINUE            : 'CONTINUE' ;
 AND                 : 'AND' ;
+AND_THEN            : 'AND_THEN' ;
 OR                  : 'OR' ;
+OR_ELSE             : 'OR_ELSE' ;
 XOR                 : 'XOR' ;
 METHOD              : 'METHOD' ;
 END_METHOD          : 'END_METHOD' ;

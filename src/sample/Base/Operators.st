@@ -11,9 +11,6 @@ FUNCTION_BLOCK FB_Operators
         _uint3: UINT := UINT#10 / 3;
         _uint4: UINT := UINT#10 * 3;
 
-        _uint5: UINT := UINT#10 / 0;
-
-        _uint6: UINT := UINT#10 >> 3;
-        _uint7: UINT := UINT#10 << 3;
+        // _uint5: UINT := UINT#10 / 0;
     END_VAR
 END_FUNCTION_BLOCK

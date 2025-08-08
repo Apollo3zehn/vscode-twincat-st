@@ -86,59 +86,61 @@ export class StructuredTextParser extends antlr.Parser {
     public static readonly EXIT = 73;
     public static readonly CONTINUE = 74;
     public static readonly AND = 75;
-    public static readonly OR = 76;
-    public static readonly XOR = 77;
-    public static readonly METHOD = 78;
-    public static readonly END_METHOD = 79;
-    public static readonly INTERFACE = 80;
-    public static readonly END_INTERFACE = 81;
-    public static readonly STRUCT = 82;
-    public static readonly END_STRUCT = 83;
-    public static readonly UNION = 84;
-    public static readonly END_UNION = 85;
-    public static readonly ENUM = 86;
-    public static readonly END_ENUM = 87;
-    public static readonly ABSTRACT = 88;
-    public static readonly FINAL = 89;
-    public static readonly CONSTANT = 90;
-    public static readonly PUBLIC = 91;
-    public static readonly PRIVATE = 92;
-    public static readonly PROTECTED = 93;
-    public static readonly INTERNAL = 94;
-    public static readonly MOD = 95;
-    public static readonly TYPE = 96;
-    public static readonly END_TYPE = 97;
-    public static readonly CARET = 98;
-    public static readonly REFERENCE_TO = 99;
-    public static readonly POINTER_TO = 100;
-    public static readonly LOGICAL_TYPE = 101;
-    public static readonly BITFIELD_TYPE = 102;
-    public static readonly UNSIGNED_INT_TYPE = 103;
-    public static readonly SIGNED_INT_TYPE = 104;
-    public static readonly FLOATING_POINT_TYPE = 105;
-    public static readonly X_TYPE = 106;
-    public static readonly POINTER_TYPE = 107;
-    public static readonly TIME_TYPE = 108;
-    public static readonly DATE_TYPE = 109;
-    public static readonly TIME_OF_DAY_TYPE = 110;
-    public static readonly DATE_AND_TIME_TYPE = 111;
-    public static readonly STRING_TYPE = 112;
-    public static readonly SUBRANGE_PARAM = 113;
-    public static readonly STRING_LEN_PARAM = 114;
-    public static readonly BOOL_LITERAL = 115;
-    public static readonly INTEGER_LITERAL = 116;
-    public static readonly REAL_LITERAL = 117;
-    public static readonly STRING_LITERAL = 118;
-    public static readonly WSTRING_LITERAL = 119;
-    public static readonly TIME_LITERAL = 120;
-    public static readonly LTIME_LITERAL = 121;
-    public static readonly DATE_LITERAL = 122;
-    public static readonly TIME_OF_DAY_LITERAL = 123;
-    public static readonly DATETIME_LITERAL = 124;
-    public static readonly ID = 125;
-    public static readonly WS = 126;
-    public static readonly COMMENT = 127;
-    public static readonly COMMENT_BLOCK = 128;
+    public static readonly AND_THEN = 76;
+    public static readonly OR = 77;
+    public static readonly OR_ELSE = 78;
+    public static readonly XOR = 79;
+    public static readonly METHOD = 80;
+    public static readonly END_METHOD = 81;
+    public static readonly INTERFACE = 82;
+    public static readonly END_INTERFACE = 83;
+    public static readonly STRUCT = 84;
+    public static readonly END_STRUCT = 85;
+    public static readonly UNION = 86;
+    public static readonly END_UNION = 87;
+    public static readonly ENUM = 88;
+    public static readonly END_ENUM = 89;
+    public static readonly ABSTRACT = 90;
+    public static readonly FINAL = 91;
+    public static readonly CONSTANT = 92;
+    public static readonly PUBLIC = 93;
+    public static readonly PRIVATE = 94;
+    public static readonly PROTECTED = 95;
+    public static readonly INTERNAL = 96;
+    public static readonly MOD = 97;
+    public static readonly TYPE = 98;
+    public static readonly END_TYPE = 99;
+    public static readonly CARET = 100;
+    public static readonly REFERENCE_TO = 101;
+    public static readonly POINTER_TO = 102;
+    public static readonly LOGICAL_TYPE = 103;
+    public static readonly BITFIELD_TYPE = 104;
+    public static readonly UNSIGNED_INT_TYPE = 105;
+    public static readonly SIGNED_INT_TYPE = 106;
+    public static readonly FLOATING_POINT_TYPE = 107;
+    public static readonly X_TYPE = 108;
+    public static readonly POINTER_TYPE = 109;
+    public static readonly TIME_TYPE = 110;
+    public static readonly DATE_TYPE = 111;
+    public static readonly TIME_OF_DAY_TYPE = 112;
+    public static readonly DATE_AND_TIME_TYPE = 113;
+    public static readonly STRING_TYPE = 114;
+    public static readonly SUBRANGE_PARAM = 115;
+    public static readonly STRING_LEN_PARAM = 116;
+    public static readonly BOOL_LITERAL = 117;
+    public static readonly INTEGER_LITERAL = 118;
+    public static readonly REAL_LITERAL = 119;
+    public static readonly STRING_LITERAL = 120;
+    public static readonly WSTRING_LITERAL = 121;
+    public static readonly TIME_LITERAL = 122;
+    public static readonly LTIME_LITERAL = 123;
+    public static readonly DATE_LITERAL = 124;
+    public static readonly TIME_OF_DAY_LITERAL = 125;
+    public static readonly DATETIME_LITERAL = 126;
+    public static readonly ID = 127;
+    public static readonly WS = 128;
+    public static readonly COMMENT = 129;
+    public static readonly COMMENT_BLOCK = 130;
     public static readonly RULE_compilationUnit = 0;
     public static readonly RULE_program = 1;
     public static readonly RULE_function = 2;
@@ -217,12 +219,13 @@ export class StructuredTextParser extends antlr.Parser {
         "'IF'", "'THEN'", "'ELSIF'", "'ELSE'", "'END_IF'", "'CASE'", "'ARRAY'", 
         "'OF'", "'END_CASE'", "'WHILE'", "'DO'", "'END_WHILE'", "'REPEAT'", 
         "'UNTIL'", "'END_REPEAT'", "'FOR'", "'TO'", "'BY'", "'END_FOR'", 
-        "'RETURN'", "'EXIT'", "'CONTINUE'", "'AND'", "'OR'", "'XOR'", "'METHOD'", 
-        "'END_METHOD'", "'INTERFACE'", "'END_INTERFACE'", "'STRUCT'", "'END_STRUCT'", 
-        "'UNION'", "'END_UNION'", "'ENUM'", "'END_ENUM'", "'ABSTRACT'", 
-        "'FINAL'", "'CONSTANT'", "'PUBLIC'", "'PRIVATE'", "'PROTECTED'", 
-        "'INTERNAL'", "'MOD'", "'TYPE'", "'END_TYPE'", "'^'", "'REFERENCE TO'", 
-        "'POINTER TO'", null, null, null, null, null, null, "'PVOID'"
+        "'RETURN'", "'EXIT'", "'CONTINUE'", "'AND'", "'AND_THEN'", "'OR'", 
+        "'OR_ELSE'", "'XOR'", "'METHOD'", "'END_METHOD'", "'INTERFACE'", 
+        "'END_INTERFACE'", "'STRUCT'", "'END_STRUCT'", "'UNION'", "'END_UNION'", 
+        "'ENUM'", "'END_ENUM'", "'ABSTRACT'", "'FINAL'", "'CONSTANT'", "'PUBLIC'", 
+        "'PRIVATE'", "'PROTECTED'", "'INTERNAL'", "'MOD'", "'TYPE'", "'END_TYPE'", 
+        "'^'", "'REFERENCE TO'", "'POINTER TO'", null, null, null, null, 
+        null, null, "'PVOID'"
     ];
 
     public static readonly symbolicNames = [
@@ -236,10 +239,10 @@ export class StructuredTextParser extends antlr.Parser {
         "END_VAR", "IF", "THEN", "ELSIF", "ELSE", "END_IF", "CASE", "ARRAY", 
         "OF", "END_CASE", "WHILE", "DO", "END_WHILE", "REPEAT", "UNTIL", 
         "END_REPEAT", "FOR", "TO", "BY", "END_FOR", "RETURN", "EXIT", "CONTINUE", 
-        "AND", "OR", "XOR", "METHOD", "END_METHOD", "INTERFACE", "END_INTERFACE", 
-        "STRUCT", "END_STRUCT", "UNION", "END_UNION", "ENUM", "END_ENUM", 
-        "ABSTRACT", "FINAL", "CONSTANT", "PUBLIC", "PRIVATE", "PROTECTED", 
-        "INTERNAL", "MOD", "TYPE", "END_TYPE", "CARET", "REFERENCE_TO", 
+        "AND", "AND_THEN", "OR", "OR_ELSE", "XOR", "METHOD", "END_METHOD", 
+        "INTERFACE", "END_INTERFACE", "STRUCT", "END_STRUCT", "UNION", "END_UNION", 
+        "ENUM", "END_ENUM", "ABSTRACT", "FINAL", "CONSTANT", "PUBLIC", "PRIVATE", 
+        "PROTECTED", "INTERNAL", "MOD", "TYPE", "END_TYPE", "CARET", "REFERENCE_TO", 
         "POINTER_TO", "LOGICAL_TYPE", "BITFIELD_TYPE", "UNSIGNED_INT_TYPE", 
         "SIGNED_INT_TYPE", "FLOATING_POINT_TYPE", "X_TYPE", "POINTER_TYPE", 
         "TIME_TYPE", "DATE_TYPE", "TIME_OF_DAY_TYPE", "DATE_AND_TIME_TYPE", 
@@ -289,7 +292,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 138;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            while (((((_la - 27)) & ~0x1F) === 0 && ((1 << (_la - 27)) & 4194389) !== 0) || _la === 80 || _la === 96) {
+            while (((((_la - 27)) & ~0x1F) === 0 && ((1 << (_la - 27)) & 4194389) !== 0) || _la === 82 || _la === 98) {
                 {
                 this.state = 136;
                 this.errorHandler.sync(this);
@@ -373,7 +376,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 146;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & 15) !== 0)) {
+            if (((((_la - 93)) & ~0x1F) === 0 && ((1 << (_la - 93)) & 15) !== 0)) {
                 {
                 this.state = 145;
                 this.accessModifier();
@@ -437,7 +440,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 163;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & 15) !== 0)) {
+            if (((((_la - 93)) & ~0x1F) === 0 && ((1 << (_la - 93)) & 15) !== 0)) {
                 {
                 this.state = 162;
                 this.accessModifier();
@@ -513,7 +516,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 184;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & 15) !== 0)) {
+            if (((((_la - 93)) & ~0x1F) === 0 && ((1 << (_la - 93)) & 15) !== 0)) {
                 {
                 this.state = 183;
                 this.accessModifier();
@@ -523,7 +526,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 187;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (((((_la - 88)) & ~0x1F) === 0 && ((1 << (_la - 88)) & 7) !== 0)) {
+            if (((((_la - 90)) & ~0x1F) === 0 && ((1 << (_la - 90)) & 7) !== 0)) {
                 {
                 this.state = 186;
                 this.modifier();
@@ -599,7 +602,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 208;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & 15) !== 0)) {
+            if (((((_la - 93)) & ~0x1F) === 0 && ((1 << (_la - 93)) & 15) !== 0)) {
                 {
                 this.state = 207;
                 this.accessModifier();
@@ -609,7 +612,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 211;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (((((_la - 88)) & ~0x1F) === 0 && ((1 << (_la - 88)) & 7) !== 0)) {
+            if (((((_la - 90)) & ~0x1F) === 0 && ((1 << (_la - 90)) & 7) !== 0)) {
                 {
                 this.state = 210;
                 this.modifier();
@@ -677,7 +680,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 230;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & 15) !== 0)) {
+            if (((((_la - 93)) & ~0x1F) === 0 && ((1 << (_la - 93)) & 15) !== 0)) {
                 {
                 this.state = 229;
                 this.accessModifier();
@@ -687,7 +690,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 233;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (((((_la - 88)) & ~0x1F) === 0 && ((1 << (_la - 88)) & 7) !== 0)) {
+            if (((((_la - 90)) & ~0x1F) === 0 && ((1 << (_la - 90)) & 7) !== 0)) {
                 {
                 this.state = 232;
                 this.modifier();
@@ -719,7 +722,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 245;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            while (((((_la - 27)) & ~0x1F) === 0 && ((1 << (_la - 27)) & 29294849) !== 0) || _la === 78) {
+            while (((((_la - 27)) & ~0x1F) === 0 && ((1 << (_la - 27)) & 29294849) !== 0) || _la === 80) {
                 {
                 {
                 this.state = 242;
@@ -771,7 +774,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 256;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & 15) !== 0)) {
+            if (((((_la - 93)) & ~0x1F) === 0 && ((1 << (_la - 93)) & 15) !== 0)) {
                 {
                 this.state = 255;
                 this.accessModifier();
@@ -793,7 +796,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 265;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            while (((((_la - 27)) & ~0x1F) === 0 && ((1 << (_la - 27)) & 29294849) !== 0) || _la === 78) {
+            while (((((_la - 27)) & ~0x1F) === 0 && ((1 << (_la - 27)) & 29294849) !== 0) || _la === 80) {
                 {
                 {
                 this.state = 262;
@@ -843,7 +846,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 275;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & 15) !== 0)) {
+            if (((((_la - 93)) & ~0x1F) === 0 && ((1 << (_la - 93)) & 15) !== 0)) {
                 {
                 this.state = 274;
                 this.accessModifier();
@@ -853,7 +856,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 278;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (((((_la - 88)) & ~0x1F) === 0 && ((1 << (_la - 88)) & 7) !== 0)) {
+            if (((((_la - 90)) & ~0x1F) === 0 && ((1 << (_la - 90)) & 7) !== 0)) {
                 {
                 this.state = 277;
                 this.modifier();
@@ -865,7 +868,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 284;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            while (_la === 27 || _la === 125) {
+            while (_la === 27 || _la === 127) {
                 {
                 {
                 this.state = 281;
@@ -923,7 +926,7 @@ export class StructuredTextParser extends antlr.Parser {
                 this.state = 297;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & 15) !== 0)) {
+                if (((((_la - 93)) & ~0x1F) === 0 && ((1 << (_la - 93)) & 15) !== 0)) {
                     {
                     this.state = 296;
                     this.accessModifier();
@@ -962,7 +965,7 @@ export class StructuredTextParser extends antlr.Parser {
                 this.state = 312;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & 15) !== 0)) {
+                if (((((_la - 93)) & ~0x1F) === 0 && ((1 << (_la - 93)) & 15) !== 0)) {
                     {
                     this.state = 311;
                     this.accessModifier();
@@ -1001,7 +1004,7 @@ export class StructuredTextParser extends antlr.Parser {
                 this.state = 327;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & 15) !== 0)) {
+                if (((((_la - 93)) & ~0x1F) === 0 && ((1 << (_la - 93)) & 15) !== 0)) {
                     {
                     this.state = 326;
                     this.accessModifier();
@@ -1040,7 +1043,7 @@ export class StructuredTextParser extends antlr.Parser {
                 this.state = 342;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & 15) !== 0)) {
+                if (((((_la - 93)) & ~0x1F) === 0 && ((1 << (_la - 93)) & 15) !== 0)) {
                     {
                     this.state = 341;
                     this.accessModifier();
@@ -1106,7 +1109,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 363;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (((((_la - 102)) & ~0x1F) === 0 && ((1 << (_la - 102)) & 23) !== 0)) {
+            if (((((_la - 104)) & ~0x1F) === 0 && ((1 << (_la - 104)) & 23) !== 0)) {
                 {
                 this.state = 362;
                 this.enumType();
@@ -1213,7 +1216,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 382;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            while (_la === 27 || _la === 125) {
+            while (_la === 27 || _la === 127) {
                 {
                 {
                 this.state = 379;
@@ -1253,7 +1256,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 391;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            while (_la === 27 || _la === 125) {
+            while (_la === 27 || _la === 127) {
                 {
                 {
                 this.state = 388;
@@ -1420,7 +1423,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 421;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (((((_la - 88)) & ~0x1F) === 0 && ((1 << (_la - 88)) & 7) !== 0)) {
+            if (((((_la - 90)) & ~0x1F) === 0 && ((1 << (_la - 90)) & 7) !== 0)) {
                 {
                 this.state = 420;
                 this.modifier();
@@ -1430,7 +1433,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 426;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            while (_la === 27 || _la === 125) {
+            while (_la === 27 || _la === 127) {
                 {
                 {
                 this.state = 423;
@@ -1794,7 +1797,7 @@ export class StructuredTextParser extends antlr.Parser {
                 this.state = 484;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 113) {
+                if (_la === 115) {
                     {
                     this.state = 483;
                     this.match(StructuredTextParser.SUBRANGE_PARAM);
@@ -1813,7 +1816,7 @@ export class StructuredTextParser extends antlr.Parser {
                 this.state = 488;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 113) {
+                if (_la === 115) {
                     {
                     this.state = 487;
                     this.match(StructuredTextParser.SUBRANGE_PARAM);
@@ -1832,7 +1835,7 @@ export class StructuredTextParser extends antlr.Parser {
                 this.state = 492;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 113) {
+                if (_la === 115) {
                     {
                     this.state = 491;
                     this.match(StructuredTextParser.SUBRANGE_PARAM);
@@ -1900,7 +1903,7 @@ export class StructuredTextParser extends antlr.Parser {
                 this.state = 503;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-                if (_la === 114) {
+                if (_la === 116) {
                     {
                     this.state = 502;
                     this.match(StructuredTextParser.STRING_LEN_PARAM);
@@ -1937,7 +1940,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 507;
             localContext._enumTypeId = this.tokenStream.LT(1);
             _la = this.tokenStream.LA(1);
-            if(!(((((_la - 102)) & ~0x1F) === 0 && ((1 << (_la - 102)) & 23) !== 0))) {
+            if(!(((((_la - 104)) & ~0x1F) === 0 && ((1 << (_la - 104)) & 23) !== 0))) {
                 localContext._enumTypeId = this.errorHandler.recoverInline(this);
             }
             else {
@@ -1947,7 +1950,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 509;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (_la === 113) {
+            if (_la === 115) {
                 {
                 this.state = 508;
                 this.match(StructuredTextParser.SUBRANGE_PARAM);
@@ -2413,7 +2416,7 @@ export class StructuredTextParser extends antlr.Parser {
                 this.state = 584;
                 this.errorHandler.sync(this);
                 _la = this.tokenStream.LA(1);
-            } while (((((_la - 115)) & ~0x1F) === 0 && ((1 << (_la - 115)) & 1035) !== 0));
+            } while (((((_la - 117)) & ~0x1F) === 0 && ((1 << (_la - 117)) & 1035) !== 0));
             this.state = 588;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
@@ -2498,7 +2501,7 @@ export class StructuredTextParser extends antlr.Parser {
             {
             this.state = 603;
             _la = this.tokenStream.LA(1);
-            if(!(((((_la - 115)) & ~0x1F) === 0 && ((1 << (_la - 115)) & 1035) !== 0))) {
+            if(!(((((_la - 117)) & ~0x1F) === 0 && ((1 << (_la - 117)) & 1035) !== 0))) {
             this.errorHandler.recoverInline(this);
             }
             else {
@@ -2898,7 +2901,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 668;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 67919880) !== 0) || ((((_la - 109)) & ~0x1F) === 0 && ((1 << (_la - 109)) & 73671) !== 0)) {
+            if ((((_la) & ~0x1F) === 0 && ((1 << _la) & 67919880) !== 0) || ((((_la - 111)) & ~0x1F) === 0 && ((1 << (_la - 111)) & 73671) !== 0)) {
                 {
                 this.state = 667;
                 this.argumentList();
@@ -3028,7 +3031,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 684;
             localContext._prefix = this.tokenStream.LT(1);
             _la = this.tokenStream.LA(1);
-            if(!(_la === 13 || _la === 14 || _la === 109)) {
+            if(!(_la === 13 || _la === 14 || _la === 111)) {
                 localContext._prefix = this.errorHandler.recoverInline(this);
             }
             else {
@@ -3201,7 +3204,7 @@ export class StructuredTextParser extends antlr.Parser {
                         this.state = 709;
                         localContext._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
-                        if(!(_la === 16 || _la === 17 || _la === 95)) {
+                        if(!(_la === 16 || _la === 17 || _la === 97)) {
                             localContext._op = this.errorHandler.recoverInline(this);
                         }
                         else {
@@ -3267,7 +3270,7 @@ export class StructuredTextParser extends antlr.Parser {
                         this.state = 718;
                         localContext._op = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
-                        if(!(((((_la - 75)) & ~0x1F) === 0 && ((1 << (_la - 75)) & 7) !== 0))) {
+                        if(!(((((_la - 75)) & ~0x1F) === 0 && ((1 << (_la - 75)) & 31) !== 0))) {
                             localContext._op = this.errorHandler.recoverInline(this);
                         }
                         else {
@@ -3397,7 +3400,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 739;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & 15) !== 0)) {
+            if (((((_la - 93)) & ~0x1F) === 0 && ((1 << (_la - 93)) & 15) !== 0)) {
                 {
                 this.state = 738;
                 this.accessModifier();
@@ -3435,7 +3438,7 @@ export class StructuredTextParser extends antlr.Parser {
             this.state = 746;
             this.errorHandler.sync(this);
             _la = this.tokenStream.LA(1);
-            if (((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & 15) !== 0)) {
+            if (((((_la - 93)) & ~0x1F) === 0 && ((1 << (_la - 93)) & 15) !== 0)) {
                 {
                 this.state = 745;
                 this.accessModifier();
@@ -3552,7 +3555,7 @@ export class StructuredTextParser extends antlr.Parser {
             {
             this.state = 769;
             _la = this.tokenStream.LA(1);
-            if(!(((((_la - 116)) & ~0x1F) === 0 && ((1 << (_la - 116)) & 519) !== 0))) {
+            if(!(((((_la - 118)) & ~0x1F) === 0 && ((1 << (_la - 118)) & 519) !== 0))) {
             this.errorHandler.recoverInline(this);
             }
             else {
@@ -3583,7 +3586,7 @@ export class StructuredTextParser extends antlr.Parser {
             {
             this.state = 771;
             _la = this.tokenStream.LA(1);
-            if(!(((((_la - 91)) & ~0x1F) === 0 && ((1 << (_la - 91)) & 15) !== 0))) {
+            if(!(((((_la - 93)) & ~0x1F) === 0 && ((1 << (_la - 93)) & 15) !== 0))) {
             this.errorHandler.recoverInline(this);
             }
             else {
@@ -3614,7 +3617,7 @@ export class StructuredTextParser extends antlr.Parser {
             {
             this.state = 773;
             _la = this.tokenStream.LA(1);
-            if(!(((((_la - 88)) & ~0x1F) === 0 && ((1 << (_la - 88)) & 7) !== 0))) {
+            if(!(((((_la - 90)) & ~0x1F) === 0 && ((1 << (_la - 90)) & 7) !== 0))) {
             this.errorHandler.recoverInline(this);
             }
             else {
@@ -3659,7 +3662,7 @@ export class StructuredTextParser extends antlr.Parser {
     }
 
     public static readonly _serializedATN: number[] = [
-        4,1,128,776,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,
+        4,1,130,776,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,
         7,6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,
         13,2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,2,19,7,19,2,
         20,7,20,2,21,7,21,2,22,7,22,2,23,7,23,2,24,7,24,2,25,7,25,2,26,7,
@@ -3726,10 +3729,10 @@ export class StructuredTextParser extends antlr.Parser {
         0,1,110,65,0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,
         40,42,44,46,48,50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,80,82,
         84,86,88,90,92,94,96,98,100,102,104,106,108,110,112,114,116,118,
-        120,122,124,126,128,0,14,2,0,43,48,50,51,2,0,102,104,106,106,2,0,
-        6,6,10,10,2,0,6,6,11,11,3,0,115,116,118,118,125,125,2,0,13,14,109,
-        109,2,0,16,17,95,95,1,0,18,19,1,0,20,25,1,0,75,77,2,0,18,19,26,26,
-        2,0,116,118,125,125,1,0,91,94,1,0,88,90,840,0,138,1,0,0,0,2,142,
+        120,122,124,126,128,0,14,2,0,43,48,50,51,2,0,104,106,108,108,2,0,
+        6,6,10,10,2,0,6,6,11,11,3,0,117,118,120,120,127,127,2,0,13,14,111,
+        111,2,0,16,17,97,97,1,0,18,19,1,0,20,25,1,0,75,79,2,0,18,19,26,26,
+        2,0,118,120,127,127,1,0,93,96,1,0,90,92,840,0,138,1,0,0,0,2,142,
         1,0,0,0,4,159,1,0,0,0,6,180,1,0,0,0,8,204,1,0,0,0,10,226,1,0,0,0,
         12,252,1,0,0,0,14,271,1,0,0,0,16,350,1,0,0,0,18,352,1,0,0,0,20,371,
         1,0,0,0,22,376,1,0,0,0,24,378,1,0,0,0,26,387,1,0,0,0,28,396,1,0,
@@ -3751,81 +3754,81 @@ export class StructuredTextParser extends antlr.Parser {
         1,0,0,0,138,136,1,0,0,0,138,139,1,0,0,0,139,1,1,0,0,0,140,138,1,
         0,0,0,141,143,3,120,60,0,142,141,1,0,0,0,142,143,1,0,0,0,143,144,
         1,0,0,0,144,146,5,29,0,0,145,147,3,126,63,0,146,145,1,0,0,0,146,
-        147,1,0,0,0,147,148,1,0,0,0,148,152,5,125,0,0,149,151,3,34,17,0,
+        147,1,0,0,0,147,148,1,0,0,0,148,152,5,127,0,0,149,151,3,34,17,0,
         150,149,1,0,0,0,151,154,1,0,0,0,152,150,1,0,0,0,152,153,1,0,0,0,
         153,155,1,0,0,0,154,152,1,0,0,0,155,156,3,56,28,0,156,157,5,30,0,
         0,157,3,1,0,0,0,158,160,3,120,60,0,159,158,1,0,0,0,159,160,1,0,0,
         0,160,161,1,0,0,0,161,163,5,33,0,0,162,164,3,126,63,0,163,162,1,
-        0,0,0,163,164,1,0,0,0,164,165,1,0,0,0,165,168,5,125,0,0,166,167,
+        0,0,0,163,164,1,0,0,0,164,165,1,0,0,0,165,168,5,127,0,0,166,167,
         5,1,0,0,167,169,3,44,22,0,168,166,1,0,0,0,168,169,1,0,0,0,169,173,
         1,0,0,0,170,172,3,34,17,0,171,170,1,0,0,0,172,175,1,0,0,0,173,171,
         1,0,0,0,173,174,1,0,0,0,174,176,1,0,0,0,175,173,1,0,0,0,176,177,
         3,56,28,0,177,178,5,34,0,0,178,5,1,0,0,0,179,181,3,120,60,0,180,
-        179,1,0,0,0,180,181,1,0,0,0,181,182,1,0,0,0,182,184,5,78,0,0,183,
+        179,1,0,0,0,180,181,1,0,0,0,181,182,1,0,0,0,182,184,5,80,0,0,183,
         185,3,126,63,0,184,183,1,0,0,0,184,185,1,0,0,0,185,187,1,0,0,0,186,
         188,3,128,64,0,187,186,1,0,0,0,187,188,1,0,0,0,188,189,1,0,0,0,189,
-        192,5,125,0,0,190,191,5,1,0,0,191,193,3,44,22,0,192,190,1,0,0,0,
+        192,5,127,0,0,190,191,5,1,0,0,191,193,3,44,22,0,192,190,1,0,0,0,
         192,193,1,0,0,0,193,197,1,0,0,0,194,196,3,34,17,0,195,194,1,0,0,
         0,196,199,1,0,0,0,197,195,1,0,0,0,197,198,1,0,0,0,198,200,1,0,0,
-        0,199,197,1,0,0,0,200,201,3,56,28,0,201,202,5,79,0,0,202,7,1,0,0,
+        0,199,197,1,0,0,0,200,201,3,56,28,0,201,202,5,81,0,0,202,7,1,0,0,
         0,203,205,3,120,60,0,204,203,1,0,0,0,204,205,1,0,0,0,205,206,1,0,
         0,0,206,208,5,35,0,0,207,209,3,126,63,0,208,207,1,0,0,0,208,209,
         1,0,0,0,209,211,1,0,0,0,210,212,3,128,64,0,211,210,1,0,0,0,211,212,
-        1,0,0,0,212,213,1,0,0,0,213,214,5,125,0,0,214,215,5,1,0,0,215,219,
+        1,0,0,0,212,213,1,0,0,0,213,214,5,127,0,0,214,215,5,1,0,0,215,219,
         3,44,22,0,216,218,3,34,17,0,217,216,1,0,0,0,218,221,1,0,0,0,219,
         217,1,0,0,0,219,220,1,0,0,0,220,222,1,0,0,0,221,219,1,0,0,0,222,
         223,3,114,57,0,223,224,5,36,0,0,224,9,1,0,0,0,225,227,3,120,60,0,
         226,225,1,0,0,0,226,227,1,0,0,0,227,228,1,0,0,0,228,230,5,31,0,0,
         229,231,3,126,63,0,230,229,1,0,0,0,230,231,1,0,0,0,231,233,1,0,0,
         0,232,234,3,128,64,0,233,232,1,0,0,0,233,234,1,0,0,0,234,235,1,0,
-        0,0,235,237,5,125,0,0,236,238,3,30,15,0,237,236,1,0,0,0,237,238,
+        0,0,235,237,5,127,0,0,236,238,3,30,15,0,237,236,1,0,0,0,237,238,
         1,0,0,0,238,240,1,0,0,0,239,241,3,28,14,0,240,239,1,0,0,0,240,241,
         1,0,0,0,241,245,1,0,0,0,242,244,3,32,16,0,243,242,1,0,0,0,244,247,
         1,0,0,0,245,243,1,0,0,0,245,246,1,0,0,0,246,248,1,0,0,0,247,245,
         1,0,0,0,248,249,3,56,28,0,249,250,5,32,0,0,250,11,1,0,0,0,251,253,
         3,120,60,0,252,251,1,0,0,0,252,253,1,0,0,0,253,254,1,0,0,0,254,256,
-        5,80,0,0,255,257,3,126,63,0,256,255,1,0,0,0,256,257,1,0,0,0,257,
-        258,1,0,0,0,258,260,5,125,0,0,259,261,3,30,15,0,260,259,1,0,0,0,
+        5,82,0,0,255,257,3,126,63,0,256,255,1,0,0,0,256,257,1,0,0,0,257,
+        258,1,0,0,0,258,260,5,127,0,0,259,261,3,30,15,0,260,259,1,0,0,0,
         260,261,1,0,0,0,261,265,1,0,0,0,262,264,3,32,16,0,263,262,1,0,0,
         0,264,267,1,0,0,0,265,263,1,0,0,0,265,266,1,0,0,0,266,268,1,0,0,
-        0,267,265,1,0,0,0,268,269,5,81,0,0,269,13,1,0,0,0,270,272,3,120,
+        0,267,265,1,0,0,0,268,269,5,83,0,0,269,13,1,0,0,0,270,272,3,120,
         60,0,271,270,1,0,0,0,271,272,1,0,0,0,272,273,1,0,0,0,273,275,5,49,
         0,0,274,276,3,126,63,0,275,274,1,0,0,0,275,276,1,0,0,0,276,278,1,
         0,0,0,277,279,3,128,64,0,278,277,1,0,0,0,278,279,1,0,0,0,279,280,
-        1,0,0,0,280,284,5,125,0,0,281,283,3,38,19,0,282,281,1,0,0,0,283,
+        1,0,0,0,280,284,5,127,0,0,281,283,3,38,19,0,282,281,1,0,0,0,283,
         286,1,0,0,0,284,282,1,0,0,0,284,285,1,0,0,0,285,287,1,0,0,0,286,
         284,1,0,0,0,287,288,5,52,0,0,288,15,1,0,0,0,289,291,3,120,60,0,290,
         289,1,0,0,0,291,294,1,0,0,0,292,290,1,0,0,0,292,293,1,0,0,0,293,
-        295,1,0,0,0,294,292,1,0,0,0,295,297,5,96,0,0,296,298,3,126,63,0,
-        297,296,1,0,0,0,297,298,1,0,0,0,298,299,1,0,0,0,299,300,5,125,0,
-        0,300,301,5,1,0,0,301,302,3,18,9,0,302,303,5,97,0,0,303,351,1,0,
+        295,1,0,0,0,294,292,1,0,0,0,295,297,5,98,0,0,296,298,3,126,63,0,
+        297,296,1,0,0,0,297,298,1,0,0,0,298,299,1,0,0,0,299,300,5,127,0,
+        0,300,301,5,1,0,0,301,302,3,18,9,0,302,303,5,99,0,0,303,351,1,0,
         0,0,304,306,3,120,60,0,305,304,1,0,0,0,306,309,1,0,0,0,307,305,1,
         0,0,0,307,308,1,0,0,0,308,310,1,0,0,0,309,307,1,0,0,0,310,312,5,
-        96,0,0,311,313,3,126,63,0,312,311,1,0,0,0,312,313,1,0,0,0,313,314,
-        1,0,0,0,314,315,5,125,0,0,315,316,5,1,0,0,316,317,3,24,12,0,317,
-        318,5,97,0,0,318,351,1,0,0,0,319,321,3,120,60,0,320,319,1,0,0,0,
+        98,0,0,311,313,3,126,63,0,312,311,1,0,0,0,312,313,1,0,0,0,313,314,
+        1,0,0,0,314,315,5,127,0,0,315,316,5,1,0,0,316,317,3,24,12,0,317,
+        318,5,99,0,0,318,351,1,0,0,0,319,321,3,120,60,0,320,319,1,0,0,0,
         321,324,1,0,0,0,322,320,1,0,0,0,322,323,1,0,0,0,323,325,1,0,0,0,
-        324,322,1,0,0,0,325,327,5,96,0,0,326,328,3,126,63,0,327,326,1,0,
-        0,0,327,328,1,0,0,0,328,329,1,0,0,0,329,330,5,125,0,0,330,331,5,
-        1,0,0,331,332,3,26,13,0,332,333,5,97,0,0,333,351,1,0,0,0,334,336,
+        324,322,1,0,0,0,325,327,5,98,0,0,326,328,3,126,63,0,327,326,1,0,
+        0,0,327,328,1,0,0,0,328,329,1,0,0,0,329,330,5,127,0,0,330,331,5,
+        1,0,0,331,332,3,26,13,0,332,333,5,99,0,0,333,351,1,0,0,0,334,336,
         3,120,60,0,335,334,1,0,0,0,336,339,1,0,0,0,337,335,1,0,0,0,337,338,
-        1,0,0,0,338,340,1,0,0,0,339,337,1,0,0,0,340,342,5,96,0,0,341,343,
+        1,0,0,0,338,340,1,0,0,0,339,337,1,0,0,0,340,342,5,98,0,0,341,343,
         3,126,63,0,342,341,1,0,0,0,342,343,1,0,0,0,343,344,1,0,0,0,344,345,
-        5,125,0,0,345,346,5,1,0,0,346,347,3,44,22,0,347,348,5,2,0,0,348,
-        349,5,97,0,0,349,351,1,0,0,0,350,292,1,0,0,0,350,307,1,0,0,0,350,
+        5,127,0,0,345,346,5,1,0,0,346,347,3,44,22,0,347,348,5,2,0,0,348,
+        349,5,99,0,0,349,351,1,0,0,0,350,292,1,0,0,0,350,307,1,0,0,0,350,
         322,1,0,0,0,350,337,1,0,0,0,351,17,1,0,0,0,352,353,5,3,0,0,353,358,
         3,20,10,0,354,355,5,4,0,0,355,357,3,20,10,0,356,354,1,0,0,0,357,
         360,1,0,0,0,358,356,1,0,0,0,358,359,1,0,0,0,359,361,1,0,0,0,360,
         358,1,0,0,0,361,363,5,5,0,0,362,364,3,50,25,0,363,362,1,0,0,0,363,
         364,1,0,0,0,364,367,1,0,0,0,365,366,5,6,0,0,366,368,3,22,11,0,367,
         365,1,0,0,0,367,368,1,0,0,0,368,369,1,0,0,0,369,370,5,2,0,0,370,
-        19,1,0,0,0,371,374,5,125,0,0,372,373,5,6,0,0,373,375,3,110,55,0,
-        374,372,1,0,0,0,374,375,1,0,0,0,375,21,1,0,0,0,376,377,5,125,0,0,
-        377,23,1,0,0,0,378,382,5,82,0,0,379,381,3,38,19,0,380,379,1,0,0,
+        19,1,0,0,0,371,374,5,127,0,0,372,373,5,6,0,0,373,375,3,110,55,0,
+        374,372,1,0,0,0,374,375,1,0,0,0,375,21,1,0,0,0,376,377,5,127,0,0,
+        377,23,1,0,0,0,378,382,5,84,0,0,379,381,3,38,19,0,380,379,1,0,0,
         0,381,384,1,0,0,0,382,380,1,0,0,0,382,383,1,0,0,0,383,385,1,0,0,
-        0,384,382,1,0,0,0,385,386,5,83,0,0,386,25,1,0,0,0,387,391,5,84,0,
+        0,384,382,1,0,0,0,385,386,5,85,0,0,386,25,1,0,0,0,387,391,5,86,0,
         0,388,390,3,38,19,0,389,388,1,0,0,0,390,393,1,0,0,0,391,389,1,0,
-        0,0,391,392,1,0,0,0,392,394,1,0,0,0,393,391,1,0,0,0,394,395,5,85,
+        0,0,391,392,1,0,0,0,392,394,1,0,0,0,393,391,1,0,0,0,394,395,5,87,
         0,0,395,27,1,0,0,0,396,397,5,37,0,0,397,402,3,44,22,0,398,399,5,
         4,0,0,399,401,3,44,22,0,400,398,1,0,0,0,401,404,1,0,0,0,402,400,
         1,0,0,0,402,403,1,0,0,0,403,29,1,0,0,0,404,402,1,0,0,0,405,406,5,
@@ -3838,7 +3841,7 @@ export class StructuredTextParser extends antlr.Parser {
         1,0,0,0,426,424,1,0,0,0,426,427,1,0,0,0,427,429,1,0,0,0,428,426,
         1,0,0,0,429,430,5,52,0,0,430,35,1,0,0,0,431,432,7,0,0,0,432,37,1,
         0,0,0,433,435,3,120,60,0,434,433,1,0,0,0,434,435,1,0,0,0,435,436,
-        1,0,0,0,436,437,5,125,0,0,437,438,5,1,0,0,438,442,3,44,22,0,439,
+        1,0,0,0,436,437,5,127,0,0,437,438,5,1,0,0,438,442,3,44,22,0,439,
         440,3,62,31,0,440,441,3,40,20,0,441,443,1,0,0,0,442,439,1,0,0,0,
         442,443,1,0,0,0,443,444,1,0,0,0,444,445,5,2,0,0,445,39,1,0,0,0,446,
         449,3,110,55,0,447,449,3,42,21,0,448,446,1,0,0,0,448,447,1,0,0,0,
@@ -3848,21 +3851,21 @@ export class StructuredTextParser extends antlr.Parser {
         0,0,460,43,1,0,0,0,461,476,3,46,23,0,462,463,5,59,0,0,463,464,5,
         7,0,0,464,465,3,110,55,0,465,466,5,9,0,0,466,467,3,110,55,0,467,
         468,5,8,0,0,468,469,5,60,0,0,469,470,3,44,22,0,470,476,1,0,0,0,471,
-        472,5,100,0,0,472,476,3,44,22,0,473,474,5,99,0,0,474,476,3,44,22,
+        472,5,102,0,0,472,476,3,44,22,0,473,474,5,101,0,0,474,476,3,44,22,
         0,475,461,1,0,0,0,475,462,1,0,0,0,475,471,1,0,0,0,475,473,1,0,0,
-        0,476,45,1,0,0,0,477,480,3,48,24,0,478,480,5,125,0,0,479,477,1,0,
-        0,0,479,478,1,0,0,0,480,47,1,0,0,0,481,506,5,101,0,0,482,484,5,102,
-        0,0,483,485,5,113,0,0,484,483,1,0,0,0,484,485,1,0,0,0,485,506,1,
-        0,0,0,486,488,5,103,0,0,487,489,5,113,0,0,488,487,1,0,0,0,488,489,
-        1,0,0,0,489,506,1,0,0,0,490,492,5,104,0,0,491,493,5,113,0,0,492,
-        491,1,0,0,0,492,493,1,0,0,0,493,506,1,0,0,0,494,506,5,106,0,0,495,
-        506,5,107,0,0,496,506,5,105,0,0,497,506,5,108,0,0,498,506,5,109,
-        0,0,499,506,5,110,0,0,500,506,5,111,0,0,501,503,5,112,0,0,502,504,
-        5,114,0,0,503,502,1,0,0,0,503,504,1,0,0,0,504,506,1,0,0,0,505,481,
+        0,476,45,1,0,0,0,477,480,3,48,24,0,478,480,5,127,0,0,479,477,1,0,
+        0,0,479,478,1,0,0,0,480,47,1,0,0,0,481,506,5,103,0,0,482,484,5,104,
+        0,0,483,485,5,115,0,0,484,483,1,0,0,0,484,485,1,0,0,0,485,506,1,
+        0,0,0,486,488,5,105,0,0,487,489,5,115,0,0,488,487,1,0,0,0,488,489,
+        1,0,0,0,489,506,1,0,0,0,490,492,5,106,0,0,491,493,5,115,0,0,492,
+        491,1,0,0,0,492,493,1,0,0,0,493,506,1,0,0,0,494,506,5,108,0,0,495,
+        506,5,109,0,0,496,506,5,107,0,0,497,506,5,110,0,0,498,506,5,111,
+        0,0,499,506,5,112,0,0,500,506,5,113,0,0,501,503,5,114,0,0,502,504,
+        5,116,0,0,503,502,1,0,0,0,503,504,1,0,0,0,504,506,1,0,0,0,505,481,
         1,0,0,0,505,482,1,0,0,0,505,486,1,0,0,0,505,490,1,0,0,0,505,494,
         1,0,0,0,505,495,1,0,0,0,505,496,1,0,0,0,505,497,1,0,0,0,505,498,
         1,0,0,0,505,499,1,0,0,0,505,500,1,0,0,0,505,501,1,0,0,0,506,49,1,
-        0,0,0,507,509,7,1,0,0,508,510,5,113,0,0,509,508,1,0,0,0,509,510,
+        0,0,0,507,509,7,1,0,0,508,510,5,115,0,0,509,508,1,0,0,0,509,510,
         1,0,0,0,510,51,1,0,0,0,511,512,1,0,0,0,512,53,1,0,0,0,513,514,1,
         0,0,0,514,55,1,0,0,0,515,517,3,58,29,0,516,515,1,0,0,0,517,520,1,
         0,0,0,518,516,1,0,0,0,518,519,1,0,0,0,519,57,1,0,0,0,520,518,1,0,
@@ -3877,7 +3880,7 @@ export class StructuredTextParser extends antlr.Parser {
         90,45,0,542,543,5,2,0,0,543,65,1,0,0,0,544,549,3,68,34,0,545,546,
         5,4,0,0,546,548,3,68,34,0,547,545,1,0,0,0,548,551,1,0,0,0,549,547,
         1,0,0,0,549,550,1,0,0,0,550,67,1,0,0,0,551,549,1,0,0,0,552,553,5,
-        125,0,0,553,554,7,3,0,0,554,557,3,110,55,0,555,557,3,110,55,0,556,
+        127,0,0,553,554,7,3,0,0,554,557,3,110,55,0,555,557,3,110,55,0,556,
         552,1,0,0,0,556,555,1,0,0,0,557,69,1,0,0,0,558,559,5,53,0,0,559,
         560,3,110,55,0,560,561,5,54,0,0,561,569,3,56,28,0,562,563,5,55,0,
         0,563,564,3,110,55,0,564,565,5,54,0,0,565,566,3,56,28,0,566,568,
@@ -3895,7 +3898,7 @@ export class StructuredTextParser extends antlr.Parser {
         606,5,62,0,0,606,607,3,110,55,0,607,608,5,63,0,0,608,609,3,56,28,
         0,609,610,5,64,0,0,610,79,1,0,0,0,611,612,5,65,0,0,612,613,3,56,
         28,0,613,614,5,66,0,0,614,615,3,110,55,0,615,616,5,67,0,0,616,81,
-        1,0,0,0,617,618,5,68,0,0,618,619,5,125,0,0,619,620,5,6,0,0,620,621,
+        1,0,0,0,617,618,5,68,0,0,618,619,5,127,0,0,619,620,5,6,0,0,620,621,
         3,110,55,0,621,622,5,69,0,0,622,625,3,110,55,0,623,624,5,70,0,0,
         624,626,3,110,55,0,625,623,1,0,0,0,625,626,1,0,0,0,626,627,1,0,0,
         0,627,628,5,63,0,0,628,629,3,56,28,0,629,630,5,71,0,0,630,83,1,0,
@@ -3903,27 +3906,27 @@ export class StructuredTextParser extends antlr.Parser {
         0,0,635,636,5,2,0,0,636,87,1,0,0,0,637,638,5,74,0,0,638,639,5,2,
         0,0,639,89,1,0,0,0,640,645,3,92,46,0,641,642,5,12,0,0,642,644,3,
         92,46,0,643,641,1,0,0,0,644,647,1,0,0,0,645,643,1,0,0,0,645,646,
-        1,0,0,0,646,91,1,0,0,0,647,645,1,0,0,0,648,652,5,125,0,0,649,651,
+        1,0,0,0,646,91,1,0,0,0,647,645,1,0,0,0,648,652,5,127,0,0,649,651,
         3,94,47,0,650,649,1,0,0,0,651,654,1,0,0,0,652,650,1,0,0,0,652,653,
         1,0,0,0,653,93,1,0,0,0,654,652,1,0,0,0,655,659,3,96,48,0,656,659,
         3,98,49,0,657,659,3,100,50,0,658,655,1,0,0,0,658,656,1,0,0,0,658,
-        657,1,0,0,0,659,95,1,0,0,0,660,661,5,98,0,0,661,97,1,0,0,0,662,663,
-        5,7,0,0,663,664,3,110,55,0,664,665,5,8,0,0,665,99,1,0,0,0,666,668,
-        5,3,0,0,667,669,3,66,33,0,668,667,1,0,0,0,668,669,1,0,0,0,669,670,
-        1,0,0,0,670,671,5,5,0,0,671,101,1,0,0,0,672,683,5,116,0,0,673,683,
-        5,117,0,0,674,683,5,115,0,0,675,683,5,120,0,0,676,683,5,121,0,0,
-        677,683,3,104,52,0,678,683,3,106,53,0,679,683,3,108,54,0,680,683,
-        5,118,0,0,681,683,5,119,0,0,682,672,1,0,0,0,682,673,1,0,0,0,682,
-        674,1,0,0,0,682,675,1,0,0,0,682,676,1,0,0,0,682,677,1,0,0,0,682,
-        678,1,0,0,0,682,679,1,0,0,0,682,680,1,0,0,0,682,681,1,0,0,0,683,
-        103,1,0,0,0,684,685,7,5,0,0,685,686,5,15,0,0,686,687,5,122,0,0,687,
-        105,1,0,0,0,688,689,5,111,0,0,689,690,5,15,0,0,690,691,5,124,0,0,
-        691,107,1,0,0,0,692,693,5,110,0,0,693,694,5,15,0,0,694,695,5,123,
-        0,0,695,109,1,0,0,0,696,697,6,55,-1,0,697,698,3,112,56,0,698,699,
-        3,110,55,8,699,707,1,0,0,0,700,707,3,102,51,0,701,707,3,90,45,0,
-        702,703,5,3,0,0,703,704,3,110,55,0,704,705,5,5,0,0,705,707,1,0,0,
-        0,706,696,1,0,0,0,706,700,1,0,0,0,706,701,1,0,0,0,706,702,1,0,0,
-        0,707,722,1,0,0,0,708,709,10,7,0,0,709,710,7,6,0,0,710,721,3,110,
+        657,1,0,0,0,659,95,1,0,0,0,660,661,5,100,0,0,661,97,1,0,0,0,662,
+        663,5,7,0,0,663,664,3,110,55,0,664,665,5,8,0,0,665,99,1,0,0,0,666,
+        668,5,3,0,0,667,669,3,66,33,0,668,667,1,0,0,0,668,669,1,0,0,0,669,
+        670,1,0,0,0,670,671,5,5,0,0,671,101,1,0,0,0,672,683,5,118,0,0,673,
+        683,5,119,0,0,674,683,5,117,0,0,675,683,5,122,0,0,676,683,5,123,
+        0,0,677,683,3,104,52,0,678,683,3,106,53,0,679,683,3,108,54,0,680,
+        683,5,120,0,0,681,683,5,121,0,0,682,672,1,0,0,0,682,673,1,0,0,0,
+        682,674,1,0,0,0,682,675,1,0,0,0,682,676,1,0,0,0,682,677,1,0,0,0,
+        682,678,1,0,0,0,682,679,1,0,0,0,682,680,1,0,0,0,682,681,1,0,0,0,
+        683,103,1,0,0,0,684,685,7,5,0,0,685,686,5,15,0,0,686,687,5,124,0,
+        0,687,105,1,0,0,0,688,689,5,113,0,0,689,690,5,15,0,0,690,691,5,126,
+        0,0,691,107,1,0,0,0,692,693,5,112,0,0,693,694,5,15,0,0,694,695,5,
+        125,0,0,695,109,1,0,0,0,696,697,6,55,-1,0,697,698,3,112,56,0,698,
+        699,3,110,55,8,699,707,1,0,0,0,700,707,3,102,51,0,701,707,3,90,45,
+        0,702,703,5,3,0,0,703,704,3,110,55,0,704,705,5,5,0,0,705,707,1,0,
+        0,0,706,696,1,0,0,0,706,700,1,0,0,0,706,701,1,0,0,0,706,702,1,0,
+        0,0,707,722,1,0,0,0,708,709,10,7,0,0,709,710,7,6,0,0,710,721,3,110,
         55,8,711,712,10,6,0,0,712,713,7,7,0,0,713,721,3,110,55,7,714,715,
         10,5,0,0,715,716,7,8,0,0,716,721,3,110,55,6,717,718,10,4,0,0,718,
         719,7,9,0,0,719,721,3,110,55,5,720,708,1,0,0,0,720,711,1,0,0,0,720,
@@ -3937,7 +3940,7 @@ export class StructuredTextParser extends antlr.Parser {
         3,56,28,0,742,743,5,40,0,0,743,117,1,0,0,0,744,746,5,41,0,0,745,
         747,3,126,63,0,746,745,1,0,0,0,746,747,1,0,0,0,747,748,1,0,0,0,748,
         749,3,56,28,0,749,750,5,42,0,0,750,119,1,0,0,0,751,752,5,27,0,0,
-        752,754,5,125,0,0,753,755,3,122,61,0,754,753,1,0,0,0,754,755,1,0,
+        752,754,5,127,0,0,753,755,3,122,61,0,754,753,1,0,0,0,754,755,1,0,
         0,0,755,756,1,0,0,0,756,757,5,28,0,0,757,121,1,0,0,0,758,759,5,3,
         0,0,759,764,3,124,62,0,760,761,5,4,0,0,761,763,3,124,62,0,762,760,
         1,0,0,0,763,766,1,0,0,0,764,762,1,0,0,0,764,765,1,0,0,0,765,767,
@@ -5808,8 +5811,14 @@ export class ExprContext extends antlr.ParserRuleContext {
     public AND(): antlr.TerminalNode | null {
         return this.getToken(StructuredTextParser.AND, 0);
     }
+    public AND_THEN(): antlr.TerminalNode | null {
+        return this.getToken(StructuredTextParser.AND_THEN, 0);
+    }
     public OR(): antlr.TerminalNode | null {
         return this.getToken(StructuredTextParser.OR, 0);
+    }
+    public OR_ELSE(): antlr.TerminalNode | null {
+        return this.getToken(StructuredTextParser.OR_ELSE, 0);
     }
     public XOR(): antlr.TerminalNode | null {
         return this.getToken(StructuredTextParser.XOR, 0);

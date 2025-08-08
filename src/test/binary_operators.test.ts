@@ -1,5 +1,5 @@
 import assert from 'assert';
-import { evaluateExpressionWith2Arguments } from '../model/evaluation.js';
+import { evaluateBinaryOperation } from '../model/evaluation.js';
 import { evaluateIntegerLiteral } from '../model/literals/evaluateIntegerLiteral.js';
 import { createType } from './test_helper.js';
 
@@ -89,7 +89,7 @@ suite('binary operators', () => {
             const rhsType = createType(rhs);
 
             // Act
-            const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
+            const result = evaluateBinaryOperation(lhsType, rhsType, operator);
             
             // Assert
             assert(result);
@@ -110,7 +110,7 @@ suite('binary operators', () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
+            const result = evaluateBinaryOperation(lhsType, rhsType, operator);
             
             // Assert
             assert(result);
@@ -131,7 +131,7 @@ suite('binary operators', () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
+            const result = evaluateBinaryOperation(lhsType, rhsType, operator);
             
             // Assert
             assert(result);
@@ -152,7 +152,7 @@ suite('binary operators', () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateExpressionWith2Arguments(lhsType, rhsType, operator);
+            const result = evaluateBinaryOperation(lhsType, rhsType, operator);
             
             // Assert
             assert(result);

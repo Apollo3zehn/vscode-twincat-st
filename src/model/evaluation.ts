@@ -5,7 +5,7 @@ import { getContextRange, getNestedTypeOrSelf, negateBits } from "../core/utils.
 import { AssignmentOperatorContext, ExprContext, LiteralContext, MemberExpressionContext, PostfixOpContext, PropertyContext } from "../generated/StructuredTextParser.js";
 import { StModelBuilder } from "./StModelBuilder.js";
 import { findDeclaration } from "./declaration.js";
-import { C0001, C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0080, C0140, C0143, C0185, M0003 } from "./diagnostics.js";
+import { C0001, C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0080, C0140, C0143, C0185, M0002, M0003 } from "./diagnostics.js";
 import { evaluateLogicalLiteral } from "./literals/evaluateBoolLiteral.js";
 import { evaluateDateAndTimeLiteral } from "./literals/evaluateDateAndTimeLiteral.js";
 import { evaluateDateLiteral } from "./literals/evaluateDateLiteral.js";
@@ -52,36 +52,50 @@ export function evaluateExpression(
 
     if (expressions.length === 2) {
 
-        // Step 1: Evaluate expressions
-        var lhsType = evaluateExpression(expressions[0]);
-        var rhsType = evaluateExpression(expressions[1]);
+        // Evaluate operands
+        let lhsType = evaluateExpression(expressions[0]);
+        let rhsType = evaluateExpression(expressions[1]);
 
         if (!lhsType || !rhsType)
             return undefined;
-            
-        // Step 2: Get lowest common denominator
-        let lcdType: StType | undefined = undefined;
-        [lhsType, rhsType, lcdType] = evaluateExpressionWith2Arguments(lhsType, rhsType, expression._op!.text!);
 
-        if (!lcdType)
+        const binaryOperatorString = expression._op!.text!;
+        let binaryOperationType: StType | undefined;
+
+        // Evaluate operation
+        [lhsType, rhsType, binaryOperationType] = evaluateBinaryOperation(
+            lhsType,
+            rhsType,
+            binaryOperatorString
+        );
+
+        //
+        if (binaryOperationType) {
+
+            // Evalute assignment
+            const lhsSuccess = checkAssignment(
+                binaryOperationType, expression,
+                lhsType, expressions[0],
+                false
+            );
+
+            const rhsSuccess = checkAssignment(
+                binaryOperationType, expression,
+                rhsType, expressions[1],
+                false
+            );
+
+            return lhsSuccess && rhsSuccess
+                ? binaryOperationType
+                : undefined;
+
+            return binaryOperationType;
+        } 
+
+        else {
+            M0002(lhsType.getId(), rhsType.getId(), expression._op!);
             return undefined;
-
-        // Step 3: Check assignments of lhs and rhs to LCD
-        const lhsResult = checkAssignment(
-            lcdType, expression,
-            lhsType, expressions[0],
-            false
-        );
-
-        const rhsResult = checkAssignment(
-            lcdType, expression,
-            rhsType, expressions[1],
-            false
-        );
-
-        return lhsResult && rhsResult
-            ? lcdType
-            : undefined;
+        }
     }
 
     else if (expressions.length === 1) {
@@ -95,15 +109,15 @@ export function evaluateExpression(
 
         if (unaryOpCtx) {
 
-            const unaryOpText = unaryOpCtx.getText();
-            const promotedType = evaluateUnaryOperator(type, unaryOpText);
+            const unaryOperatorString = unaryOpCtx.getText();
+            const unaryOperationType = evaluateUnaryOperation(type, unaryOperatorString);
 
-            if (promotedType) {
-                return promotedType;
+            if (unaryOperationType) {
+                return unaryOperationType;
             } 
 
             else {
-                M0003(type.getId(), unaryOpCtx, unaryOpText);
+                M0003(type.getId(), unaryOpCtx, unaryOperatorString);
                 return undefined;
             }
         }
@@ -120,7 +134,7 @@ export function evaluateExpression(
     return undefined;
 }
 
-export function evaluateUnaryOperator(
+export function evaluateUnaryOperation(
     type: StType,
     unaryOpText: String
 ): StType | undefined {
@@ -343,7 +357,7 @@ export function evaluateMemberExpression(
     return currentType;
 }  
 
-export function evaluateExpressionWith2Arguments(
+export function evaluateBinaryOperation(
     lhsType: StType,
     rhsType: StType,
     operator: string

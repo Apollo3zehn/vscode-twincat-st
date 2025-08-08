@@ -1,4 +1,4 @@
-import { ParserRuleContext, TerminalNode } from "antlr4ng";
+import { ParserRuleContext, TerminalNode, Token } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity } from "vscode";
 import { StSymbol } from "../core/types.js";
 import { getContextRange, getOriginalText, getTokenRange, getTypeOfType } from "../core/utils.js";
@@ -18,12 +18,25 @@ export function M0001(subRangeToken: TerminalNode) {
     StModelBuilder.currentSourceFile.diagnostics.push(diagnostic);
 }
 
-// M0003: The unary operator '{name}' is not defined for type '{name}'
-export function M0003(typeName: string, ctx: UnaryOpContext, unaryOpText: string) {
+// M0002: The '{name}' operator is not defined for the types '{name}' and '{name}'
+export function M0002(lhsTypeName: string, rhsTypeName: string, operatorToken: Token) {
 
     const diagnostic = new Diagnostic(
-        getContextRange(ctx)!,
-        `The unary operator '${unaryOpText}' is not defined for type '${typeName}'`,
+        getTokenRange(operatorToken),
+        `The binary operator '${operatorToken.text}' is not defined for the types '${lhsTypeName}' and '${rhsTypeName}'`,
+        DiagnosticSeverity.Error
+    );
+
+    diagnostic.code = "M0002";
+    StModelBuilder.currentSourceFile.diagnostics.push(diagnostic);
+}
+
+// M0003: The unary operator '{name}' is not defined for type '{name}'
+export function M0003(typeName: string, ctx: UnaryOpContext, unaryOperatorString: string) {
+
+    const diagnostic = new Diagnostic(
+        getContextRange(ctx),
+        `The unary operator '${unaryOperatorString}' is not defined for type '${typeName}'`,
         DiagnosticSeverity.Error
     );
 

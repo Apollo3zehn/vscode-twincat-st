@@ -1,4 +1,4 @@
-// M0002: The '{name}' operator is not defined for the type combination '{name}' and '{name}'
+// M0002: The '{name}' operator is not defined for the types '{name}' and '{name}'
 FUNCTION_BLOCK M0002
 
     VAR

@@ -1,5 +1,5 @@
 import assert from "assert";
-import { evaluateUnaryOperator } from "../model/evaluation.js";
+import { evaluateUnaryOperation } from "../model/evaluation.js";
 import { createType } from "./test_helper.js";
 import { evaluateIntegerLiteral } from "../model/literals/evaluateIntegerLiteral.js";
 import { evaluateLogicalLiteral } from "../model/literals/evaluateBoolLiteral.js";
@@ -16,7 +16,7 @@ suite("plus", () => {
         assert(type);
 
         // Act
-        const actualType = evaluateUnaryOperator(type, "+");
+        const actualType = evaluateUnaryOperation(type, "+");
 
         // Assert
         assert.strictEqual(
@@ -55,7 +55,7 @@ suite("minus", () => {
         assert(type);
 
         // Act
-        const actualType = evaluateUnaryOperator(type, "-");
+        const actualType = evaluateUnaryOperation(type, "-");
 
         // Assert
         assert.strictEqual(
@@ -78,7 +78,7 @@ suite("minus", () => {
             const type = createType(inputCodeString);
 
             // Act
-            const actualType = evaluateUnaryOperator(type, "-");
+            const actualType = evaluateUnaryOperation(type, "-");
 
             // Assert
             assert.strictEqual(
@@ -89,7 +89,7 @@ suite("minus", () => {
     });
 });
 
-suite("NOT", () => {
+suite("not", () => {
 
     const cases = [
         ["BIT#0", "1"],
@@ -113,7 +113,7 @@ suite("NOT", () => {
             assert(type);
             
             // Act
-            const actualType = evaluateUnaryOperator(type, "NOT");
+            const actualType = evaluateUnaryOperation(type, "NOT");
 
             // Assert
             const actual = actualType?.builtinType?.value as bigint;

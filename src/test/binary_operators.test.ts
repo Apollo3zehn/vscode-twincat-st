@@ -82,7 +82,7 @@ suite('binary operators', () => {
     // Left operand: typed variable, right operand: typed variable
     cases_typed_variables.forEach(([lhs, rhs, operator, expectedType]) => {
         
-        test(`Typed variables: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
+        test(`typed variables: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
             
             // Arrange
             const lhsType = createType(lhs);
@@ -100,7 +100,7 @@ suite('binary operators', () => {
     // Left operand: typed literal, right operand: typed literal
     cases_typed_literals.forEach(([lhs, rhs, operator, expectedType]) => {
         
-        test(`Typed literals: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
+        test(`typed literals: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
             
             // Arrange
             const [lhsType, _1] = evaluateIntegerLiteral(lhs);
@@ -121,7 +121,7 @@ suite('binary operators', () => {
     // Left operand: typed literal, right operand: untyped literal
     cases_typed_untyped_literals.forEach(([lhs, rhs, operator, expectedType]) => {
         
-        test(`Typed + untyped literals: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
+        test(`typed + untyped literals: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
             
             // Arrange
             const [lhsType, _1] = evaluateIntegerLiteral(lhs);
@@ -142,7 +142,7 @@ suite('binary operators', () => {
     // Left operand: untyped literal, right operand: untyped literal
     cases_untyped_literals.forEach(([lhs, rhs, operator, expectedType]) => {
         
-        test(`Untyped literals: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
+        test(`untyped literals: ${lhs} ${operator} ${rhs} => ${expectedType}`, () => {
             
             // Arrange
             const [lhsType, _1] = evaluateIntegerLiteral(lhs);

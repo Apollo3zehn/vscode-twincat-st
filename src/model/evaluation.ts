@@ -143,14 +143,15 @@ export function evaluateUnaryOperator(
         )
     ) {
         let newTypeCode = builtinType.code;
+        let newValue = builtinType.value;
 
         if (unaryOpText === "-") {
 
             if (kind === StNativeTypeKind.Bitfield || kind === StNativeTypeKind.UnsignedInteger) {
 
-                if (builtinType.value) {
+                if (newValue) {
 
-                    builtinType.value = -builtinType.value;
+                    newValue = -newValue;
 
                     // It is strange but typed literals like -BYTE#255 
                     // do not change their type in TwinCAT, so there
@@ -191,6 +192,7 @@ export function evaluateUnaryOperator(
 
         type = new StType();
         type.builtinType = new StBuiltinType(newTypeCode);
+        type.builtinType.value = newValue;
 
         return type;
     }

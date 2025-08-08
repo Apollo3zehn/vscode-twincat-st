@@ -7,7 +7,111 @@ import { StModelBuilder } from "../model/StModelBuilder.js";
 import { createType } from "./test_helper.js";
 import { evaluateRealLiteral } from "../model/literals/evaluateRealLiteral.js";
 
-const cases_literal = [
+const cases_valid_variable: [string, string][] = [
+
+    // BOOL assignments
+    ["BOOL", "BOOL"],
+    ["BOOL", "BIT"],
+
+    // BIT assignments
+    ["BIT", "BOOL"],
+    ["BIT", "BIT"],
+
+    // BYTE assignments
+    ["BYTE", "BYTE"],
+    ["BYTE", "USINT"],
+
+    // WORD assignments
+    ["WORD", "BYTE"],
+    ["WORD", "WORD"],
+    ["WORD", "USINT"],
+    ["WORD", "UINT"],
+
+    // DWORD assignments
+    ["DWORD", "BYTE"],
+    ["DWORD", "WORD"],
+    ["DWORD", "DWORD"],
+    ["DWORD", "USINT"],
+    ["DWORD", "UINT"],
+    ["DWORD", "UDINT"],
+
+    // LWORD assignments
+    ["LWORD", "BYTE"],
+    ["LWORD", "WORD"],
+    ["LWORD", "DWORD"],
+    ["LWORD", "LWORD"],
+    ["LWORD", "USINT"],
+    ["LWORD", "UINT"],
+    ["LWORD", "UDINT"],
+    ["LWORD", "ULINT"],
+
+    // USINT assignments
+    ["USINT", "BYTE"],
+    ["USINT", "USINT"],
+
+    // UINT assignments
+    ["UINT", "BYTE"],
+    ["UINT", "WORD"],
+    ["UINT", "USINT"],
+    ["UINT", "UINT"],
+
+    // UDINT assignments
+    ["UDINT", "BYTE"],
+    ["UDINT", "WORD"],
+    ["UDINT", "DWORD"],
+    ["UDINT", "USINT"],
+    ["UDINT", "UINT"],
+    ["UDINT", "UDINT"],
+
+    // ULINT assignments
+    ["ULINT", "BYTE"],
+    ["ULINT", "WORD"],
+    ["ULINT", "DWORD"],
+    ["ULINT", "LWORD"],
+    ["ULINT", "USINT"],
+    ["ULINT", "UINT"],
+    ["ULINT", "UDINT"],
+    ["ULINT", "ULINT"],
+
+    // INT assignments
+    ["INT", "SINT"],
+    ["INT", "INT"],
+
+    // DINT assignments
+    ["DINT", "SINT"],
+    ["DINT", "INT"],
+    ["DINT", "DINT"],
+
+    // LINT assignments
+    ["LINT", "SINT"],
+    ["LINT", "INT"],
+    ["LINT", "DINT"],
+    ["LINT", "LINT"],
+
+    // REAL assignments
+    ["REAL", "BYTE"],
+    ["REAL", "WORD"],
+    ["REAL", "USINT"],
+    ["REAL", "UINT"],
+    ["REAL", "SINT"],
+    ["REAL", "INT"],
+    ["REAL", "REAL"],
+
+    // LREAL assignments
+    ["LREAL", "BYTE"],
+    ["LREAL", "WORD"],
+    ["LREAL", "DWORD"],
+    ["LREAL", "USINT"],
+    ["LREAL", "UINT"],
+    ["LREAL", "UDINT"],
+    ["LREAL", "SINT"],
+    ["LREAL", "INT"],
+    ["LREAL", "DINT"],
+    ["LREAL", "REAL"],
+    ["LREAL", "LREAL"],
+];
+
+const cases_invalid_literal = [
 
     // BOOL assignments
     ["BOOL", "-1", "SINT"],
@@ -29,10 +133,10 @@ const cases_literal = [
 
     // INT assignments
     ["INT", "16#FFFFFFFF", "LINT"], // UDINT in TwinCAT
-    // ["INT", "18446744073709551615", "ULINT"] // currently broken because of typescript
+    // ["INT", "18446744073709551615", "ULINT"] // currently broken because of javascript limitation
 ];
 
-const cases_variable = [
+const cases_invalid_variable = [
     
     // BOOL assignments
     ["BOOL", "BYTE"],
@@ -201,6 +305,28 @@ const cases_variable = [
     ["LREAL", "BIT"],
 ];
 
+suite('assignment (valid)', () => {
+
+    setup(() => {
+        StModelBuilder.currentSourceFile = new StSourceFile(Uri.parse("file:///dummy"));
+    });
+
+    // Variables
+    cases_valid_variable.forEach(([lhs, rhs]) => {
+
+        test(`${lhs} := ${rhs}`, () => {
+            
+            const lhsType = createType(lhs);
+            const rhsType = createType(rhs);
+
+            internalEvaluateAssignment(lhsType, undefined, rhsType, undefined, false);
+
+            const diagnostics = StModelBuilder.currentSourceFile.diagnostics;
+            assert.strictEqual(diagnostics.length, 0);
+        });
+    });
+});
+
 suite('assignment (invalid)', () => {
 
     setup(() => {
@@ -208,9 +334,9 @@ suite('assignment (invalid)', () => {
     });
 
     // Literals
-    cases_literal.forEach(([lhs, rhs, expectedType]) => {
+    cases_invalid_literal.forEach(([lhs, rhs, expectedType]) => {
         
-        test(`assignment: ${lhs} := ${rhs} => ${expectedType}`, () => {
+        test(`${lhs} := ${rhs} => ${expectedType}`, () => {
             
             // Arrange
             let lhsType: StType | undefined = createType(lhs);
@@ -235,9 +361,9 @@ suite('assignment (invalid)', () => {
     });
 
     // Variables
-    cases_variable.forEach(([lhs, rhs]) => {
+    cases_invalid_variable.forEach(([lhs, rhs]) => {
 
-        test(`assignment ${lhs} := ${rhs}`, () => {
+        test(`${lhs} := ${rhs}`, () => {
             
             const lhsType = createType(lhs);
             const rhsType = createType(rhs);

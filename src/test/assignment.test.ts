@@ -133,7 +133,7 @@ const cases_invalid_literal = [
 
     // INT assignments
     ["INT", "16#FFFFFFFF", "LINT"], // UDINT in TwinCAT
-    // ["INT", "18446744073709551615", "ULINT"] // currently broken because of javascript limitation
+    ["INT", "18446744073709551615", "ULINT"]
 ];
 
 const cases_invalid_variable = [

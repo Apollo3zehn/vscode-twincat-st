@@ -127,7 +127,7 @@ export class StructuredTextParser extends antlr.Parser {
     public static readonly STRING_TYPE = 114;
     public static readonly SUBRANGE_PARAM = 115;
     public static readonly STRING_LEN_PARAM = 116;
-    public static readonly BOOL_LITERAL = 117;
+    public static readonly LOGICAL_LITERAL = 117;
     public static readonly INTEGER_LITERAL = 118;
     public static readonly REAL_LITERAL = 119;
     public static readonly STRING_LITERAL = 120;
@@ -246,7 +246,7 @@ export class StructuredTextParser extends antlr.Parser {
         "POINTER_TO", "LOGICAL_TYPE", "BITFIELD_TYPE", "UNSIGNED_INT_TYPE", 
         "SIGNED_INT_TYPE", "FLOATING_POINT_TYPE", "X_TYPE", "POINTER_TYPE", 
         "TIME_TYPE", "DATE_TYPE", "TIME_OF_DAY_TYPE", "DATE_AND_TIME_TYPE", 
-        "STRING_TYPE", "SUBRANGE_PARAM", "STRING_LEN_PARAM", "BOOL_LITERAL", 
+        "STRING_TYPE", "SUBRANGE_PARAM", "STRING_LEN_PARAM", "LOGICAL_LITERAL", 
         "INTEGER_LITERAL", "REAL_LITERAL", "STRING_LITERAL", "WSTRING_LITERAL", 
         "TIME_LITERAL", "LTIME_LITERAL", "DATE_LITERAL", "TIME_OF_DAY_LITERAL", 
         "DATETIME_LITERAL", "ID", "WS", "COMMENT", "COMMENT_BLOCK"
@@ -1560,7 +1560,7 @@ export class StructuredTextParser extends antlr.Parser {
             case StructuredTextParser.DATE_TYPE:
             case StructuredTextParser.TIME_OF_DAY_TYPE:
             case StructuredTextParser.DATE_AND_TIME_TYPE:
-            case StructuredTextParser.BOOL_LITERAL:
+            case StructuredTextParser.LOGICAL_LITERAL:
             case StructuredTextParser.INTEGER_LITERAL:
             case StructuredTextParser.REAL_LITERAL:
             case StructuredTextParser.STRING_LITERAL:
@@ -2946,11 +2946,11 @@ export class StructuredTextParser extends antlr.Parser {
                 this.match(StructuredTextParser.REAL_LITERAL);
                 }
                 break;
-            case StructuredTextParser.BOOL_LITERAL:
+            case StructuredTextParser.LOGICAL_LITERAL:
                 this.enterOuterAlt(localContext, 3);
                 {
                 this.state = 674;
-                this.match(StructuredTextParser.BOOL_LITERAL);
+                this.match(StructuredTextParser.LOGICAL_LITERAL);
                 }
                 break;
             case StructuredTextParser.TIME_LITERAL:
@@ -3148,7 +3148,7 @@ export class StructuredTextParser extends antlr.Parser {
             case StructuredTextParser.DATE_TYPE:
             case StructuredTextParser.TIME_OF_DAY_TYPE:
             case StructuredTextParser.DATE_AND_TIME_TYPE:
-            case StructuredTextParser.BOOL_LITERAL:
+            case StructuredTextParser.LOGICAL_LITERAL:
             case StructuredTextParser.INTEGER_LITERAL:
             case StructuredTextParser.REAL_LITERAL:
             case StructuredTextParser.STRING_LITERAL:
@@ -5323,8 +5323,8 @@ export class CaseValueContext extends antlr.ParserRuleContext {
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }
-    public BOOL_LITERAL(): antlr.TerminalNode | null {
-        return this.getToken(StructuredTextParser.BOOL_LITERAL, 0);
+    public LOGICAL_LITERAL(): antlr.TerminalNode | null {
+        return this.getToken(StructuredTextParser.LOGICAL_LITERAL, 0);
     }
     public INTEGER_LITERAL(): antlr.TerminalNode | null {
         return this.getToken(StructuredTextParser.INTEGER_LITERAL, 0);
@@ -5670,8 +5670,8 @@ export class LiteralContext extends antlr.ParserRuleContext {
     public REAL_LITERAL(): antlr.TerminalNode | null {
         return this.getToken(StructuredTextParser.REAL_LITERAL, 0);
     }
-    public BOOL_LITERAL(): antlr.TerminalNode | null {
-        return this.getToken(StructuredTextParser.BOOL_LITERAL, 0);
+    public LOGICAL_LITERAL(): antlr.TerminalNode | null {
+        return this.getToken(StructuredTextParser.LOGICAL_LITERAL, 0);
     }
     public TIME_LITERAL(): antlr.TerminalNode | null {
         return this.getToken(StructuredTextParser.TIME_LITERAL, 0);

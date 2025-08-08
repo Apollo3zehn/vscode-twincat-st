@@ -69,7 +69,7 @@
     },
     "numbers": {
       "name": "constant.numeric.st",
-      "match": "([\\-+])?\\b(?:(BYTE|D?WORD|L?WORD|U?(?:S|D|L)?INT|REAL|LREAL)#)?((?:(?:16|10|8|2)#)?[0-9A-Fa-f_\\.\\-+]+\\b)",
+      "match": "([\\-+])?\\b(?:(BOOL|BIT|BYTE|D?WORD|L?WORD|U?(?:S|D|L)?INT|REAL|LREAL)#)?((?:(?:16|10|8|2)#)?[0-9A-Fa-f_\\.\\-+]+\\b)",
       "captures": {
         "1": { "name": "keyword.operator.arithmetic.st" },
         "2": { "name": "storage.type.st" },
@@ -394,7 +394,7 @@
       "patterns": [
         {
           "name": "storage.type.st",
-          "match": "\\b(POINTER TO|REFERENCE TO|REAL|LREAL|BOOL|BIT|STRING|WSTRING|BYTE|WORD|DWORD|LWORD|XWORD|__XWORD|USINT|UINT|UDINT|ULINT|UXINT|__UXINT|SINT|INT|DINT|LINT|XINT|__XINT|TIME|LTIME|DATE|TIME_OF_DAY|TOD|DATE_AND_TIME|DT|LDATE|LTIME_OF_DAY|LTOD|LDATE_AND_TIME|LDT|PVOID)\\b"
+          "match": "\\b(BOOL|BIT|BYTE|WORD|DWORD|LWORD|XWORD|__XWORD|USINT|UINT|UDINT|ULINT|UXINT|__UXINT|SINT|INT|DINT|LINT|XINT|__XINT|REAL|LREAL|STRING|WSTRING|TIME|LTIME|DATE|TIME_OF_DAY|TOD|DATE_AND_TIME|DT|LDATE|LTIME_OF_DAY|LTOD|LDATE_AND_TIME|LDT|PVOID|POINTER TO|REFERENCE TO)\\b"
         },
         {
           "match": "(ARRAY)\\s*(\\[.*?\\])\\s*(OF)\\s*(.*)",

@@ -201,7 +201,7 @@ caseElement
     ;
 
 caseValue
-    : BOOL_LITERAL | INTEGER_LITERAL | STRING_LITERAL | ID
+    : LOGICAL_LITERAL | INTEGER_LITERAL | STRING_LITERAL | ID
     ;
 
 whileStatement
@@ -263,7 +263,7 @@ call
 literal
     : INTEGER_LITERAL
     | REAL_LITERAL
-    | BOOL_LITERAL
+    | LOGICAL_LITERAL
     | TIME_LITERAL
     | LTIME_LITERAL
     | dateLiteral
@@ -442,7 +442,10 @@ SUBRANGE_PARAM      : '(' INTEGER_LITERAL '..' '-'? INTEGER_LITERAL ')' ;
 STRING_LEN_PARAM    : '(' INTEGER_LITERAL ')' ;
 
 // Identifiers and literals
-BOOL_LITERAL        : 'TRUE' | 'FALSE' ;
+LOGICAL_LITERAL     : 'TRUE'
+                    | 'FALSE'
+                    | LOGICAL_TYPE '#' ( '0' | '1' )
+                    ;
 
 INTEGER_LITERAL
                     :

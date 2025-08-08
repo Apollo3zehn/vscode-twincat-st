@@ -1,7 +1,7 @@
 import { CommonTokenStream, ParserRuleContext, TerminalNode } from "antlr4ng";
 import { Diagnostic, Range, Uri, window } from "vscode";
 import { StatementContext, TypeContext } from "../generated/StructuredTextParser.js";
-import { getOriginalText, getTcConfig } from "./utils.js";
+import { getOriginalText, getTcConfig, parseBigIntWithRadix } from "./utils.js";
 import { M0001 } from "../model/diagnostics.js";
 
 export const logger = window.createOutputChannel("TwinCAT Structured Text");
@@ -59,10 +59,10 @@ export class StBuiltinType {
     }
 
     public details: StNativeTypeDetails | undefined;        // all
-    public subRangeStart: number | undefined;               // unsigned and signed integers
-    public subRangeStop: number | undefined;                // unsigned and signed integers
+    public subRangeStart: bigint | undefined;               // unsigned and signed integers
+    public subRangeStop: bigint | undefined;                // unsigned and signed integers
     public isFullRange: boolean | undefined;                // unsigned and signed integers
-    public value: number | undefined;                       // literals or constants
+    public value: bigint | number | undefined;              // literals or constants (bigint = logical + integers, number = float)
     public isLiteral: boolean | undefined;                  // literals
     public stringLength: number | undefined;                // strings
 
@@ -77,8 +77,8 @@ export class StBuiltinType {
 
         if (subRangeParts) {
 
-            this.subRangeStart = Number.parseInt(subRangeParts[0].slice(1));
-            this.subRangeStop = Number.parseInt(subRangeParts[1].slice(0, -1));
+            this.subRangeStart = parseBigIntWithRadix(subRangeParts[0].slice(1), 10);
+            this.subRangeStop = parseBigIntWithRadix(subRangeParts[1].slice(0, -1), 10);
             this.isFullRange = false;
 
             const min = this.details.min!;
@@ -97,8 +97,8 @@ export class StBuiltinType {
         }
 
         else {
-            this.subRangeStart = this.details.min;
-            this.subRangeStop = this.details.max;
+            this.subRangeStart = this.details.min as bigint;
+            this.subRangeStop = this.details.max as bigint;
             this.isFullRange = true;
         }
     }
@@ -209,8 +209,8 @@ export class StNativeTypeDetails {
         public readonly kind: StNativeTypeKind,
         public readonly size: number,
         public readonly signed?: boolean,
-        public readonly min?: number,
-        public readonly max?: number
+        public readonly min?: bigint | number,
+        public readonly max?: bigint | number
     ) {
         //
     }
@@ -348,44 +348,44 @@ export const nativeTypesDetails = new Map<StBuiltinTypeCode, StNativeTypeDetails
     [StBuiltinTypeCode.BIT,             new StNativeTypeDetails(StNativeTypeKind.Logical, 1)],
 
     // Bitstring Types
-    [StBuiltinTypeCode.BYTE,            new StNativeTypeDetails(StNativeTypeKind.Bitfield, 1, false, 0, 0xFF)],
-    [StBuiltinTypeCode.WORD,            new StNativeTypeDetails(StNativeTypeKind.Bitfield, 2, false, 0, 0xFFFF)],
-    [StBuiltinTypeCode.DWORD,           new StNativeTypeDetails(StNativeTypeKind.Bitfield, 4, false, 0, 0xFFFFFFFF)],
-    [StBuiltinTypeCode.LWORD,           new StNativeTypeDetails(StNativeTypeKind.Bitfield, 8, false, 0, Number.MAX_SAFE_INTEGER)],
+    [StBuiltinTypeCode.BYTE,            new StNativeTypeDetails(StNativeTypeKind.Bitfield, 8, false, 0, 0xFF)],
+    [StBuiltinTypeCode.WORD,            new StNativeTypeDetails(StNativeTypeKind.Bitfield, 16, false, 0, 0xFFFF)],
+    [StBuiltinTypeCode.DWORD,           new StNativeTypeDetails(StNativeTypeKind.Bitfield, 32, false, 0, 0xFFFFFFFF)],
+    [StBuiltinTypeCode.LWORD,           new StNativeTypeDetails(StNativeTypeKind.Bitfield, 64, false, 0, Number.MAX_SAFE_INTEGER)],
 
     // Unsigned Integer Types
-    [StBuiltinTypeCode.USINT,           new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 1, false, 0, 0xFF)],
-    [StBuiltinTypeCode.UINT,            new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 2, false, 0, 0xFFFF)],
-    [StBuiltinTypeCode.UDINT,           new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 4, false, 0, 0xFFFFFFFF)],
-    [StBuiltinTypeCode.ULINT,           new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 8, false, 0, Number.MAX_SAFE_INTEGER)],
+    [StBuiltinTypeCode.USINT,           new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 8, false, 0, 0xFF)],
+    [StBuiltinTypeCode.UINT,            new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 16, false, 0, 0xFFFF)],
+    [StBuiltinTypeCode.UDINT,           new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 32, false, 0, 0xFFFFFFFF)],
+    [StBuiltinTypeCode.ULINT,           new StNativeTypeDetails(StNativeTypeKind.UnsignedInteger, 64, false, 0, Number.MAX_SAFE_INTEGER)],
 
     // Signed Integer Types
-    [StBuiltinTypeCode.SINT,            new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 1, true, -0x80, 0x7F)],
-    [StBuiltinTypeCode.INT,             new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 2, true, -0x8000, 0x7FFF)],
-    [StBuiltinTypeCode.DINT,            new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 4, true, -0x80000000, 0x7FFFFFFF)],
-    [StBuiltinTypeCode.LINT,            new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 8, true, Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)],
+    [StBuiltinTypeCode.SINT,            new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 8, true, -0x80, 0x7F)],
+    [StBuiltinTypeCode.INT,             new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 16, true, -0x8000, 0x7FFF)],
+    [StBuiltinTypeCode.DINT,            new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 32, true, -0x80000000, 0x7FFFFFFF)],
+    [StBuiltinTypeCode.LINT,            new StNativeTypeDetails(StNativeTypeKind.SignedInteger, 64, true, Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)],
 
     // Floating Point Types
-    [StBuiltinTypeCode.REAL,            new StNativeTypeDetails(StNativeTypeKind.Float, 4, undefined, -3.402823e+38, 3.402823e+38)],
-    [StBuiltinTypeCode.LREAL,           new StNativeTypeDetails(StNativeTypeKind.Float, 8, undefined, -1.7976931348623158e+308, 1.7976931348623158e+308)],
+    [StBuiltinTypeCode.REAL,            new StNativeTypeDetails(StNativeTypeKind.Float, 32, undefined, -3.402823e+38, 3.402823e+38)],
+    [StBuiltinTypeCode.LREAL,           new StNativeTypeDetails(StNativeTypeKind.Float, 64, undefined, -1.7976931348623158e+308, 1.7976931348623158e+308)],
 
     // String Types
     [StBuiltinTypeCode.STRING,          new StNativeTypeDetails(StNativeTypeKind.String, -1)],
     [StBuiltinTypeCode.WSTRING,         new StNativeTypeDetails(StNativeTypeKind.String, -1)],
 
     // Time types
-    [StBuiltinTypeCode.TIME,            new StNativeTypeDetails(StNativeTypeKind.Time, 4)],
-    [StBuiltinTypeCode.LTIME,           new StNativeTypeDetails(StNativeTypeKind.Time, 8)],
+    [StBuiltinTypeCode.TIME,            new StNativeTypeDetails(StNativeTypeKind.Time, 32)],
+    [StBuiltinTypeCode.LTIME,           new StNativeTypeDetails(StNativeTypeKind.Time, 64)],
     
     // Date types
-    [StBuiltinTypeCode.DATE,            new StNativeTypeDetails(StNativeTypeKind.Date, 4)],
-    [StBuiltinTypeCode.LDATE,           new StNativeTypeDetails(StNativeTypeKind.Date, 8)],
+    [StBuiltinTypeCode.DATE,            new StNativeTypeDetails(StNativeTypeKind.Date, 32)],
+    [StBuiltinTypeCode.LDATE,           new StNativeTypeDetails(StNativeTypeKind.Date, 64)],
     
     // Time-of-day types
-    [StBuiltinTypeCode.TIME_OF_DAY,     new StNativeTypeDetails(StNativeTypeKind.TimeOfDay, 4)],
-    [StBuiltinTypeCode.LTIME_OF_DAY,    new StNativeTypeDetails(StNativeTypeKind.TimeOfDay, 8)],
+    [StBuiltinTypeCode.TIME_OF_DAY,     new StNativeTypeDetails(StNativeTypeKind.TimeOfDay, 32)],
+    [StBuiltinTypeCode.LTIME_OF_DAY,    new StNativeTypeDetails(StNativeTypeKind.TimeOfDay, 64)],
     
     // Date-and-time types
-    [StBuiltinTypeCode.DATE_AND_TIME,   new StNativeTypeDetails(StNativeTypeKind.DateAndTime, 4)],
-    [StBuiltinTypeCode.LDATE_AND_TIME,  new StNativeTypeDetails(StNativeTypeKind.DateAndTime, 8)],
+    [StBuiltinTypeCode.DATE_AND_TIME,   new StNativeTypeDetails(StNativeTypeKind.DateAndTime, 32)],
+    [StBuiltinTypeCode.LDATE_AND_TIME,  new StNativeTypeDetails(StNativeTypeKind.DateAndTime, 64)],
 ]);

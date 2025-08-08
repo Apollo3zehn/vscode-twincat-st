@@ -342,3 +342,58 @@ export function getModifier(modifierCtx: ModifierContext | null): StModifier | u
         ? StModifier[normalized as keyof typeof StModifier]
         : undefined;
 }
+
+
+export function negateBits(value: bigint, bitWidth: number, signed: boolean): bigint {
+
+    let valueAsBigInt = value;
+    const mask = (1n << BigInt(bitWidth)) - 1n;
+    let negated = ~valueAsBigInt & mask;
+
+    if (signed) {
+        // Convert to signed representation if MSB is set
+        const signBit = 1n << BigInt(bitWidth - 1);
+
+        if (negated & signBit)
+            negated -= (1n << BigInt(bitWidth));
+    }
+
+    return negated;
+}
+
+export function parseBigIntWithRadix(value: string, radix: number): bigint {
+    
+    let prefix = "";
+
+    switch (radix) {
+
+        case 2:
+            prefix = "0b";
+            break;
+        
+        case 8:
+            prefix = "0o";
+            break;
+        
+        case 10:
+            prefix = "";
+            break;
+        
+        case 16:
+            prefix = "0x";
+            break;
+        
+        default:
+            throw new Error(`Unsupported radix: ${radix}`);
+    }
+
+    return BigInt(prefix + value);
+}
+
+export function bigIntToTwosComplement(value: bigint, bits: number): string {
+
+    const mask = (1n << BigInt(bits)) - 1n;
+    const twosComplement = (value & mask).toString(2).padStart(bits, "0");
+
+    return twosComplement;
+}

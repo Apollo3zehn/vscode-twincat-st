@@ -1,12 +1,12 @@
 import { ParserRuleContext } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity } from "vscode";
 import { StBuiltinType, StBuiltinTypeCode, StModifier, StNativeTypeKind, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
-import { getContextRange, getNestedTypeOrSelf } from "../core/utils.js";
+import { getContextRange, getNestedTypeOrSelf, negateBits } from "../core/utils.js";
 import { AssignmentOperatorContext, ExprContext, LiteralContext, MemberExpressionContext, PostfixOpContext, PropertyContext } from "../generated/StructuredTextParser.js";
 import { StModelBuilder } from "./StModelBuilder.js";
 import { findDeclaration } from "./declaration.js";
 import { C0001, C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0080, C0140, C0143, C0185, M0003 } from "./diagnostics.js";
-import { evaluateBoolLiteral } from "./literals/evaluateBoolLiteral.js";
+import { evaluateLogicalLiteral } from "./literals/evaluateBoolLiteral.js";
 import { evaluateDateAndTimeLiteral } from "./literals/evaluateDateAndTimeLiteral.js";
 import { evaluateDateLiteral } from "./literals/evaluateDateLiteral.js";
 import { evaluateIntegerLiteral, getSignedIntegerForSize, getSmallestIntegerForValue, getUnsignedIntegerForSize } from "./literals/evaluateIntegerLiteral.js";
@@ -130,6 +130,9 @@ export function evaluateUnaryOperator(
     if (!builtinType)
         return undefined;
 
+    let newTypeCode = builtinType.code;
+    let newValue = builtinType.value;
+    
     const kind = builtinType.details?.kind;
     
     if (
@@ -142,14 +145,14 @@ export function evaluateUnaryOperator(
             kind === StNativeTypeKind.Float
         )
     ) {
-        let newTypeCode = builtinType.code;
-        let newValue = builtinType.value;
-
         if (unaryOpText === "-") {
 
-            if (kind === StNativeTypeKind.Bitfield || kind === StNativeTypeKind.UnsignedInteger) {
+            if (
+                kind === StNativeTypeKind.Bitfield ||
+                kind === StNativeTypeKind.UnsignedInteger
+            ) {
 
-                if (newValue) {
+                if (newValue !== undefined) {
 
                     newValue = -newValue;
 
@@ -189,15 +192,45 @@ export function evaluateUnaryOperator(
                 }
             }
         }
-
-        type = new StType();
-        type.builtinType = new StBuiltinType(newTypeCode);
-        type.builtinType.value = newValue;
-
-        return type;
     }
 
-    return undefined;
+    else if (
+        unaryOpText === "NOT" &&
+        (
+            kind === StNativeTypeKind.Logical ||
+            kind === StNativeTypeKind.Bitfield ||
+            kind === StNativeTypeKind.UnsignedInteger ||
+            kind === StNativeTypeKind.SignedInteger
+        )
+    ) {
+
+        if (kind === StNativeTypeKind.Logical) {
+            if (newValue !== undefined) {
+                newValue = newValue === 0n
+                    ? 1n
+                    : 0n;
+            }
+        }
+
+        else {
+            if (newValue !== undefined) {
+                const bitWidth = builtinType.details!.size!;
+                const isSigned = builtinType.details!.signed!;
+
+                newValue = negateBits(newValue as bigint, bitWidth, isSigned);
+            }
+        }
+    }
+        
+    else {
+        return undefined;
+    }
+
+    type = new StType();
+    type.builtinType = new StBuiltinType(newTypeCode);
+    type.builtinType.value = newValue;
+
+    return type;
 }
 
 export function evaluateMemberExpression(
@@ -346,7 +379,7 @@ export function internalEvaluateAssignment(
 ): [StType | undefined, StType | undefined] {
 
     let rhsBuiltinType = rhsType.builtinType;
-    let rhsIsUntypedLiteral = rhsBuiltinType?.code === null;
+    let rhsIsUntypedIntegerLiteral = rhsBuiltinType?.code === null;
     
     switch (lhsType.builtinType?.details?.kind) {
 
@@ -368,16 +401,16 @@ export function internalEvaluateAssignment(
         case StNativeTypeKind.UnsignedInteger:
            
             // Promote the rhs type to the smallest unsigned integer type that can represent its value
-            if (rhsBuiltinType?.value !== undefined && rhsIsUntypedLiteral)
-                rhsType = getSmallestIntegerForValue(rhsBuiltinType.value, false, true)!;
+            if (rhsBuiltinType?.value !== undefined && rhsIsUntypedIntegerLiteral)
+                rhsType = getSmallestIntegerForValue(rhsBuiltinType.value as bigint, false, true)!;
 
             break;
         
         case StNativeTypeKind.SignedInteger:
            
             // Promote the rhs type to the smallest signed integer type that can represent its value
-            if (rhsBuiltinType?.value !== undefined && rhsIsUntypedLiteral)
-                rhsType = getSmallestIntegerForValue(rhsBuiltinType.value, true, false)!;
+            if (rhsBuiltinType?.value !== undefined && rhsIsUntypedIntegerLiteral)
+                rhsType = getSmallestIntegerForValue(rhsBuiltinType.value as bigint, true, false)!;
 
             break;
             
@@ -385,7 +418,7 @@ export function internalEvaluateAssignment(
            
             const isFloat = rhsBuiltinType?.details?.kind === StNativeTypeKind.Float;
             
-            if (isFloat && Math.abs(rhsBuiltinType!.value!) <= 3.402823e+38)
+            if (isFloat && Math.abs(rhsBuiltinType!.value! as number) <= 3.402823e+38)
                 return [lhsType, lhsType];
         
         default:
@@ -394,13 +427,13 @@ export function internalEvaluateAssignment(
 
     // Fallback
     rhsBuiltinType = rhsType.builtinType;
-    rhsIsUntypedLiteral = rhsBuiltinType?.code === null;
+    rhsIsUntypedIntegerLiteral = rhsBuiltinType?.code === null;
 
-    if (rhsIsUntypedLiteral) {
+    if (rhsIsUntypedIntegerLiteral) {
         
         // Promote the rhs type to the smallest integer type that can represent its value
-        if (rhsBuiltinType?.value !== undefined && rhsIsUntypedLiteral)
-            rhsType = getSmallestIntegerForValue(rhsBuiltinType.value, true, true)!;
+        if (rhsBuiltinType?.value !== undefined && rhsIsUntypedIntegerLiteral)
+            rhsType = getSmallestIntegerForValue(rhsBuiltinType.value as bigint, true, true)!;
     }
 
     // Check assignment
@@ -559,7 +592,7 @@ function checkAssignment(
                     ) {
                         const warning = new Diagnostic(
                             getContextRange(rhsCtx),
-                            `Implicit conversion from '${StBuiltinTypeCode[rhsBuiltinType.code!]}' to '${StBuiltinTypeCode[rhsBuiltinType.code!]}': Possible loss of information`,
+                            `Implicit conversion from '${StBuiltinTypeCode[rhsBuiltinType.code!]}' to '${StBuiltinTypeCode[lhsBuiltinType.code!]}': Possible loss of information`,
                             DiagnosticSeverity.Warning
                         );
 
@@ -589,23 +622,23 @@ function promoteMathOperands(
 ): [StType, StType] {
     
     const lhsBuiltinType = lhsType.builtinType;
-    const lhsIsUntypedLiteral = lhsBuiltinType?.code === null;
+    const lhsIsUntypedIntegerLiteral = lhsBuiltinType?.code === null;
 
     const rhsBuiltinType = rhsType.builtinType;
-    const rhsIsUntypedLiteral = rhsBuiltinType?.code === null;
+    const rhsIsUntypedIntegerLiteral = rhsBuiltinType?.code === null;
 
-    if (lhsIsUntypedLiteral && rhsIsUntypedLiteral) {
+    if (lhsIsUntypedIntegerLiteral && rhsIsUntypedIntegerLiteral) {
 
         // Promote both literals to the smallest signed integer type that can represent their values
         if (operator === "-" || lhsBuiltinType.value! < 0 || rhsBuiltinType.value! < 0) {
-            lhsType = getSmallestIntegerForValue(lhsBuiltinType.value!, true, false)!;
-            rhsType = getSmallestIntegerForValue(rhsBuiltinType.value!, true, false)!;
+            lhsType = getSmallestIntegerForValue(lhsBuiltinType.value! as bigint, true, false)!;
+            rhsType = getSmallestIntegerForValue(rhsBuiltinType.value! as bigint, true, false)!;
         }
 
         // Promote both literals to the smallest unsigned integer type that can represent their values
         else {
-            lhsType = getSmallestIntegerForValue(lhsBuiltinType.value!, false, true)!;
-            rhsType = getSmallestIntegerForValue(rhsBuiltinType.value!, false, true)!;
+            lhsType = getSmallestIntegerForValue(lhsBuiltinType.value! as bigint, false, true)!;
+            rhsType = getSmallestIntegerForValue(rhsBuiltinType.value! as bigint, false, true)!;
         }
     }
 
@@ -617,23 +650,23 @@ function promoteMathOperands(
         if (lhsIsSigned || rhsIsSigned) {
 
             // Promote the lhs type to the smallest signed integer type that can represent its value
-            if (lhsBuiltinType!.value !== undefined && lhsIsUntypedLiteral)
-                lhsType = getSmallestIntegerForValue(lhsBuiltinType.value, true, false)!;
+            if (lhsBuiltinType!.value !== undefined && lhsIsUntypedIntegerLiteral)
+                lhsType = getSmallestIntegerForValue(lhsBuiltinType.value as bigint, true, false)!;
 
             // Promote the rhs type to the smallest signed integer type that can represent its value
-            if (rhsBuiltinType!.value !== undefined && rhsIsUntypedLiteral)
-                rhsType = getSmallestIntegerForValue(rhsBuiltinType.value, true, false)!;
+            if (rhsBuiltinType!.value !== undefined && rhsIsUntypedIntegerLiteral)
+                rhsType = getSmallestIntegerForValue(rhsBuiltinType.value as bigint, true, false)!;
         }
 
         else {
 
             // Promote the lhs type to the smallest unsigned integer type that can represent its value
-            if (lhsBuiltinType?.value !== undefined && lhsIsUntypedLiteral)
-                lhsType = getSmallestIntegerForValue(lhsBuiltinType.value, false, true)!;
+            if (lhsBuiltinType?.value !== undefined && lhsIsUntypedIntegerLiteral)
+                lhsType = getSmallestIntegerForValue(lhsBuiltinType.value as bigint, false, true)!;
 
             // Promote the rhs type to the smallest unsigned integer type that can represent its value
-            if (rhsBuiltinType?.value !== undefined && rhsIsUntypedLiteral)
-                rhsType = getSmallestIntegerForValue(rhsBuiltinType.value, false, true)!;
+            if (rhsBuiltinType?.value !== undefined && rhsIsUntypedIntegerLiteral)
+                rhsType = getSmallestIntegerForValue(rhsBuiltinType.value as bigint, false, true)!;
         }
     }
     
@@ -661,11 +694,11 @@ function getLowestCommonDenominator(
 
     if (leftDetails && rightDetails) {
 
-        const leftIsUnsignedInteger = leftDetails.kind === StNativeTypeKind.Bitfield || leftDetails.kind === StNativeTypeKind.UnsignedInteger;
-        const leftIsSignedInteger = leftDetails.kind === StNativeTypeKind.SignedInteger;
+        const leftIsUnsignedInteger = leftDetails.signed === false;
+        const leftIsSignedInteger = leftDetails.signed === true;
 
-        const rightIsUnsignedInteger = rightDetails.kind === StNativeTypeKind.Bitfield || rightDetails.kind === StNativeTypeKind.UnsignedInteger;
-        const rightIsSignedInteger = rightDetails.kind === StNativeTypeKind.SignedInteger;
+        const rightIsUnsignedInteger = rightDetails.signed === false;
+        const rightIsSignedInteger = rightDetails.signed === true;
 
         // If both are unsigned, promote to the larger unsigned type
         if (leftIsUnsignedInteger && rightIsUnsignedInteger)
@@ -697,8 +730,8 @@ function evaluateLiteral(literal: LiteralContext): StType | undefined {
     let type: StType | undefined;
     let lhsType: string | undefined;
 
-    if (literal.BOOL_LITERAL())
-        type = evaluateBoolLiteral();
+    if (literal.LOGICAL_LITERAL())
+        type = evaluateLogicalLiteral(literal.LOGICAL_LITERAL()?.getText()!);
 
     else if (literal.INTEGER_LITERAL())
         [type, lhsType] = evaluateIntegerLiteral(literal.INTEGER_LITERAL()?.getText()!);

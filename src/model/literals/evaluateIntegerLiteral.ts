@@ -1,4 +1,5 @@
 import { nativeTypesDetails, StBuiltinType, StBuiltinTypeCode, StNativeTypeKind, StType } from "../../core/types.js";
+import { parseBigIntWithRadix } from "../../core/utils.js";
 
 export function evaluateIntegerLiteral(
     literal: string
@@ -8,7 +9,7 @@ export function evaluateIntegerLiteral(
 
     let lhsBuiltinType: StBuiltinType | undefined;
     let radix: number = 10;
-    let value: number;
+    let value: bigint;
 
     /* Important: Do not convert type to uppercase
      * first because TwinCAT requires the input string 
@@ -21,16 +22,15 @@ export function evaluateIntegerLiteral(
 
     else if (splittedText.length === 2) {
 
-        if (splittedText[0] in StBuiltinTypeCode) {
+        if (splittedText[0] in StBuiltinTypeCode)
             lhsBuiltinType = new StBuiltinType(splittedText[0] as StBuiltinTypeCode);
-        }
             
-        else {
+        else
             radix = parseInt(splittedText[0], 10);
-        }
     }
     
-    value = parseInt(splittedText[splittedText.length - 1], radix);
+    const valueAsString = splittedText[splittedText.length - 1].replaceAll("_", "");
+    value = parseBigIntWithRadix(valueAsString, radix);
 
     let rhsType: StType;
 
@@ -90,7 +90,7 @@ export function evaluateIntegerLiteral(
 }
 
 export function getSmallestIntegerForValue(
-    value: number,
+    value: bigint,
     allowSigned: boolean,
     allowUnsigned: boolean
 ): StType | undefined {
@@ -135,7 +135,7 @@ export function getSmallestIntegerForValue(
         else if (allowSigned && value < Math.pow(2, 63))
             code = StBuiltinTypeCode.LINT;
             
-        else if (allowUnsigned && value < Math.pow(2, 64))
+        else if (value < Math.pow(2, 64))
             code = StBuiltinTypeCode.ULINT;
     }
 
@@ -153,14 +153,14 @@ export function getSignedIntegerForSize(size: number): StBuiltinTypeCode {
     for (const [code, nativeDetails] of nativeTypesDetails.entries()) {
 
         if (
-            nativeDetails.kind === StNativeTypeKind.SignedInteger &&
+            nativeDetails.signed &&
             nativeDetails.size === size
         ) {
             return code;
         }
     }
 
-    throw Error(`Unsupported unsigned integer size ${size}`);
+    throw Error(`Unsupported signed integer size ${size}`);
 }
 
 export function getUnsignedIntegerForSize(size: number): StBuiltinTypeCode {

@@ -7,11 +7,13 @@ FUNCTION_BLOCK Literals
         bool_false:             BOOL            := FALSE;
         bool_1:                 BOOL            := 1;
         bool_true:              BOOL            := TRUE;
+        bool_typed:             BOOL            := BOOL#1;
 
         bit_0:                  BIT             := 0;
         bit_false:              BIT             := FALSE;
         bit_1:                  BIT             := 1;
         bit_true:               BIT             := TRUE;
+        bit_typed:              BIT             := BIT#1;
 
         // Bitstring Types
         _word_1:                WORD            := 1;
@@ -20,7 +22,7 @@ FUNCTION_BLOCK Literals
         // Unsigned Integer Types
         uint_positive:          UINT            := 010;
         uint_typed:             UINT            := UINT#1;
-        usint_underscore:       UINT            := USINT#2__5_6;
+        usint_underscore:       UINT            := USINT#2__5_5;
 
         int_positive:           INT             := 10;
         int_negative:           INT             := -10;
@@ -47,6 +49,7 @@ FUNCTION_BLOCK Literals
         real_positive:          REAL            := REAL#1.99;
         real_negative:          REAL            := -1.99;
         real_scientific:        REAL            := 1e-99;
+        real_underscore:        REAL            := 1__00e-9__9;
 
         // String Types
         string_narrow:          STRING          := 'A';

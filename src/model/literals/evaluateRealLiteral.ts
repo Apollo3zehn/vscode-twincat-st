@@ -16,7 +16,7 @@ export function evaluateRealLiteral(
     if (splittedText.length === 2)
         lhsTypeCode = splittedText[0] as StBuiltinTypeCode;
 
-    value = parseFloat(splittedText[splittedText.length - 1]);
+    value = parseFloat(splittedText[splittedText.length - 1].replaceAll("_", ""));
 
     let rhsTypeCode: StBuiltinTypeCode;
 

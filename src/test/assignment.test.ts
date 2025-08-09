@@ -4,7 +4,7 @@ import { StSourceFile, StType } from "../core/types.js";
 import { internalEvaluateAssignment } from "../model/evaluation.js";
 import { evaluateIntegerLiteral } from "../model/literals/evaluateIntegerLiteral.js";
 import { StModelBuilder } from "../model/StModelBuilder.js";
-import { createType } from "./test_helper.js";
+import { createType } from "./testUtils.js";
 import { evaluateRealLiteral } from "../model/literals/evaluateRealLiteral.js";
 
 const cases_valid_variable: [string, string][] = [
@@ -305,7 +305,7 @@ const cases_invalid_variable = [
     ["LREAL", "BIT"],
 ];
 
-suite('assignment (valid)', () => {
+suite("assignment (valid)", () => {
 
     setup(() => {
         StModelBuilder.currentSourceFile = new StSourceFile(Uri.parse("file:///dummy"));
@@ -327,7 +327,7 @@ suite('assignment (valid)', () => {
     });
 });
 
-suite('assignment (invalid)', () => {
+suite("assignment (invalid)", () => {
 
     setup(() => {
         StModelBuilder.currentSourceFile = new StSourceFile(Uri.parse("file:///dummy"));

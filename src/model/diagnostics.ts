@@ -1,7 +1,7 @@
 import { ParserRuleContext, TerminalNode, Token } from "antlr4ng";
-import { Diagnostic, DiagnosticSeverity } from "vscode";
+import { Diagnostic, DiagnosticSeverity, Range } from "vscode";
 import { StSymbol } from "../core/types.js";
-import { getContextRange, getOriginalText, getTokenRange, getTypeOfType } from "../core/utils.js";
+import { defaultRange, getContextRange, getOriginalText, getTokenRange, getTypeOfType } from "../core/utils.js";
 import { ArrayInitContext, PostfixOpContext, UnaryOpContext } from "../generated/StructuredTextParser.js";
 import { StModelBuilder } from "./StModelBuilder.js";
 
@@ -19,11 +19,16 @@ export function M0001(subRangeToken: TerminalNode) {
 }
 
 // M0002: The '{name}' operator is not defined for the types '{name}' and '{name}'
-export function M0002(lhsTypeName: string, rhsTypeName: string, operatorToken: Token) {
+export function M0002(
+    lhsTypeName: string,
+    rhsTypeName: string,
+    operatorText: string,
+    operatorRange?: Range
+) {
 
     const diagnostic = new Diagnostic(
-        getTokenRange(operatorToken),
-        `The binary operator '${operatorToken.text}' is not defined for the types '${lhsTypeName}' and '${rhsTypeName}'`,
+        operatorRange ?? defaultRange,
+        `The binary operator '${operatorText}' is not defined for the types '${lhsTypeName}' and '${rhsTypeName}'`,
         DiagnosticSeverity.Error
     );
 
@@ -72,13 +77,13 @@ export function C0018(lastMember: StSymbol) {
 
 // C0032: Cannot convert type '{name}' to type '{name}'
 export function C0032(
-    rhsCtx: ParserRuleContext | undefined,
     rhsTypeId: string | undefined,
-    lhsTypeId: string | undefined
+    lhsTypeId: string | undefined,
+    rhsRange?: Range
 ) {
 
     const diagnostic = new Diagnostic(
-        getContextRange(rhsCtx),
+        rhsRange ?? defaultRange,
         `Cannot convert type '${rhsTypeId}' to type '${lhsTypeId}'`,
         DiagnosticSeverity.Error
     );

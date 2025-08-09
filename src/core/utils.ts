@@ -5,6 +5,8 @@ import { Position, Range, workspace } from "vscode";
 import { ModifierContext } from "../generated/StructuredTextParser.js";
 import { Architecture, StModifier, StSymbol, StSymbolKind, StType, TcConfig } from "./types.js";
 
+export const defaultRange = new Range(0, 0, 0, 0);
+
 export const TIME_COMPONENTS = [
     { value: 0, max: undefined },   // days
     { value: 0, max: 23 },          // hours
@@ -388,12 +390,4 @@ export function parseBigIntWithRadix(value: string, radix: number): bigint {
     }
 
     return BigInt(prefix + value);
-}
-
-export function bigIntToTwosComplement(value: bigint, bits: number): string {
-
-    const mask = (1n << BigInt(bits)) - 1n;
-    const twosComplement = (value & mask).toString(2).padStart(bits, "0");
-
-    return twosComplement;
 }

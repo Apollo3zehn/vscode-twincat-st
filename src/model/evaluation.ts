@@ -1,7 +1,7 @@
 import { ParserRuleContext } from "antlr4ng";
-import { Diagnostic, DiagnosticSeverity } from "vscode";
+import { Diagnostic, DiagnosticSeverity, Range } from "vscode";
 import { StBuiltinType, StBuiltinTypeCode, StModifier, StNativeTypeKind, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
-import { getContextRange, getNestedTypeOrSelf, negateBits } from "../core/utils.js";
+import { defaultRange, getContextRange, getNestedTypeOrSelf, getTokenRange, negateBits } from "../core/utils.js";
 import { AssignmentOperatorContext, ExprContext, LiteralContext, MemberExpressionContext, PostfixOpContext, PropertyContext } from "../generated/StructuredTextParser.js";
 import { StModelBuilder } from "./StModelBuilder.js";
 import { findDeclaration } from "./declaration.js";
@@ -16,6 +16,7 @@ import { evaluateStringLiteral } from "./literals/evaluateStringLiteral.js";
 import { evaluateTimeLiteral } from "./literals/evaluateTimeLiteral.js";
 import { evaluateTimeOfDayLiteral } from "./literals/evaluateTimeOfDayLiteral.js";
 import { evaluateWStringLiteral } from "./literals/evaluateWStringLiteral.js";
+import { addBigInt, addNumber, divideBigInt, divideNumber, executeBinaryOperation, multiplyBigInt, multiplyNumber, subtractBigInt, subtractNumber } from "./binaryOperations.js";
 
 export function evaluateAssignment(
     lhsType: StType | undefined,
@@ -60,49 +61,23 @@ export function evaluateExpression(
             return undefined;
 
         const binaryOperatorString = expression._op!.text!;
-        let binaryOperationType: StType | undefined;
 
         // Evaluate operation
-        [lhsType, rhsType, binaryOperationType] = evaluateBinaryOperation(
+        return evaluateBinaryOperation(
             lhsType,
             rhsType,
-            binaryOperatorString
+            binaryOperatorString,
+            getTokenRange(expression._op!),
+            getContextRange(expressions[0]),
+            getContextRange(expressions[1])
         );
-
-        //
-        if (binaryOperationType) {
-
-            // Evalute assignment
-            const lhsSuccess = checkAssignment(
-                binaryOperationType, expression,
-                lhsType, expressions[0],
-                false
-            );
-
-            const rhsSuccess = checkAssignment(
-                binaryOperationType, expression,
-                rhsType, expressions[1],
-                false
-            );
-
-            return lhsSuccess && rhsSuccess
-                ? binaryOperationType
-                : undefined;
-
-            return binaryOperationType;
-        } 
-
-        else {
-            M0002(lhsType.getId(), rhsType.getId(), expression._op!);
-            return undefined;
-        }
     }
 
     else if (expressions.length === 1) {
         
-        let type = evaluateExpression(expressions[0]);
+        let resultType = evaluateExpression(expressions[0]);
 
-        if (!type)
+        if (!resultType)
             return undefined;
 
         const unaryOpCtx = expression.unaryOp();
@@ -110,14 +85,14 @@ export function evaluateExpression(
         if (unaryOpCtx) {
 
             const unaryOperatorString = unaryOpCtx.getText();
-            const unaryOperationType = evaluateUnaryOperation(type, unaryOperatorString);
+            const unaryOperationType = evaluateUnaryOperation(resultType, unaryOperatorString);
 
             if (unaryOperationType) {
                 return unaryOperationType;
             } 
 
             else {
-                M0003(type.getId(), unaryOpCtx, unaryOperatorString);
+                M0003(resultType.getId(), unaryOpCtx, unaryOperatorString);
                 return undefined;
             }
         }
@@ -360,28 +335,78 @@ export function evaluateMemberExpression(
 export function evaluateBinaryOperation(
     lhsType: StType,
     rhsType: StType,
-    operator: string
-): [StType, StType, StType | undefined] {
+    operatorText: string,
+    operatorRange?: Range,
+    lhsRange?: Range,
+    rhsRange?: Range
+): StType | undefined {
 
     // Step 1: Promote possible constants (literals and constant expressions)
-    [lhsType, rhsType] = promoteMathOperands(operator, lhsType, rhsType);
+    [lhsType, rhsType] = promoteMathOperands(operatorText, lhsType, rhsType);
 
-    if (!lhsType.builtinType || !rhsType.builtinType)
-        return [lhsType, rhsType, undefined];
+    /* Ensure boths sides are builtin types, which is a prerequisite for step 2 */
+    if (!lhsType.builtinType || !rhsType.builtinType) {
+        M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
+        return undefined;
+    }
     
     // Step 2: Get lowest common denominator
-    const lcdBuiltinTypeCode = getLowestCommonDenominator(
+    const newTypeCode = getLowestCommonDenominator(
         lhsType,
         rhsType
     );
 
-    if (!lcdBuiltinTypeCode)
-        return [lhsType, rhsType, undefined];
+    const newType = new StType();
+    newType.builtinType = new StBuiltinType(newTypeCode);
 
-    const lcdType = new StType();
-    lcdType.builtinType = new StBuiltinType(lcdBuiltinTypeCode);
+    // Step 3: Check assignment
+    const lhsSuccess = checkAssignment(newType, lhsType, lhsRange);
+    const rhsSuccess = checkAssignment(newType, rhsType, rhsRange);
 
-    return [lhsType, rhsType, lcdType];
+    if (!lhsSuccess || !rhsSuccess)
+        return undefined;
+
+    // Step 4: Execute
+    const lhsValue = lhsType.builtinType.value;
+    const rhsValue = rhsType.builtinType.value;
+
+    let opNumber: (a: number, b: number) => number;
+    let opBigInt: (a: bigint, b: bigint) => bigint;
+
+    switch (operatorText) {
+
+        case "+":
+            opNumber = addNumber;
+            opBigInt = addBigInt;
+            break;
+        
+        case "-":
+            opNumber = subtractNumber;
+            opBigInt = subtractBigInt;
+            break;
+        
+        case "*":
+            opNumber = multiplyNumber;
+            opBigInt = multiplyBigInt;
+            break;
+        
+        case "/":
+            opNumber = divideNumber;
+            opBigInt = divideBigInt;
+            break;
+        
+        default:
+            throw new Error(`The operator ${operatorText} is not yet implemented.`);
+    }
+
+    newType.builtinType.value = executeBinaryOperation(
+        lhsValue,
+        rhsValue,
+        opNumber,
+        opBigInt
+    );
+
+    return newType;
 }
 
 export function internalEvaluateAssignment(
@@ -451,26 +476,22 @@ export function internalEvaluateAssignment(
     }
 
     // Check assignment
-    checkAssignment(
-        lhsType, lhsCtx,
-        rhsType, rhsCtx,
-        isRefAssignment
-    );
+    if (isRefAssignment && !lhsType.isReference) {
+        C0140(lhsCtx);
+        return [undefined, undefined];
+    }
+    
+    checkAssignment(lhsType, rhsType, getContextRange(rhsCtx));
 
     return [lhsType, rhsType];
 }
 
 function checkAssignment(
     lhsType: StType,
-    lhsCtx: ParserRuleContext | undefined,
     rhsType: StType,
-    rhsCtx: ParserRuleContext | undefined,
-    isRefAssignment: boolean
+    rhsRange?: Range
 ): boolean {
     
-    if (isRefAssignment && !lhsType.isReference)
-        C0140(lhsCtx);
-
     if (lhsType.isReference)
         lhsType = lhsType.referencedOrElementType!;
 
@@ -499,7 +520,7 @@ function checkAssignment(
             ) {
 
                 const warning = new Diagnostic(
-                    getContextRange(rhsCtx),
+                    rhsRange ?? defaultRange,
                     `String type '${StBuiltinTypeCode[rhsBuiltinType.code!]}(${rhsBuiltinType.stringLength})' too long for string type '${StBuiltinTypeCode[lhsBuiltinType.code!]}(${rhsBuiltinType.stringLength})': The string will be truncated`,
                     DiagnosticSeverity.Warning
                 );
@@ -562,7 +583,7 @@ function checkAssignment(
                             if (rhsDetails.signed && !lhsDetails.signed) {
 
                                 const warning = new Diagnostic(
-                                    getContextRange(rhsCtx),
+                                    rhsRange ?? defaultRange,
                                     `Implicit conversion from signed type '${StBuiltinTypeCode[rhsBuiltinType.code!]}' to unsigned type '${StBuiltinTypeCode[lhsBuiltinType.code!]}': Possible change of sign`,
                                     DiagnosticSeverity.Warning
                                 );
@@ -573,7 +594,7 @@ function checkAssignment(
                             else if (!rhsDetails.signed && lhsDetails.signed) {
 
                                 const warning = new Diagnostic(
-                                    getContextRange(rhsCtx),
+                                    rhsRange ?? defaultRange,
                                     `Implicit conversion from unsigned type '${StBuiltinTypeCode[rhsBuiltinType.code!]}' to signed type '${StBuiltinTypeCode[lhsBuiltinType.code!]}': Possible change of sign`,
                                     DiagnosticSeverity.Warning
                                 );
@@ -605,7 +626,7 @@ function checkAssignment(
                         )
                     ) {
                         const warning = new Diagnostic(
-                            getContextRange(rhsCtx),
+                            rhsRange ?? defaultRange,
                             `Implicit conversion from '${StBuiltinTypeCode[rhsBuiltinType.code!]}' to '${StBuiltinTypeCode[lhsBuiltinType.code!]}': Possible loss of information`,
                             DiagnosticSeverity.Warning
                         );
@@ -621,9 +642,9 @@ function checkAssignment(
     }
 
     C0032(
-        rhsCtx,
         rhsType.getId(),
-        lhsType.getId()
+        lhsType.getId(),
+        rhsRange
     );
 
     return false;
@@ -690,7 +711,7 @@ function promoteMathOperands(
 function getLowestCommonDenominator(
     lhsType: StType,
     rhsType: StType
-): StBuiltinTypeCode | undefined {
+): StBuiltinTypeCode {
 
     /* The calling method ensures that both values are defined */
     const leftCode = lhsType.builtinType?.code!;

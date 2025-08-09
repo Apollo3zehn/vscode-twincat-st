@@ -1,9 +1,8 @@
 import assert from "assert";
 import { evaluateUnaryOperation } from "../model/evaluation.js";
-import { createType } from "./test_helper.js";
+import { bigIntToTwosComplement, createType } from "./testUtils.js";
 import { evaluateIntegerLiteral } from "../model/literals/evaluateIntegerLiteral.js";
 import { evaluateLogicalLiteral } from "../model/literals/evaluateBoolLiteral.js";
-import { bigIntToTwosComplement } from "../core/utils.js";
 
 suite("plus", () => {
 

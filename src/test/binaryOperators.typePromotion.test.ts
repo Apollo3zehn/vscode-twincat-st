@@ -1,7 +1,7 @@
 import assert from 'assert';
 import { evaluateBinaryOperation } from '../model/evaluation.js';
 import { evaluateIntegerLiteral } from '../model/literals/evaluateIntegerLiteral.js';
-import { createType } from './test_helper.js';
+import { createType } from './testUtils.js';
 
 // Left operand: typed variable, right operand: typed variable
 const cases_typed_variables = [
@@ -77,7 +77,7 @@ const cases_untyped_literals = [
     ['0', '0', '-', 'SINT'],
 ];
 
-suite('binary operators', () => {
+suite("binary operators", () => {
     
     // Left operand: typed variable, right operand: typed variable
     cases_typed_variables.forEach(([lhs, rhs, operator, expectedType]) => {
@@ -93,7 +93,7 @@ suite('binary operators', () => {
             
             // Assert
             assert(result);
-            assert.strictEqual(result[2]?.getId(), expectedType);
+            assert.strictEqual(result.getId(), expectedType);
         });
     });
 
@@ -114,7 +114,7 @@ suite('binary operators', () => {
             
             // Assert
             assert(result);
-            assert.strictEqual(result[2]?.getId(), expectedType);
+            assert.strictEqual(result.getId(), expectedType);
         });
     });
 
@@ -135,7 +135,7 @@ suite('binary operators', () => {
             
             // Assert
             assert(result);
-            assert.strictEqual(result[2]?.getId(), expectedType);
+            assert.strictEqual(result.getId(), expectedType);
         });
     });
 
@@ -156,7 +156,7 @@ suite('binary operators', () => {
             
             // Assert
             assert(result);
-            assert.strictEqual(result[2]?.getId(), expectedType);
+            assert.strictEqual(result.getId(), expectedType);
         });
     });
 });

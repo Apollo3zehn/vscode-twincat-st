@@ -16,7 +16,7 @@ import { evaluateStringLiteral } from "./literals/evaluateStringLiteral.js";
 import { evaluateTimeLiteral } from "./literals/evaluateTimeLiteral.js";
 import { evaluateTimeOfDayLiteral } from "./literals/evaluateTimeOfDayLiteral.js";
 import { evaluateWStringLiteral } from "./literals/evaluateWStringLiteral.js";
-import { addBigInt, addNumber, divideBigInt, divideNumber, executeBinaryOperation, multiplyBigInt, multiplyNumber, subtractBigInt, subtractNumber } from "./binaryOperations.js";
+import { addBigInt, addNumber, divideBigInt, divideNumber, equalsBigInt, equalsNumber, executeBinaryOperation, moduloBigInt, multiplyBigInt, multiplyNumber, subtractBigInt, subtractNumber } from "./operations.js";
 
 export function evaluateAssignment(
     lhsType: StType | undefined,
@@ -368,31 +368,100 @@ export function evaluateBinaryOperation(
 
     // Step 4: Execute
     const lhsValue = lhsType.builtinType.value;
-    const rhsValue = rhsType.builtinType.value;
+    const lhsKind = lhsType.builtinType.details!.kind;
 
-    let opNumber: (a: number, b: number) => number;
-    let opBigInt: (a: bigint, b: bigint) => bigint;
+    const lhsIsInteger =
+        lhsKind === StNativeTypeKind.Bitfield ||
+        lhsKind === StNativeTypeKind.UnsignedInteger ||
+        lhsKind === StNativeTypeKind.SignedInteger;
+    
+    const lhsIsNumber = lhsIsInteger || lhsKind === StNativeTypeKind.Float;
+
+    const rhsValue = rhsType.builtinType.value;
+    const rhsKind = rhsType.builtinType.details!.kind;
+
+    const rhsIsInteger =
+        rhsKind === StNativeTypeKind.Bitfield ||
+        rhsKind === StNativeTypeKind.UnsignedInteger ||
+        rhsKind === StNativeTypeKind.SignedInteger;
+    
+    const rhsIsNumber = rhsIsInteger || rhsKind === StNativeTypeKind.Float;
+
+    let opNumber: ((a: number, b: number) => number | bigint) | undefined;
+    let opBigInt: ((a: bigint, b: bigint) => bigint) | undefined;
 
     switch (operatorText) {
 
-        case "+":
-            opNumber = addNumber;
-            opBigInt = addBigInt;
-            break;
-        
-        case "-":
-            opNumber = subtractNumber;
-            opBigInt = subtractBigInt;
-            break;
-        
         case "*":
+            
+            if (!(lhsIsNumber && rhsIsNumber)) {
+                M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
+                return undefined;
+            }
+            
             opNumber = multiplyNumber;
             opBigInt = multiplyBigInt;
+            
             break;
         
         case "/":
+
+            if (!(lhsIsNumber && rhsIsNumber)) {
+                M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
+                return undefined;
+            }
+            
             opNumber = divideNumber;
             opBigInt = divideBigInt;
+
+            break;
+        
+        case "MOD":
+
+            if (!(lhsIsInteger && rhsIsInteger)) {
+                M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
+                return undefined;
+            }
+
+            opNumber = undefined;
+            opBigInt = moduloBigInt;
+
+            break;
+
+        case "+":
+
+            if (!(lhsIsNumber && rhsIsNumber)) {
+                M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
+                return undefined;
+            }
+
+            opNumber = addNumber;
+            opBigInt = addBigInt;
+
+            break;
+        
+        case "-":
+
+            if (!(lhsIsNumber && rhsIsNumber)) {
+                M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
+                return undefined;
+            }
+
+            opNumber = subtractNumber;
+            opBigInt = subtractBigInt;
+
+            break;
+        
+        case "=":
+
+            if (!(lhsIsNumber && rhsIsNumber)) {
+                M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
+                return undefined;
+            }
+
+            opNumber = equalsNumber;
+            opBigInt = equalsBigInt;
+
             break;
         
         default:

@@ -44,7 +44,7 @@ export class StBuiltinType {
             const details = nativeTypesDetails.get(code);
 
             if (!details)
-            throw Error(`Unknown native type ${code}`);
+                throw Error(`Unknown native type ${code}`);
 
             this.details = details;
 

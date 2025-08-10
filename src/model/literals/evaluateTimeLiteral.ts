@@ -2,21 +2,15 @@ import { Temporal } from "temporal-polyfill";
 import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
 import { findOverflowComponent, TIME_COMPONENTS } from "../../core/utils.js";
 
-const MIN_TIME_MS = Temporal.Duration.from({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-    milliseconds: 0
-}).total("milliseconds");
+const MIN_TIME_MS = 0n;
 
-const MAX_TIME_MS = Temporal.Duration.from({
-    days: 49,
-    hours: 17,
-    minutes: 2,
-    seconds: 47,
-    milliseconds: 295
-}).total("milliseconds");
+const MAX_TIME_MS = (
+    49n * 24n * 60n * 60n * 1000n + // days to ms
+    17n * 60n * 60n * 1000n +       // hours to ms
+    2n  * 60n * 1000n +             // minutes to ms
+    47n * 1000n +                   // seconds to ms
+    295n                            // milliseconds
+);
 
 export function evaluateTimeLiteral(
     literal: string
@@ -35,27 +29,18 @@ export function evaluateTimeLiteral(
     TIME_COMPONENTS[5].value = 0; // microseconds
     TIME_COMPONENTS[6].value = 0; // nanoseconds
 
-    let time: Temporal.Duration;
-
-    try {
-        time = Temporal.Duration.from({
-            days: TIME_COMPONENTS[0].value,
-            hours: TIME_COMPONENTS[1].value,
-            minutes: TIME_COMPONENTS[2].value,
-            seconds: TIME_COMPONENTS[3].value,
-            milliseconds: TIME_COMPONENTS[4].value,
-        });
-    } catch {
-        return [undefined, StBuiltinTypeCode.TIME];
-    }
+    const timeInMilliseconds =
+        BigInt(TIME_COMPONENTS[0].value) * 24n * 60n * 60n * 1000n +    // days
+        BigInt(TIME_COMPONENTS[1].value) * 60n * 60n * 1000n +          // hours
+        BigInt(TIME_COMPONENTS[2].value) * 60n * 1000n +                // minutes
+        BigInt(TIME_COMPONENTS[3].value) * 1000n +                      // seconds
+        BigInt(TIME_COMPONENTS[4].value);                               // milliseconds
 
     // Find index of first overflowing component
     const index = match.slice(1).findIndex(x => x);
     const hasOverflow = findOverflowComponent(index);
 
     // Validate
-    const timeInMilliseconds = BigInt(time.total("milliseconds"));
-
     if (
         !hasOverflow &&
         MIN_TIME_MS <= timeInMilliseconds &&
@@ -67,7 +52,7 @@ export function evaluateTimeLiteral(
 
         return [type, undefined];
     }
-    
+
     else {
         return [undefined, StBuiltinTypeCode.TIME];
     }

@@ -30,8 +30,6 @@ FUNCTION_BLOCK C0001
         time_of_day_invalid:    TIME_OF_DAY     := TIME_OF_DAY#23:00:72.000;
 
         l_time_over1:           LTIME           := LTIME#1M61S;
-
-        // Javascript Temporal API comes to a limit with such large numbers :-(
         l_time_over2:           LTIME           := LTIME#213503D23H34M33S709MS551US616NS;
 
         l_date_under:           LDATE           := LDATE#1969-12-31;

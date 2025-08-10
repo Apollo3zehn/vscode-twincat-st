@@ -2,7 +2,7 @@ import { Temporal } from "temporal-polyfill";
 import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
 import { convertToPlatformSpecificTypeText } from "../../core/utils.js";
 
-const MIDNIGHT = Temporal.PlainTime.from({});
+const MIDNIGHT = Temporal.PlainTime.from({ hour: 0 });
 
 const MIN_TIME_OF_DAY = Temporal.PlainTime.from({
     hour: 0,

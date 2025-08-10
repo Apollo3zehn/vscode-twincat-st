@@ -2,7 +2,7 @@ import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
 import { findOverflowComponent, TIME_COMPONENTS } from "../../core/utils.js";
 import { Temporal } from "temporal-polyfill";
 
-const MIN_LTIME = Temporal.Duration.from({
+const MIN_LTIME = BigInt(Temporal.Duration.from({
     days: 0,
     hours: 0,
     minutes: 0,
@@ -10,9 +10,9 @@ const MIN_LTIME = Temporal.Duration.from({
     milliseconds: 0,
     microseconds: 0,
     nanoseconds: 0
-}).total("nanoseconds");
+}).total("nanoseconds"));
 
-const MAX_LTIME = Temporal.Duration.from({
+const MAX_LTIME = BigInt(Temporal.Duration.from({
     days: 213503,
     hours: 23,
     minutes: 34,
@@ -20,7 +20,7 @@ const MAX_LTIME = Temporal.Duration.from({
     milliseconds: 709,
     microseconds: 551,
     nanoseconds: 615
-}).total("nanoseconds");
+}).total("nanoseconds"));
 
 export function evaluateLTimeLiteral(
     literal: string
@@ -61,7 +61,12 @@ export function evaluateLTimeLiteral(
 
     if (!hasOverflow &&
         MIN_LTIME <= ltimeInNanoseconds &&
-        ltimeInNanoseconds <= MAX_LTIME
+        /* Not sure if '+ 1n' is correct here, but with Javascript it 
+         * is difficult to properly implement large number handling 
+         * and MAX_LTIME has the value 18446744073709551616 instead
+         * of 18446744073709551615 (2^64).
+         */
+        ltimeInNanoseconds <= MAX_LTIME + 1n
     ) {
         const type = new StType();
         type.builtinType = new StBuiltinType(StBuiltinTypeCode.LTIME);

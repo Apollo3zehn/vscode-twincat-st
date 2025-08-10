@@ -1,4 +1,4 @@
-import { nativeTypesDetails, StBuiltinType, StBuiltinTypeCode, StNativeTypeKind, StType } from "../../core/types.js";
+import { builtinTypesDetails, StBuiltinType, StBuiltinTypeCode, StBuiltinTypeKind, StType } from "../../core/types.js";
 import { parseBigIntWithRadix } from "../../core/utils.js";
 
 export function evaluateIntegerLiteral(
@@ -52,7 +52,7 @@ export function evaluateIntegerLiteral(
         if (
             value < 0 &&
             lhsBuiltinType &&
-            lhsBuiltinType.details?.kind !== StNativeTypeKind.SignedInteger
+            lhsBuiltinType.details?.kind !== StBuiltinTypeKind.SignedInteger
         ) {
             return [
                 undefined,
@@ -150,11 +150,11 @@ export function getSmallestIntegerForValue(
 
 export function getSignedIntegerForSize(size: number): StBuiltinTypeCode {
 
-    for (const [code, nativeDetails] of nativeTypesDetails.entries()) {
+    for (const [code, builtinTypeDetails] of builtinTypesDetails.entries()) {
 
         if (
-            nativeDetails.signed &&
-            nativeDetails.size === size
+            builtinTypeDetails.signed &&
+            builtinTypeDetails.size === size
         ) {
             return code;
         }
@@ -165,11 +165,11 @@ export function getSignedIntegerForSize(size: number): StBuiltinTypeCode {
 
 export function getUnsignedIntegerForSize(size: number): StBuiltinTypeCode {
 
-    for (const [code, nativeDetails] of nativeTypesDetails.entries()) {
+    for (const [code, builtinTypeDetails] of builtinTypesDetails.entries()) {
 
         if (
-            nativeDetails.kind === StNativeTypeKind.UnsignedInteger &&
-            nativeDetails.size === size
+            builtinTypeDetails.kind === StBuiltinTypeKind.UnsignedInteger &&
+            builtinTypeDetails.size === size
         ) {
             return code;
         }

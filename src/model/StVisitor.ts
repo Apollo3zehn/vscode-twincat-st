@@ -1,6 +1,6 @@
 import { ParserRuleContext, Token } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Uri } from "vscode";
-import { Architecture, nativeTypesDetails, StAccessModifier, StBuiltinType, StBuiltinTypeCode, StModel, StNativeTypeKind, StSymbol, StSymbolKind, StType, StTypeDeclarationDetails, StVariableScope } from "../core/types.js";
+import { Architecture, builtinTypesDetails, StAccessModifier, StBuiltinType, StBuiltinTypeCode, StModel, StBuiltinTypeKind, StSymbol, StSymbolKind, StType, StTypeDeclarationDetails, StVariableScope } from "../core/types.js";
 import { convertToPlatformSpecificTypeText, getContextRange, getModifier, getOriginalText, getTokenRange } from "../core/utils.js";
 import { AccessModifierContext, DutDeclContext, EnumMemberContext, EnumTypeContext, FunctionBlockContext, FunctionContext, InitialValueContext, InterfaceContext, MemberAccessContext, MemberContext, MethodContext, ModifierContext, ProgramContext, PropertyContext, StatementContext, TypeContext, VarDeclContext, VarDeclSectionContext, VarGlobalSectionContext } from "../generated/StructuredTextParser.js";
 import { StructuredTextVisitor } from "../generated/StructuredTextVisitor.js";
@@ -356,15 +356,15 @@ export class StVisitor extends StructuredTextVisitor<void> {
 
                     type.builtinType = new StBuiltinType(code, builtinType.SUBRANGE_PARAM() ?? undefined);
                     
-                    const nativeTypeDetails = code
-                        ? nativeTypesDetails.get(code)
+                    const builtinTypeDetails = code
+                        ? builtinTypesDetails.get(code)
                         : undefined;
 
-                    const builtinTypeKind = nativeTypeDetails?.kind;
+                    const builtinTypeKind = builtinTypeDetails?.kind;
 
                     switch (builtinTypeKind) {
 
-                        case StNativeTypeKind.String:
+                        case StBuiltinTypeKind.String:
 
                             const stringLengthParam = builtinType
                                 .STRING_LEN_PARAM()?.getText();

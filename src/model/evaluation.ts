@@ -1,6 +1,6 @@
 import { ParserRuleContext } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Range } from "vscode";
-import { StBuiltinType, StBuiltinTypeCode, StModifier, StNativeTypeKind, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
+import { StBuiltinType, StBuiltinTypeCode, StModifier, StBuiltinTypeKind, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
 import { defaultRange, getContextRange, getNestedTypeOrSelf, getTokenRange, negateBits } from "../core/utils.js";
 import { AssignmentOperatorContext, ExprContext, LiteralContext, MemberExpressionContext, PostfixOpContext, PropertyContext } from "../generated/StructuredTextParser.js";
 import { StModelBuilder } from "./StModelBuilder.js";
@@ -128,17 +128,17 @@ export function evaluateUnaryOperation(
         (unaryOpText === "+" || unaryOpText === "-") &&
         (
             builtinType.code === null || // Untyped integer literal
-            kind === StNativeTypeKind.Bitfield ||
-            kind === StNativeTypeKind.UnsignedInteger ||
-            kind === StNativeTypeKind.SignedInteger ||
-            kind === StNativeTypeKind.Float
+            kind === StBuiltinTypeKind.Bitfield ||
+            kind === StBuiltinTypeKind.UnsignedInteger ||
+            kind === StBuiltinTypeKind.SignedInteger ||
+            kind === StBuiltinTypeKind.Float
         )
     ) {
         if (unaryOpText === "-") {
 
             if (
-                kind === StNativeTypeKind.Bitfield ||
-                kind === StNativeTypeKind.UnsignedInteger
+                kind === StBuiltinTypeKind.Bitfield ||
+                kind === StBuiltinTypeKind.UnsignedInteger
             ) {
 
                 if (newValue !== undefined) {
@@ -186,14 +186,14 @@ export function evaluateUnaryOperation(
     else if (
         unaryOpText === "NOT" &&
         (
-            kind === StNativeTypeKind.Logical ||
-            kind === StNativeTypeKind.Bitfield ||
-            kind === StNativeTypeKind.UnsignedInteger ||
-            kind === StNativeTypeKind.SignedInteger
+            kind === StBuiltinTypeKind.Logical ||
+            kind === StBuiltinTypeKind.Bitfield ||
+            kind === StBuiltinTypeKind.UnsignedInteger ||
+            kind === StBuiltinTypeKind.SignedInteger
         )
     ) {
 
-        if (kind === StNativeTypeKind.Logical) {
+        if (kind === StBuiltinTypeKind.Logical) {
             if (newValue !== undefined) {
                 newValue = newValue === 0n
                     ? 1n
@@ -371,21 +371,21 @@ export function evaluateBinaryOperation(
     const lhsKind = lhsType.builtinType.details!.kind;
 
     const lhsIsInteger =
-        lhsKind === StNativeTypeKind.Bitfield ||
-        lhsKind === StNativeTypeKind.UnsignedInteger ||
-        lhsKind === StNativeTypeKind.SignedInteger;
+        lhsKind === StBuiltinTypeKind.Bitfield ||
+        lhsKind === StBuiltinTypeKind.UnsignedInteger ||
+        lhsKind === StBuiltinTypeKind.SignedInteger;
     
-    const lhsIsNumber = lhsIsInteger || lhsKind === StNativeTypeKind.Float;
+    const lhsIsNumber = lhsIsInteger || lhsKind === StBuiltinTypeKind.Float;
 
     const rhsValue = rhsType.builtinType.value;
     const rhsKind = rhsType.builtinType.details!.kind;
 
     const rhsIsInteger =
-        rhsKind === StNativeTypeKind.Bitfield ||
-        rhsKind === StNativeTypeKind.UnsignedInteger ||
-        rhsKind === StNativeTypeKind.SignedInteger;
+        rhsKind === StBuiltinTypeKind.Bitfield ||
+        rhsKind === StBuiltinTypeKind.UnsignedInteger ||
+        rhsKind === StBuiltinTypeKind.SignedInteger;
     
-    const rhsIsNumber = rhsIsInteger || rhsKind === StNativeTypeKind.Float;
+    const rhsIsNumber = rhsIsInteger || rhsKind === StBuiltinTypeKind.Float;
 
     let opNumber: ((a: number, b: number) => number | bigint) | undefined;
     let opBigInt: ((a: bigint, b: bigint) => bigint) | undefined;
@@ -491,7 +491,7 @@ export function internalEvaluateAssignment(
     
     switch (lhsType.builtinType?.details?.kind) {
 
-        case StNativeTypeKind.Logical:
+        case StBuiltinTypeKind.Logical:
            
             /* ONLY literals are allowed here! */
             if (rhsBuiltinType?.isLiteral) {
@@ -505,8 +505,8 @@ export function internalEvaluateAssignment(
             
             break;
               
-        case StNativeTypeKind.Bitfield:
-        case StNativeTypeKind.UnsignedInteger:
+        case StBuiltinTypeKind.Bitfield:
+        case StBuiltinTypeKind.UnsignedInteger:
            
             // Promote the rhs type to the smallest unsigned integer type that can represent its value
             if (rhsBuiltinType?.value !== undefined && rhsIsUntypedIntegerLiteral)
@@ -514,7 +514,7 @@ export function internalEvaluateAssignment(
 
             break;
         
-        case StNativeTypeKind.SignedInteger:
+        case StBuiltinTypeKind.SignedInteger:
            
             // Promote the rhs type to the smallest signed integer type that can represent its value
             if (rhsBuiltinType?.value !== undefined && rhsIsUntypedIntegerLiteral)
@@ -522,9 +522,9 @@ export function internalEvaluateAssignment(
 
             break;
             
-        case StNativeTypeKind.Float:
+        case StBuiltinTypeKind.Float:
            
-            const isFloat = rhsBuiltinType?.details?.kind === StNativeTypeKind.Float;
+            const isFloat = rhsBuiltinType?.details?.kind === StBuiltinTypeKind.Float;
             
             if (isFloat && Math.abs(rhsBuiltinType!.value! as number) <= 3.402823e+38)
                 return [lhsType, lhsType];
@@ -584,7 +584,7 @@ function checkAssignment(
         if (lhsBuiltinType.code === rhsBuiltinType.code) {
 
             if (
-                rhsDetails.kind === StNativeTypeKind.String &&
+                rhsDetails.kind === StBuiltinTypeKind.String &&
                 lhsBuiltinType.stringLength! < rhsBuiltinType.stringLength!
             ) {
 
@@ -601,22 +601,22 @@ function checkAssignment(
         }
 
         const rhsIsInteger =
-            rhsDetails.kind === StNativeTypeKind.Bitfield ||
-            rhsDetails.kind === StNativeTypeKind.UnsignedInteger ||
-            rhsDetails.kind === StNativeTypeKind.SignedInteger;
+            rhsDetails.kind === StBuiltinTypeKind.Bitfield ||
+            rhsDetails.kind === StBuiltinTypeKind.UnsignedInteger ||
+            rhsDetails.kind === StBuiltinTypeKind.SignedInteger;
 
         switch (lhsDetails.kind) {
 
-            case StNativeTypeKind.Logical:
+            case StBuiltinTypeKind.Logical:
 
-                if (rhsDetails.kind === StNativeTypeKind.Logical)
+                if (rhsDetails.kind === StBuiltinTypeKind.Logical)
                     return true;
 
                 break;
 
-            case StNativeTypeKind.Bitfield:
-            case StNativeTypeKind.UnsignedInteger:
-            case StNativeTypeKind.SignedInteger:
+            case StBuiltinTypeKind.Bitfield:
+            case StBuiltinTypeKind.UnsignedInteger:
+            case StBuiltinTypeKind.SignedInteger:
 
                 if (rhsIsInteger) {
 
@@ -678,15 +678,15 @@ function checkAssignment(
 
                 break;
 
-            case StNativeTypeKind.Float:
+            case StBuiltinTypeKind.Float:
 
                 if (
-                    rhsDetails.kind === StNativeTypeKind.Float ||
+                    rhsDetails.kind === StBuiltinTypeKind.Float ||
                     rhsIsInteger
                 ) {
                     if (
                         (
-                            rhsDetails.kind === StNativeTypeKind.Float &&
+                            rhsDetails.kind === StBuiltinTypeKind.Float &&
                             rhsDetails.size > lhsDetails.size
                         ) ||
                         (

@@ -1,4 +1,4 @@
-import { nativeTypesDetails, StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
+import { builtinTypesDetails, StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
 
 export function evaluateRealLiteral(
     literal: string
@@ -58,8 +58,8 @@ export function evaluateRealLiteral(
     
     if (lhsTypeCode) {
 
-        const lhsTypeDetails = nativeTypesDetails.get(lhsTypeCode);
-        const rhsTypeDetails = nativeTypesDetails.get(rhsTypeCode);
+        const lhsTypeDetails = builtinTypesDetails.get(lhsTypeCode);
+        const rhsTypeDetails = builtinTypesDetails.get(rhsTypeCode);
 
         if (
             lhsTypeDetails &&

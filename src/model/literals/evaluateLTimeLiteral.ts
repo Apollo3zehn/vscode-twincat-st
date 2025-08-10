@@ -57,7 +57,7 @@ export function evaluateLTimeLiteral(
     const hasOverflow = findOverflowComponent(index);
 
     // Validate
-    const ltimeInNanoseconds = ltime.total("nanosecond");
+    const ltimeInNanoseconds = BigInt(ltime.total("nanoseconds"));
 
     if (!hasOverflow &&
         MIN_LTIME <= ltimeInNanoseconds &&
@@ -65,6 +65,7 @@ export function evaluateLTimeLiteral(
     ) {
         const type = new StType();
         type.builtinType = new StBuiltinType(StBuiltinTypeCode.LTIME);
+        type.builtinType.value = ltimeInNanoseconds;
 
         return [type, undefined];
     }

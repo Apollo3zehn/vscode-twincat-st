@@ -1,6 +1,6 @@
 import { Temporal } from "temporal-polyfill";
 import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
-import { convertToPlatformSpecificTypeText } from "../../core/utils.js";
+import { convertToPlatformSpecificTypeText, EPOCH } from "../../core/utils.js";
 
 const MIN_DATE_AND_TIME = Temporal.PlainDateTime.from({
     year: 1970,
@@ -84,10 +84,10 @@ export function evaluateDateAndTimeLiteral(
         nanosecond = nanosecondTotal % 1e3;
     }
 
-    let dateTimeValue: Temporal.PlainDateTime;
+    let dateAndTimeValue: Temporal.PlainDateTime;
 
     try {
-        dateTimeValue = Temporal.PlainDateTime.from({
+        dateAndTimeValue = Temporal.PlainDateTime.from({
             year,
             month,
             day,
@@ -100,15 +100,15 @@ export function evaluateDateAndTimeLiteral(
         });
 
         if (
-            dateTimeValue.year !== year ||
-            dateTimeValue.month !== month ||
-            dateTimeValue.day !== day ||
-            dateTimeValue.hour !== hour ||
-            dateTimeValue.minute !== minute ||
-            dateTimeValue.second !== second ||
-            dateTimeValue.millisecond !== millisecond ||
-            dateTimeValue.microsecond !== microsecond ||
-            dateTimeValue.nanosecond !== nanosecond
+            dateAndTimeValue.year !== year ||
+            dateAndTimeValue.month !== month ||
+            dateAndTimeValue.day !== day ||
+            dateAndTimeValue.hour !== hour ||
+            dateAndTimeValue.minute !== minute ||
+            dateAndTimeValue.second !== second ||
+            dateAndTimeValue.millisecond !== millisecond ||
+            dateAndTimeValue.microsecond !== microsecond ||
+            dateAndTimeValue.nanosecond !== nanosecond
         ) {
             return [undefined, lhsBuiltinType];
         }
@@ -117,16 +117,18 @@ export function evaluateDateAndTimeLiteral(
     }
 
     let choosenType: StBuiltinTypeCode | undefined;
+    let value: bigint;
 
     switch (lhsBuiltinType) {
         
         case StBuiltinTypeCode.DATE_AND_TIME:
 
             if (
-                Temporal.PlainDateTime.compare(MIN_DATE_AND_TIME, dateTimeValue) <= 0 &&
-                Temporal.PlainDateTime.compare(dateTimeValue, MAX_DATE_AND_TIME) <= 0
+                Temporal.PlainDateTime.compare(MIN_DATE_AND_TIME, dateAndTimeValue) <= 0 &&
+                Temporal.PlainDateTime.compare(dateAndTimeValue, MAX_DATE_AND_TIME) <= 0
             ) {
                 choosenType = StBuiltinTypeCode.DATE_AND_TIME;
+                value = BigInt(dateAndTimeValue.since(EPOCH).total("seconds"));
             }
             
             else {
@@ -138,10 +140,11 @@ export function evaluateDateAndTimeLiteral(
         case StBuiltinTypeCode.LDATE_AND_TIME:
 
             if (
-                Temporal.PlainDateTime.compare(MIN_LDATE_AND_TIME, dateTimeValue) <= 0 &&
-                Temporal.PlainDateTime.compare(dateTimeValue, MAX_LDATE_AND_TIME) <= 0
+                Temporal.PlainDateTime.compare(MIN_LDATE_AND_TIME, dateAndTimeValue) <= 0 &&
+                Temporal.PlainDateTime.compare(dateAndTimeValue, MAX_LDATE_AND_TIME) <= 0
             ) {
                 choosenType = StBuiltinTypeCode.LDATE_AND_TIME;
+                value = BigInt(dateAndTimeValue.since(EPOCH).total("nanoseconds"));
             }
             
             else {
@@ -157,6 +160,7 @@ export function evaluateDateAndTimeLiteral(
 
     const type = new StType();
     type.builtinType = new StBuiltinType(choosenType);
+    type.builtinType.value = value;
 
     return [type, undefined];
 }

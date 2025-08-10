@@ -2,6 +2,8 @@ import { Temporal } from "temporal-polyfill";
 import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
 import { convertToPlatformSpecificTypeText } from "../../core/utils.js";
 
+const MIDNIGHT = Temporal.PlainTime.from({});
+
 const MIN_TIME_OF_DAY = Temporal.PlainTime.from({
     hour: 0,
     minute: 0,
@@ -91,6 +93,7 @@ export function evaluateTimeOfDayLiteral(
     }
 
     let choosenType: StBuiltinTypeCode | undefined;
+    let value: bigint;
 
     switch (lhsBuiltinType) {
 
@@ -101,6 +104,7 @@ export function evaluateTimeOfDayLiteral(
                 Temporal.PlainTime.compare(timeValue, MAX_TIME_OF_DAY) <= 0
             ) {
                 choosenType = StBuiltinTypeCode.TIME_OF_DAY;
+                value = BigInt(timeValue.since(MIDNIGHT).total("milliseconds"));
             }
                 
             else {
@@ -116,6 +120,7 @@ export function evaluateTimeOfDayLiteral(
                 Temporal.PlainTime.compare(timeValue, MAX_LTIME_OF_DAY) <= 0
             ) {
                 choosenType = StBuiltinTypeCode.LTIME_OF_DAY;
+                value = BigInt(timeValue.since(MIDNIGHT).total("nanoseconds"));
             }
                 
             else {
@@ -131,6 +136,7 @@ export function evaluateTimeOfDayLiteral(
 
     const type = new StType();
     type.builtinType = new StBuiltinType(choosenType);
+    type.builtinType.value = value;
 
     return [type, undefined];
 }

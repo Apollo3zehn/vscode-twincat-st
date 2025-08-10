@@ -1,11 +1,11 @@
 import { Temporal } from "temporal-polyfill";
 import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
-import { convertToPlatformSpecificTypeText } from "../../core/utils.js";
+import { convertToPlatformSpecificTypeText, EPOCH } from "../../core/utils.js";
 
-const MIN_DATE = Temporal.PlainDate.from({ year: 1970, month: 1, day: 1 });
-const MAX_DATE = Temporal.PlainDate.from({ year: 2106, month: 2, day: 7 });
-const MIN_LDATE = Temporal.PlainDate.from({ year: 1970, month: 1, day: 1 });
-const MAX_LDATE = Temporal.PlainDate.from({ year: 2554, month: 7, day: 21 });
+const MIN_DATE = Temporal.PlainDateTime.from({ year: 1970, month: 1, day: 1 });
+const MAX_DATE = Temporal.PlainDateTime.from({ year: 2106, month: 2, day: 7 });
+const MIN_LDATE = Temporal.PlainDateTime.from({ year: 1970, month: 1, day: 1 });
+const MAX_LDATE = Temporal.PlainDateTime.from({ year: 2554, month: 7, day: 21 });
 
 export function evaluateDateLiteral(
     prefix: string,
@@ -19,10 +19,10 @@ export function evaluateDateLiteral(
     const month = Number.parseInt(dateParts[1]);
     const day = Number.parseInt(dateParts[2]);
 
-    let dateValue: Temporal.PlainDate;
+    let dateValue: Temporal.PlainDateTime;
 
     try {
-        dateValue = Temporal.PlainDate.from({ year, month, day });
+        dateValue = Temporal.PlainDateTime.from({ year, month, day });
 
         if (
             dateValue.year !== year ||
@@ -36,16 +36,18 @@ export function evaluateDateLiteral(
     }
 
     let choosenType: StBuiltinTypeCode | undefined;
+    let value: bigint;
 
     switch (lhsBuiltinType) {
 
         case StBuiltinTypeCode.DATE:
 
             if (
-                Temporal.PlainDate.compare(MIN_DATE, dateValue) <= 0 &&
-                Temporal.PlainDate.compare(dateValue, MAX_DATE) <= 0
+                Temporal.PlainDateTime.compare(MIN_DATE, dateValue) <= 0 &&
+                Temporal.PlainDateTime.compare(dateValue, MAX_DATE) <= 0
             ) {
                 choosenType = StBuiltinTypeCode.DATE;
+                value = BigInt(dateValue.since(EPOCH).total("seconds"));
             }
                 
             else {
@@ -57,10 +59,11 @@ export function evaluateDateLiteral(
         case StBuiltinTypeCode.LDATE:
 
             if (
-                Temporal.PlainDate.compare(MIN_LDATE, dateValue) <= 0 &&
-                Temporal.PlainDate.compare(dateValue, MAX_LDATE) <= 0
+                Temporal.PlainDateTime.compare(MIN_LDATE, dateValue) <= 0 &&
+                Temporal.PlainDateTime.compare(dateValue, MAX_LDATE) <= 0
             ) {
                 choosenType = StBuiltinTypeCode.LDATE;
+                value = BigInt(dateValue.since(EPOCH).total("nanoseconds"));
             }
                 
             else {
@@ -76,6 +79,7 @@ export function evaluateDateLiteral(
 
     const type = new StType();
     type.builtinType = new StBuiltinType(choosenType);
+    type.builtinType.value = value;
 
     return [type, undefined];
 }

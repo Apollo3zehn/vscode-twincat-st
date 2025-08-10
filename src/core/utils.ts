@@ -4,6 +4,13 @@ import path from "path";
 import { Position, Range, workspace } from "vscode";
 import { ModifierContext } from "../generated/StructuredTextParser.js";
 import { Architecture, StModifier, StSymbol, StSymbolKind, StType, TcConfig } from "./types.js";
+import { Temporal } from "temporal-polyfill";
+
+export const EPOCH = Temporal.PlainDateTime.from({
+    year: 1970,
+    month: 1,
+    day: 1
+});
 
 export const defaultRange = new Range(0, 0, 0, 0);
 

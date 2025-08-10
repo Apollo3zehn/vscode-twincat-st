@@ -54,7 +54,7 @@ export function evaluateTimeLiteral(
     const hasOverflow = findOverflowComponent(index);
 
     // Validate
-    const timeInMilliseconds = time.total("milliseconds");
+    const timeInMilliseconds = BigInt(time.total("milliseconds"));
 
     if (
         !hasOverflow &&
@@ -63,6 +63,7 @@ export function evaluateTimeLiteral(
     ) {
         const type = new StType();
         type.builtinType = new StBuiltinType(StBuiltinTypeCode.TIME);
+        type.builtinType.value = timeInMilliseconds;
 
         return [type, undefined];
     }

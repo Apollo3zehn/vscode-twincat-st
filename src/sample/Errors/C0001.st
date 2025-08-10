@@ -7,8 +7,6 @@ FUNCTION_BLOCK C0001
 
         // Unsigned Integer Types
         _uint:                  UINT            := UINT#-1;
-
-        (* Javascript cannot properly represent 2^64-1 so we get no correct error here unfortunately. *)
         _int2:                  INT             := 18446744073709551616;
 
         // Floating Point Types
@@ -26,6 +24,7 @@ FUNCTION_BLOCK C0001
 
         date_and_time_under:    DATE_AND_TIME   := DATE_AND_TIME#1969-12-31-23:59:59;
         date_and_time_over:     DATE_AND_TIME   := DATE_AND_TIME#2106-02-07-06:28:16;
+        date_and_time_invalid:  DATE_AND_TIME   := DATE_AND_TIME#1970-01-40-00:00:00;
 
         time_of_day_over:       TIME_OF_DAY     := TIME_OF_DAY#24:00:00.000;
         time_of_day_invalid:    TIME_OF_DAY     := TIME_OF_DAY#23:00:72.000;

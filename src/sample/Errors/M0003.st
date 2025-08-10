@@ -2,7 +2,7 @@
 FUNCTION_BLOCK M0003
 
     VAR
-        _a: M0003;
+        _a: BOOL;
     END_VAR
 
     _a := -_a;

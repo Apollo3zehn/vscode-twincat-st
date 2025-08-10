@@ -1,6 +1,38 @@
-import { DateTime } from "luxon";
+import { Temporal } from "temporal-polyfill";
 import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
-import { convertToPlatformSpecificTypeText, isTimeOfDayInRange } from "../../core/utils.js";
+import { convertToPlatformSpecificTypeText } from "../../core/utils.js";
+
+const MIN_TIME_OF_DAY = Temporal.PlainTime.from({
+    hour: 0,
+    minute: 0,
+    second: 0,
+    nanosecond: 0
+});
+
+const MAX_TIME_OF_DAY = Temporal.PlainTime.from({
+    hour: 23,
+    minute: 59,
+    second: 59,
+    millisecond: 999
+});
+
+const MIN_LTIME_OF_DAY = Temporal.PlainTime.from({
+    hour: 0,
+    minute: 0,
+    second: 0,
+    millisecond: 0,
+    microsecond: 0,
+    nanosecond: 0
+});
+
+const MAX_LTIME_OF_DAY = Temporal.PlainTime.from({
+    hour: 23,
+    minute: 59,
+    second: 59,
+    millisecond: 999,
+    microsecond: 999,
+    nanosecond: 999
+});
 
 export function evaluateTimeOfDayLiteral(
     prefix: string,
@@ -15,42 +47,62 @@ export function evaluateTimeOfDayLiteral(
     const secondAndMoreParts = (timeOfDayParts[2] ?? "").split(".");
     const secondRaw = Number.parseInt(secondAndMoreParts[0]);
     const second = Number.isNaN(secondRaw) ? 0 : secondRaw;
-    const millisecondRaw = Number.parseInt(secondAndMoreParts[1]);
+    const fractionalRaw = secondAndMoreParts[1];
 
-    let millisecond = Number.isNaN(millisecondRaw) ? 0 : millisecondRaw;
-    let millisecond_rounded = millisecond;
+    let nanosecondTotal = 0;
+    let millisecond = 0;
+    let microsecond = 0;
+    let nanosecond = 0;
 
-    if (millisecond > 999) {
-        // If input is e.g. 999999999 (nanoseconds), convert to 999.999999 ms
-        millisecond = millisecond / Math.pow(10, millisecond.toString().length - 3);
-        millisecond_rounded = 999;
+    if (fractionalRaw) {
+
+        let nanosecondString = fractionalRaw.padEnd(9, "0").slice(0, 9);
+
+        nanosecondTotal = Number.parseInt(nanosecondString, 10);
+        millisecond = Math.floor(nanosecondTotal / 1e6);
+        microsecond = Math.floor((nanosecondTotal % 1e6) / 1e3);
+        nanosecond = nanosecondTotal % 1e3;
     }
 
-    const dateTime = DateTime.fromObject({
-        hour,
-        minute,
-        second,
-        millisecond: millisecond_rounded
-    });
+    let timeValue: Temporal.PlainTime;
 
-    if (!dateTime.isValid)
+    try {
+        timeValue = Temporal.PlainTime.from({
+            hour,
+            minute,
+            second,
+            millisecond,
+            microsecond,
+            nanosecond
+        });
+
+        if (
+            timeValue.hour !== hour ||
+            timeValue.minute !== minute ||
+            timeValue.second !== second ||
+            timeValue.millisecond !== millisecond ||
+            timeValue.microsecond !== microsecond ||
+            timeValue.nanosecond !== nanosecond
+        ) {
+            return [undefined, lhsBuiltinType];
+        }
+    } catch {
         return [undefined, lhsBuiltinType];
+    }
 
     let choosenType: StBuiltinTypeCode | undefined;
 
     switch (lhsBuiltinType) {
-        
-        case StBuiltinTypeCode.TIME_OF_DAY:
 
+        case StBuiltinTypeCode.TIME_OF_DAY:
+        
             if (
-                isTimeOfDayInRange(
-                    hour, minute, second, millisecond,
-                    23, 59, 59, 999
-                )
+                Temporal.PlainTime.compare(MIN_TIME_OF_DAY, timeValue) <= 0 &&
+                Temporal.PlainTime.compare(timeValue, MAX_TIME_OF_DAY) <= 0
             ) {
                 choosenType = StBuiltinTypeCode.TIME_OF_DAY;
             }
-
+                
             else {
                 return [undefined, lhsBuiltinType];
             }
@@ -60,14 +112,12 @@ export function evaluateTimeOfDayLiteral(
         case StBuiltinTypeCode.LTIME_OF_DAY:
 
             if (
-                isTimeOfDayInRange(
-                    hour, minute, second, millisecond,
-                    23, 59, 59, 999.999999
-                )
+                Temporal.PlainTime.compare(MIN_LTIME_OF_DAY, timeValue) <= 0 &&
+                Temporal.PlainTime.compare(timeValue, MAX_LTIME_OF_DAY) <= 0
             ) {
                 choosenType = StBuiltinTypeCode.LTIME_OF_DAY;
             }
-
+                
             else {
                 return [undefined, lhsBuiltinType];
             }
@@ -75,6 +125,7 @@ export function evaluateTimeOfDayLiteral(
             break;
         
         default:
+
             return [undefined, lhsBuiltinType];
     }
 

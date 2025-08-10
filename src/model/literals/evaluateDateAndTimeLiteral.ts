@@ -1,6 +1,50 @@
-import { DateTime } from "luxon";
+import { Temporal } from "temporal-polyfill";
 import { StBuiltinType, StBuiltinTypeCode, StType } from "../../core/types.js";
-import { convertToPlatformSpecificTypeText, isDateAndTimeInRange } from "../../core/utils.js";
+import { convertToPlatformSpecificTypeText } from "../../core/utils.js";
+
+const MIN_DATE_AND_TIME = Temporal.PlainDateTime.from({
+    year: 1970,
+    month: 1,
+    day: 1,
+    hour: 0,
+    minute: 0,
+    second: 0,
+    nanosecond: 0
+});
+
+const MAX_DATE_AND_TIME = Temporal.PlainDateTime.from({
+    year: 2106,
+    month: 2,
+    day: 7,
+    hour: 6,
+    minute: 28,
+    second: 15,
+    nanosecond: 0
+});
+
+const MIN_LDATE_AND_TIME = Temporal.PlainDateTime.from({
+    year: 1970,
+    month: 1,
+    day: 1,
+    hour: 0,
+    minute: 0,
+    second: 0,
+    millisecond: 0,
+    microsecond: 0,
+    nanosecond: 0
+});
+
+const MAX_LDATE_AND_TIME = Temporal.PlainDateTime.from({
+    year: 2554,
+    month: 7,
+    day: 21,
+    hour: 23,
+    minute: 34,
+    second: 33,
+    millisecond: 709,
+    microsecond: 551,
+    nanosecond: 615
+});
 
 export function evaluateDateAndTimeLiteral(
     prefix: string,
@@ -23,29 +67,54 @@ export function evaluateDateAndTimeLiteral(
 
     const secondRaw = Number.parseInt(secondAndMoreParts[0]);
     const second = Number.isNaN(secondRaw) ? 0 : secondRaw;
-    const millisecondRaw = Number.parseInt(secondAndMoreParts[1]);
+    const fractionalRaw = secondAndMoreParts[1];
 
-    let millisecond = Number.isNaN(millisecondRaw) ? 0 : millisecondRaw;
-    let millisecond_rounded = millisecond;
+    let nanosecondTotal = 0;
+    let millisecond = 0;
+    let microsecond = 0;
+    let nanosecond = 0;
 
-    if (millisecond > 999) {
-        // If input is e.g. 999999999 (nanoseconds), convert to 999.999999 ms
-        millisecond = millisecond / Math.pow(10, millisecond.toString().length - 3);
-        millisecond_rounded = 999;
+    if (fractionalRaw) {
+
+        let nanosecondString = fractionalRaw.padEnd(9, "0").slice(0, 9);
+
+        nanosecondTotal = Number.parseInt(nanosecondString, 10);
+        millisecond = Math.floor(nanosecondTotal / 1e6);
+        microsecond = Math.floor((nanosecondTotal % 1e6) / 1e3);
+        nanosecond = nanosecondTotal % 1e3;
     }
 
-    const dateTime = DateTime.fromObject({
-        day,
-        month,
-        year,
-        hour,
-        minute,
-        second,
-        millisecond: millisecond_rounded
-    });
+    let dateTimeValue: Temporal.PlainDateTime;
 
-    if (!dateTime.isValid)
+    try {
+        dateTimeValue = Temporal.PlainDateTime.from({
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second,
+            millisecond,
+            microsecond,
+            nanosecond
+        });
+
+        if (
+            dateTimeValue.year !== year ||
+            dateTimeValue.month !== month ||
+            dateTimeValue.day !== day ||
+            dateTimeValue.hour !== hour ||
+            dateTimeValue.minute !== minute ||
+            dateTimeValue.second !== second ||
+            dateTimeValue.millisecond !== millisecond ||
+            dateTimeValue.microsecond !== microsecond ||
+            dateTimeValue.nanosecond !== nanosecond
+        ) {
+            return [undefined, lhsBuiltinType];
+        }
+    } catch {
         return [undefined, lhsBuiltinType];
+    }
 
     let choosenType: StBuiltinTypeCode | undefined;
 
@@ -54,15 +123,12 @@ export function evaluateDateAndTimeLiteral(
         case StBuiltinTypeCode.DATE_AND_TIME:
 
             if (
-                isDateAndTimeInRange(
-                    year, month, day, hour, minute, second, millisecond,
-                    1970, 1, 1, 0, 0, 0, 0,
-                    2106, 2, 7, 6, 28, 15, 0,
-                )
+                Temporal.PlainDateTime.compare(MIN_DATE_AND_TIME, dateTimeValue) <= 0 &&
+                Temporal.PlainDateTime.compare(dateTimeValue, MAX_DATE_AND_TIME) <= 0
             ) {
                 choosenType = StBuiltinTypeCode.DATE_AND_TIME;
             }
-
+            
             else {
                 return [undefined, lhsBuiltinType];
             }
@@ -72,15 +138,12 @@ export function evaluateDateAndTimeLiteral(
         case StBuiltinTypeCode.LDATE_AND_TIME:
 
             if (
-                isDateAndTimeInRange(
-                    year, month, day, hour, minute, second, millisecond,
-                    1970, 1, 1, 0, 0, 0, 0,
-                    2554, 7, 21, 23, 34, 33, 709.551615
-                )
+                Temporal.PlainDateTime.compare(MIN_LDATE_AND_TIME, dateTimeValue) <= 0 &&
+                Temporal.PlainDateTime.compare(dateTimeValue, MAX_LDATE_AND_TIME) <= 0
             ) {
                 choosenType = StBuiltinTypeCode.LDATE_AND_TIME;
             }
-
+            
             else {
                 return [undefined, lhsBuiltinType];
             }
@@ -88,6 +151,7 @@ export function evaluateDateAndTimeLiteral(
             break;
         
         default:
+
             return [undefined, lhsBuiltinType];
     }
 

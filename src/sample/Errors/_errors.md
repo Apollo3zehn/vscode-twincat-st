@@ -2,12 +2,6 @@
 - C0004: '-' is no component of 'SBYTE'
   	_bit := SBYTE#-1;
 
-- implement unary "NOT"
-
-- implement M0002
-
-- Use BigInt here: _int2:                  INT             := 18446744073709551616;
-
 - Evaluate errors.st
  array: ARRAY [0+1..GVL_Array.UPPER_LIMIT] OF INT;
 

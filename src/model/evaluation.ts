@@ -1,11 +1,11 @@
 import { ParserRuleContext } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Range } from "vscode";
-import { StBuiltinType, StBuiltinTypeCode, StModifier, StBuiltinTypeKind, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
+import { StBuiltinType, StBuiltinTypeCode, StModifier, StBuiltinTypeKind, StSymbol, StSymbolKind, StType, StVariableScope, StModel } from "../core/types.js";
 import { defaultRange, getContextRange, getNestedTypeOrSelf, getTokenRange, negateBits } from "../core/utils.js";
 import { AssignmentOperatorContext, ExprContext, LiteralContext, MemberExpressionContext, PostfixOpContext, PropertyContext } from "../generated/StructuredTextParser.js";
 import { StModelBuilder } from "./StModelBuilder.js";
 import { findDeclaration } from "./declaration.js";
-import { C0001, C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0080, C0140, C0143, C0185, M0002, M0003 } from "./diagnostics.js";
+import { C0001, C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0066, C0080, C0140, C0143, C0185, M0002, M0003 } from "./diagnostics.js";
 import { evaluateLogicalLiteral } from "./literals/evaluateBoolLiteral.js";
 import { evaluateDateAndTimeLiteral } from "./literals/evaluateDateAndTimeLiteral.js";
 import { evaluateDateLiteral } from "./literals/evaluateDateLiteral.js";
@@ -16,7 +16,7 @@ import { evaluateStringLiteral } from "./literals/evaluateStringLiteral.js";
 import { evaluateTimeLiteral } from "./literals/evaluateTimeLiteral.js";
 import { evaluateTimeOfDayLiteral } from "./literals/evaluateTimeOfDayLiteral.js";
 import { evaluateWStringLiteral } from "./literals/evaluateWStringLiteral.js";
-import { addBigInt, addNumber, divideBigInt, divideNumber, equalsBigInt, equalsNumber, executeBinaryOperation, moduloBigInt, multiplyBigInt, multiplyNumber, subtractBigInt, subtractNumber } from "./operations.js";
+import { addBigInt, addNumber, divideBigInt, divideNumber, equalsBigInt, equalsNumber, executeBinaryOperation, greaterThanBigInt, greaterThanNumber, greaterThanOrEqualToBigInt, greaterThanOrEqualToNumber, lessThanBigInt, lessThanNumber, lessThanOrEqualToBigInt, lessThanOrEqualToNumber, moduloBigInt, multiplyBigInt, multiplyNumber, notEqualsBigInt, notEqualsNumber, subtractBigInt, subtractNumber } from "./operations.js";
 
 export function evaluateAssignment(
     lhsType: StType | undefined,
@@ -60,17 +60,33 @@ export function evaluateExpression(
         if (!lhsType || !rhsType)
             return undefined;
 
-        const binaryOperatorString = expression._op!.text!;
+        const binaryOperatorString = expression._op?.text;
+        const equalityOperatorString = expression._equalityOp?.text;
 
         // Evaluate operation
-        return evaluateBinaryOperation(
-            lhsType,
-            rhsType,
-            binaryOperatorString,
-            getTokenRange(expression._op!),
-            getContextRange(expressions[0]),
-            getContextRange(expressions[1])
-        );
+        if (binaryOperatorString) {
+            return evaluateBinaryOperation(
+                lhsType,
+                rhsType,
+                binaryOperatorString,
+                getTokenRange(expression._op!),
+                getContextRange(expressions[0]),
+                getContextRange(expressions[1])
+            );
+        }
+
+        else if (equalityOperatorString) {
+            return evaluateEqualityOperation(
+                lhsType,
+                rhsType,
+                equalityOperatorString,
+                getTokenRange(expression._equalityOp!)
+            );
+        }
+
+        else {
+            return undefined;
+        }
     }
 
     else if (expressions.length === 1) {
@@ -341,17 +357,54 @@ export function evaluateBinaryOperation(
     rhsRange?: Range
 ): StType | undefined {
 
-    // Step 1: Promote possible constants (literals and constant expressions)
-    [lhsType, rhsType] = promoteMathOperands(operatorText, lhsType, rhsType);
+    // Ensure boths sides are builtin types
+    const lhsBuiltinType = lhsType.builtinType;
+    const rhsBuiltinType = rhsType.builtinType;
 
-    /* Ensure boths sides are builtin types, which is a prerequisite for step 2 */
-    if (!lhsType.builtinType || !rhsType.builtinType) {
+    if (!lhsBuiltinType || !rhsBuiltinType) {
         M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
         return undefined;
     }
+
+    // Determine type of lhs and rhs
+    const lhsKind = lhsBuiltinType.details?.kind;
+    const lhsIsUntypedIntegerLiteral = lhsBuiltinType.code === null;
+
+    const lhsIsInteger =
+        lhsIsUntypedIntegerLiteral ||
+        lhsKind === StBuiltinTypeKind.Bitfield ||
+        lhsKind === StBuiltinTypeKind.UnsignedInteger ||
+        lhsKind === StBuiltinTypeKind.SignedInteger;
     
-    // Step 2: Get lowest common denominator
-    const newTypeCode = getLowestCommonDenominator(
+    const lhsIsNumber = lhsIsInteger || lhsKind === StBuiltinTypeKind.Float;
+
+    const rhsKind = rhsBuiltinType.details?.kind;
+    const rhsIsUntypedIntegerLiteral = rhsBuiltinType.code === null;
+
+    const rhsIsInteger =
+        rhsIsUntypedIntegerLiteral ||
+        rhsKind === StBuiltinTypeKind.Bitfield ||
+        rhsKind === StBuiltinTypeKind.UnsignedInteger ||
+        rhsKind === StBuiltinTypeKind.SignedInteger;
+    
+    const rhsIsNumber = rhsIsInteger || rhsKind === StBuiltinTypeKind.Float;
+
+    // Promote possible constants (literals and constant expressions)
+    if (
+        lhsIsUntypedIntegerLiteral ||
+        rhsIsUntypedIntegerLiteral
+    ) {
+        [lhsType, rhsType] = promoteUntypedLiterals(
+            operatorText,
+            lhsType,
+            lhsIsUntypedIntegerLiteral,
+            rhsType,
+            rhsIsUntypedIntegerLiteral
+        );
+    }
+
+    // Get target type
+    const newTypeCode = getTargetTypeCode(
         lhsType,
         rhsType
     );
@@ -359,34 +412,14 @@ export function evaluateBinaryOperation(
     const newType = new StType();
     newType.builtinType = new StBuiltinType(newTypeCode);
 
-    // Step 3: Check assignment
+    // Check conversions
     const lhsSuccess = checkAssignment(newType, lhsType, lhsRange);
     const rhsSuccess = checkAssignment(newType, rhsType, rhsRange);
 
     if (!lhsSuccess || !rhsSuccess)
         return undefined;
 
-    // Step 4: Execute
-    const lhsValue = lhsType.builtinType.value;
-    const lhsKind = lhsType.builtinType.details!.kind;
-
-    const lhsIsInteger =
-        lhsKind === StBuiltinTypeKind.Bitfield ||
-        lhsKind === StBuiltinTypeKind.UnsignedInteger ||
-        lhsKind === StBuiltinTypeKind.SignedInteger;
-    
-    const lhsIsNumber = lhsIsInteger || lhsKind === StBuiltinTypeKind.Float;
-
-    const rhsValue = rhsType.builtinType.value;
-    const rhsKind = rhsType.builtinType.details!.kind;
-
-    const rhsIsInteger =
-        rhsKind === StBuiltinTypeKind.Bitfield ||
-        rhsKind === StBuiltinTypeKind.UnsignedInteger ||
-        rhsKind === StBuiltinTypeKind.SignedInteger;
-    
-    const rhsIsNumber = rhsIsInteger || rhsKind === StBuiltinTypeKind.Float;
-
+    // Execute operation
     let opNumber: ((a: number, b: number) => number | bigint) | undefined;
     let opBigInt: ((a: bigint, b: bigint) => bigint) | undefined;
 
@@ -452,10 +485,59 @@ export function evaluateBinaryOperation(
 
             break;
         
+        default:
+            throw new Error(`The operator ${operatorText} is not yet implemented.`);
+    }
+
+    newType.builtinType.value = executeBinaryOperation(
+        lhsBuiltinType.value,
+        rhsBuiltinType.value,
+        opNumber,
+        opBigInt
+    );
+
+    return newType;
+}
+
+export function evaluateEqualityOperation(
+    lhsType: StType,
+    rhsType: StType,
+    operatorText: string,
+    operatorRange?: Range
+): StType | undefined {
+    
+    const lhsKind = lhsType.builtinType?.details!.kind;
+
+    const lhsIsInteger =
+        lhsKind === StBuiltinTypeKind.Bitfield ||
+        lhsKind === StBuiltinTypeKind.UnsignedInteger ||
+        lhsKind === StBuiltinTypeKind.SignedInteger;
+    
+    const lhsIsNumber = lhsIsInteger || lhsKind === StBuiltinTypeKind.Float;
+
+    const rhsKind = rhsType.builtinType?.details!.kind;
+
+    const rhsIsInteger =
+        rhsKind === StBuiltinTypeKind.Bitfield ||
+        rhsKind === StBuiltinTypeKind.UnsignedInteger ||
+        rhsKind === StBuiltinTypeKind.SignedInteger;
+    
+    const rhsIsNumber = rhsIsInteger || rhsKind === StBuiltinTypeKind.Float;
+
+    let opNumber: ((a: number, b: number) => number | bigint) | undefined;
+    let opBigInt: ((a: bigint, b: bigint) => bigint) | undefined;
+
+    switch (operatorText) {
+        
         case "=":
 
-            if (!(lhsIsNumber && rhsIsNumber)) {
-                M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
+            if (
+                !(
+                    lhsIsNumber && rhsIsNumber ||
+                    lhsKind === rhsKind
+                )
+            ) {
+                C0066(lhsType.getId(), rhsType.getId(), operatorRange);
                 return undefined;
             }
 
@@ -464,13 +546,101 @@ export function evaluateBinaryOperation(
 
             break;
         
+        case "<>":
+
+            if (
+                !(
+                    lhsIsNumber && rhsIsNumber ||
+                    lhsKind === rhsKind
+                )
+            ) {
+                C0066(lhsType.getId(), rhsType.getId(), operatorRange);
+                return undefined;
+            }
+
+            opNumber = notEqualsNumber;
+            opBigInt = notEqualsBigInt;
+
+            break;
+        
+        case ">":
+
+            if (
+                !(
+                    lhsIsNumber && rhsIsNumber ||
+                    lhsKind === rhsKind
+                )
+            ) {
+                C0066(lhsType.getId(), rhsType.getId(), operatorRange);
+                return undefined;
+            }
+
+            opNumber = greaterThanNumber;
+            opBigInt = greaterThanBigInt;
+
+            break;
+        
+        case ">=":
+
+            if (
+                !(
+                    lhsIsNumber && rhsIsNumber ||
+                    lhsKind === rhsKind
+                )
+            ) {
+                C0066(lhsType.getId(), rhsType.getId(), operatorRange);
+                return undefined;
+            }
+
+            opNumber = greaterThanOrEqualToNumber;
+            opBigInt = greaterThanOrEqualToBigInt;
+
+            break;
+        
+        case "<":
+
+            if (
+                !(
+                    lhsIsNumber && rhsIsNumber ||
+                    lhsKind === rhsKind
+                )
+            ) {
+                C0066(lhsType.getId(), rhsType.getId(), operatorRange);
+                return undefined;
+            }
+
+            opNumber = lessThanNumber;
+            opBigInt = lessThanBigInt;
+
+            break;
+        
+        case "<=":
+
+            if (
+                !(
+                    lhsIsNumber && rhsIsNumber ||
+                    lhsKind === rhsKind
+                )
+            ) {
+                C0066(lhsType.getId(), rhsType.getId(), operatorRange);
+                return undefined;
+            }
+
+            opNumber = lessThanOrEqualToNumber;
+            opBigInt = lessThanOrEqualToBigInt;
+
+            break;
+        
         default:
             throw new Error(`The operator ${operatorText} is not yet implemented.`);
     }
 
+    const newType = new StType();
+    newType.builtinType = new StBuiltinType(StBuiltinTypeCode.BOOL);
+
     newType.builtinType.value = executeBinaryOperation(
-        lhsValue,
-        rhsValue,
+        lhsType.builtinType?.value,
+        rhsType.builtinType?.value,
         opNumber,
         opBigInt
     );
@@ -719,17 +889,16 @@ function checkAssignment(
     return false;
 }
 
-function promoteMathOperands(
+function promoteUntypedLiterals(
     operator: string,
     lhsType: StType,
-    rhsType: StType
+    lhsIsUntypedIntegerLiteral: boolean,
+    rhsType: StType,
+    rhsIsUntypedIntegerLiteral: boolean
 ): [StType, StType] {
     
-    const lhsBuiltinType = lhsType.builtinType;
-    const lhsIsUntypedIntegerLiteral = lhsBuiltinType?.code === null;
-
-    const rhsBuiltinType = rhsType.builtinType;
-    const rhsIsUntypedIntegerLiteral = rhsBuiltinType?.code === null;
+    const lhsBuiltinType = lhsType.builtinType!;
+    const rhsBuiltinType = rhsType.builtinType!;
 
     if (lhsIsUntypedIntegerLiteral && rhsIsUntypedIntegerLiteral) {
 
@@ -777,14 +946,14 @@ function promoteMathOperands(
     return [lhsType, rhsType];
 }
 
-function getLowestCommonDenominator(
+function getTargetTypeCode(
     lhsType: StType,
     rhsType: StType
 ): StBuiltinTypeCode {
 
     /* The calling method ensures that both values are defined */
-    const leftCode = lhsType.builtinType?.code!;
-    const rightCode = rhsType.builtinType?.code!;
+    const leftCode = lhsType.builtinType!.code!;
+    const rightCode = rhsType.builtinType!.code!;
 
     // Prefer REAL / LREAL
     if (leftCode === StBuiltinTypeCode.LREAL || rightCode === StBuiltinTypeCode.LREAL)
@@ -793,8 +962,24 @@ function getLowestCommonDenominator(
     if (leftCode === StBuiltinTypeCode.REAL || rightCode === StBuiltinTypeCode.REAL)
         return StBuiltinTypeCode.REAL;
 
-    const leftDetails = lhsType.builtinType?.details;
-    const rightDetails = rhsType.builtinType?.details;
+    // Prefer the other operand of TIME / LTIME
+    if (
+        leftCode === StBuiltinTypeCode.TIME ||
+        leftCode === StBuiltinTypeCode.LTIME
+    ) {
+        return rightCode;
+    }
+
+    else if (
+        rightCode === StBuiltinTypeCode.TIME ||
+        rightCode === StBuiltinTypeCode.LTIME
+    ) {
+        return leftCode;
+    }
+
+    //
+    const leftDetails = lhsType.builtinType!.details;
+    const rightDetails = rhsType.builtinType!.details;
 
     if (leftDetails && rightDetails) {
 

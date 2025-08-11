@@ -170,6 +170,19 @@ export function C0064(postfixOp: PostfixOpContext) {
     StModelBuilder.currentSourceFile.diagnostics.push(diagnostic);
 }
 
+// C0066: Cannot compare type '{name}' with type '{name}'
+export function C0066(lhsName: string, rhsName: string, operatorRange: Range | undefined) {
+
+    const diagnostic = new Diagnostic(
+        operatorRange ?? defaultRange,
+        `Cannot compare type '${lhsName}' with type '${rhsName}'`,
+        DiagnosticSeverity.Error
+    );
+
+    diagnostic.code = "C0064";
+    StModelBuilder.currentSourceFile.diagnostics.push(diagnostic);
+}
+
 // C0074: Unexpected array initialisation
 export function C0074(ctx: ArrayInitContext) {
     

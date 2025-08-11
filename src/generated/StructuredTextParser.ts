@@ -210,7 +210,7 @@ export class StructuredTextParser extends antlr.Parser {
     public static readonly literalNames = [
         null, "':'", "';'", "'('", "','", "')'", "':='", "'['", "']'", "'..'", 
         "'REF='", "'=>'", "'.'", "'D'", "'LD'", "'#'", "'*'", "'/'", "'+'", 
-        "'-'", "'='", "'<'", "'>'", "'<='", "'>='", "'<>'", "'NOT'", "'{'", 
+        "'-'", "'='", "'<>'", "'<'", "'>'", "'<='", "'>='", "'NOT'", "'{'", 
         "'}'", "'PROGRAM'", "'END_PROGRAM'", "'FUNCTION_BLOCK'", "'END_FUNCTION_BLOCK'", 
         "'FUNCTION'", "'END_FUNCTION'", "'PROPERTY'", "'END_PROPERTY'", 
         "'IMPLEMENTS'", "'EXTENDS'", "'GET'", "'END_GET'", "'SET'", "'END_SET'", 
@@ -3246,10 +3246,10 @@ export class StructuredTextParser extends antlr.Parser {
                             throw this.createFailedPredicateException("this.precpred(this.context, 5)");
                         }
                         this.state = 715;
-                        localContext._op = this.tokenStream.LT(1);
+                        localContext._equalityOp = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!((((_la) & ~0x1F) === 0 && ((1 << _la) & 66060288) !== 0))) {
-                            localContext._op = this.errorHandler.recoverInline(this);
+                            localContext._equalityOp = this.errorHandler.recoverInline(this);
                         }
                         else {
                             this.errorHandler.reportMatch(this);
@@ -5784,6 +5784,7 @@ export class TimeOfDayLiteralContext extends antlr.ParserRuleContext {
 
 export class ExprContext extends antlr.ParserRuleContext {
     public _op?: Token | null;
+    public _equalityOp?: Token | null;
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }

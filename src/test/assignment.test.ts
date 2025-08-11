@@ -305,7 +305,7 @@ const cases_invalid_variable = [
     ["LREAL", "BIT"],
 ];
 
-suite("assignment (valid)", () => {
+suite("valid", () => {
 
     setup(() => {
         StModelBuilder.currentSourceFile = new StSourceFile(Uri.parse("file:///dummy"));
@@ -327,7 +327,7 @@ suite("assignment (valid)", () => {
     });
 });
 
-suite("assignment (invalid)", () => {
+suite("invalid", () => {
 
     setup(() => {
         StModelBuilder.currentSourceFile = new StSourceFile(Uri.parse("file:///dummy"));

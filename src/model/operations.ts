@@ -52,6 +52,36 @@ export function equalsNumber(a: number, b: number): bigint {
         : 0n;
 }
 
+export function notEqualsNumber(a: number, b: number): bigint {
+    return a !== b
+        ? 1n
+        : 0n;
+}
+
+export function greaterThanNumber(a: number, b: number): bigint {
+    return a > b
+        ? 1n
+        : 0n;
+}
+
+export function greaterThanOrEqualToNumber(a: number, b: number): bigint {
+    return a >= b
+        ? 1n
+        : 0n;
+}
+
+export function lessThanNumber(a: number, b: number): bigint {
+    return a < b
+        ? 1n
+        : 0n;
+}
+
+export function lessThanOrEqualToNumber(a: number, b: number): bigint {
+    return a <= b
+        ? 1n
+        : 0n;
+}
+
 // BigInt operations
 export function multiplyBigInt(a: bigint, b: bigint): bigint {
     return a * b;
@@ -75,6 +105,36 @@ export function subtractBigInt(a: bigint, b: bigint): bigint {
 
 export function equalsBigInt(a: bigint, b: bigint): bigint {
     return a === b
+        ? 1n
+        : 0n;
+}
+
+export function notEqualsBigInt(a: bigint, b: bigint): bigint {
+    return a !== b
+        ? 1n
+        : 0n;
+}
+
+export function greaterThanBigInt(a: bigint, b: bigint): bigint {
+    return a > b
+        ? 1n
+        : 0n;
+}
+
+export function greaterThanOrEqualToBigInt(a: bigint, b: bigint): bigint {
+    return a >= b
+        ? 1n
+        : 0n;
+}
+
+export function lessThanBigInt(a: bigint, b: bigint): bigint {
+    return a < b
+        ? 1n
+        : 0n;
+}
+
+export function lessThanOrEqualToBigInt(a: bigint, b: bigint): bigint {
+    return a <= b
         ? 1n
         : 0n;
 }

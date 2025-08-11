@@ -1,3 +1,12 @@
+- C0066: Cannot compare type 'TIME' with type 'SINT'
+  _bit := _time = 2;
+  _bit := _time >= 2;
+
+
+- implement string equality
+
+- C0203: Only structures and function blocks can contain variables of type BIT
+  PRG_MAIN: _bit: BIT;
 
 - C0004: '-' is no component of 'SBYTE'
   	_bit := SBYTE#-1;
@@ -88,3 +97,36 @@ END_VAR
   C0185: It is not possible to perform component access '.', index access '[]', or call '()' on result of function call. Assign result to help variable first.
   C0261: A reference type is not allowed as base type of an array, pointer, or reference
   C0538: The number of inputs/outputs of the method '{method}' does not correspond to the interface '{interface}'
+
+
+
+
+
+
+
+_bit := _time * 2;
+_bit := _ltime * 2;
+
+_bit := _time + _time;
+# _bit := _time = _time;
+
+_bit := _ltime + _ltime;
+# _bit := _ltime = _ltime;
+
+_bit := _date + _time;
+# _bit := _date = _date;
+
+_bit := _ldate + _ltime;
+# _bit := _ldate = _ldate;
+
+_bit := _time_of_day + _time;
+# _bit := _time_of_day = _time_of_day;
+
+_bit := _ltime_of_day + _ltime;
+# _bit := _ltime_of_day = _ltime_of_day;
+
+_bit := _date_and_time + _time;
+# _bit := _date_and_time = _date_and_time;
+
+_bit := _ldate_and_time + _ltime;
+# _bit := _ldate_and_time = _ldate_and_time;

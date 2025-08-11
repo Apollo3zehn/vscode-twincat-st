@@ -289,7 +289,7 @@ expr
     : <assoc=right> unaryOp expr
     | expr op=('*'|'/'|MOD) expr
     | expr op=('+'|'-') expr
-    | expr op=('='|'<'|'>'|'<='|'>='|'<>') expr
+    | expr equalityOp=('='|'<>'|'<'|'>'|'<='|'>=') expr
     | expr op=(AND | AND_THEN | OR | OR_ELSE | XOR ) expr
     | literal
     | memberExpression

@@ -1,7 +1,7 @@
 import { ParserRuleContext } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Range } from "vscode";
 import { StBuiltinType, StBuiltinTypeCode, StModifier, StBuiltinTypeKind, StSymbol, StSymbolKind, StType, StVariableScope, StModel } from "../core/types.js";
-import { defaultRange, getContextRange, getNestedTypeOrSelf, getTokenRange, negateBits } from "../core/utils.js";
+import { defaultRange, getContextRange, getNestedTypeOrSelf, getTokenRange, isLongDateOrTime, isShortDateOrTime, negateBits } from "../core/utils.js";
 import { AssignmentOperatorContext, ExprContext, LiteralContext, MemberExpressionContext, PostfixOpContext, PropertyContext } from "../generated/StructuredTextParser.js";
 import { StModelBuilder } from "./StModelBuilder.js";
 import { findDeclaration } from "./declaration.js";
@@ -366,30 +366,10 @@ export function evaluateBinaryOperation(
         return undefined;
     }
 
-    // Determine type of lhs and rhs
-    const lhsKind = lhsBuiltinType.details?.kind;
+    // Promote untyped literals
     const lhsIsUntypedIntegerLiteral = lhsBuiltinType.code === null;
-
-    const lhsIsInteger =
-        lhsIsUntypedIntegerLiteral ||
-        lhsKind === StBuiltinTypeKind.Bitfield ||
-        lhsKind === StBuiltinTypeKind.UnsignedInteger ||
-        lhsKind === StBuiltinTypeKind.SignedInteger;
-    
-    const lhsIsNumber = lhsIsInteger || lhsKind === StBuiltinTypeKind.Float;
-
-    const rhsKind = rhsBuiltinType.details?.kind;
     const rhsIsUntypedIntegerLiteral = rhsBuiltinType.code === null;
 
-    const rhsIsInteger =
-        rhsIsUntypedIntegerLiteral ||
-        rhsKind === StBuiltinTypeKind.Bitfield ||
-        rhsKind === StBuiltinTypeKind.UnsignedInteger ||
-        rhsKind === StBuiltinTypeKind.SignedInteger;
-    
-    const rhsIsNumber = rhsIsInteger || rhsKind === StBuiltinTypeKind.Float;
-
-    // Promote possible constants (literals and constant expressions)
     if (
         lhsIsUntypedIntegerLiteral ||
         rhsIsUntypedIntegerLiteral
@@ -403,7 +383,7 @@ export function evaluateBinaryOperation(
         );
     }
 
-    // Get target type
+    // Get target type code (Could be invalid, so needs to be checked later)
     const newTypeCode = getTargetTypeCode(
         lhsType,
         rhsType
@@ -412,22 +392,45 @@ export function evaluateBinaryOperation(
     const newType = new StType();
     newType.builtinType = new StBuiltinType(newTypeCode);
 
-    // Check conversions
-    const lhsSuccess = checkAssignment(newType, lhsType, lhsRange);
-    const rhsSuccess = checkAssignment(newType, rhsType, rhsRange);
-
-    if (!lhsSuccess || !rhsSuccess)
-        return undefined;
-
     // Execute operation
     let opNumber: ((a: number, b: number) => number | bigint) | undefined;
     let opBigInt: ((a: bigint, b: bigint) => bigint) | undefined;
+
+    const lhsKind = lhsBuiltinType.details?.kind;
+
+    const lhsIsInteger =
+        lhsIsUntypedIntegerLiteral ||
+        lhsKind === StBuiltinTypeKind.Bitfield ||
+        lhsKind === StBuiltinTypeKind.UnsignedInteger ||
+        lhsKind === StBuiltinTypeKind.SignedInteger;
+    
+    const lhsIsNumber = lhsIsInteger || lhsKind === StBuiltinTypeKind.Float;
+
+    const rhsKind = rhsBuiltinType.details?.kind;
+
+    const rhsIsInteger =
+        rhsIsUntypedIntegerLiteral ||
+        rhsKind === StBuiltinTypeKind.Bitfield ||
+        rhsKind === StBuiltinTypeKind.UnsignedInteger ||
+        rhsKind === StBuiltinTypeKind.SignedInteger;
+    
+    const rhsIsNumber = rhsIsInteger || rhsKind === StBuiltinTypeKind.Float;
 
     switch (operatorText) {
 
         case "*":
             
-            if (!(lhsIsNumber && rhsIsNumber)) {
+            if (lhsIsNumber && rhsIsNumber) {
+
+                if (
+                    !checkAssignment(newType, lhsType, lhsRange) ||
+                    !checkAssignment(newType, rhsType, rhsRange)
+                ) {
+                    return undefined;
+                }
+            }
+            
+            else {
                 M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
                 return undefined;
             }
@@ -439,7 +442,17 @@ export function evaluateBinaryOperation(
         
         case "/":
 
-            if (!(lhsIsNumber && rhsIsNumber)) {
+            if (lhsIsNumber && rhsIsNumber) {
+
+                if (
+                    !checkAssignment(newType, lhsType, lhsRange) ||
+                    !checkAssignment(newType, rhsType, rhsRange)
+                ) {
+                    return undefined;
+                }
+            }
+            
+            else {
                 M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
                 return undefined;
             }
@@ -451,7 +464,17 @@ export function evaluateBinaryOperation(
         
         case "MOD":
 
-            if (!(lhsIsInteger && rhsIsInteger)) {
+            if (lhsIsNumber && rhsIsNumber) {
+
+                if (
+                    !checkAssignment(newType, lhsType, lhsRange) ||
+                    !checkAssignment(newType, rhsType, rhsRange)
+                ) {
+                    return undefined;
+                }
+            }
+            
+            else {
                 M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
                 return undefined;
             }
@@ -463,11 +486,30 @@ export function evaluateBinaryOperation(
 
         case "+":
 
-            if (!(lhsIsNumber && rhsIsNumber)) {
+            if (lhsIsNumber && rhsIsNumber) {
+
+                if (
+                    !checkAssignment(newType, lhsType, lhsRange) ||
+                    !checkAssignment(newType, rhsType, rhsRange)
+                ) {
+                    return undefined;
+                }
+            }
+            
+            else if (
+                isShortDateOrTime(lhsBuiltinType.code!) && rhsBuiltinType.code === StBuiltinTypeCode.TIME ||
+                isLongDateOrTime(lhsBuiltinType.code!) && rhsBuiltinType.code === StBuiltinTypeCode.LTIME ||
+                isShortDateOrTime(rhsBuiltinType.code!) && lhsBuiltinType.code === StBuiltinTypeCode.TIME ||
+                isLongDateOrTime(rhsBuiltinType.code!) && lhsBuiltinType.code === StBuiltinTypeCode.LTIME
+            ) {
+                // do nothing
+            }
+
+            else {
                 M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
                 return undefined;
             }
-
+            
             opNumber = addNumber;
             opBigInt = addBigInt;
 
@@ -475,11 +517,28 @@ export function evaluateBinaryOperation(
         
         case "-":
 
-            if (!(lhsIsNumber && rhsIsNumber)) {
+            if (lhsIsNumber && rhsIsNumber) {
+                
+                if (
+                    !checkAssignment(newType, lhsType, lhsRange) ||
+                    !checkAssignment(newType, rhsType, rhsRange)
+                ) {
+                    return undefined;
+                }
+            }
+            
+            else if (
+                isShortDateOrTime(lhsBuiltinType.code!) && rhsBuiltinType.code === StBuiltinTypeCode.TIME ||
+                isLongDateOrTime(lhsBuiltinType.code!) && rhsBuiltinType.code === StBuiltinTypeCode.LTIME
+            ) {
+                // do nothing
+            }
+
+            else {
                 M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
                 return undefined;
             }
-
+            
             opNumber = subtractNumber;
             opBigInt = subtractBigInt;
 

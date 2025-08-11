@@ -33,6 +33,7 @@ const cases_addition: [string, string, bigint | number][] = [
     ['INT#99', 'REAL#1', 100],
     ['REAL#99.1', 'REAL#0.9', 100],
     ['REAL#99.1', 'REAL#-0.9', 98.2]
+    #error: Add date/time test cases here (see errors.md)
 ];
 
 const cases_subtraction: [string, string, bigint | number][] = [
@@ -41,6 +42,7 @@ const cases_subtraction: [string, string, bigint | number][] = [
     ['INT#99', 'REAL#1', 98],
     ['REAL#99.1', 'REAL#0.9', 98.2],
     ['REAL#99.1', 'REAL#-0.9', 100]
+    #error: Add date/time test cases here (see errors.md)
 ];
 
 suite("arithmetic", () => {

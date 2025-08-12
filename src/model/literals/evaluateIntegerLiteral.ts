@@ -144,6 +144,7 @@ export function getSmallestIntegerForValue(
 
     const type = new StType();
     type.builtinType = new StBuiltinType(code);
+    type.builtinType.value = value;
 
     return type;
 }

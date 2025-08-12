@@ -6,6 +6,7 @@ import { StModelBuilder } from '../model/StModelBuilder.js';
 import { assertBigintOrNumberEqual, evaluateLiteralHelper } from './testUtils.js';
 
 const cases_multiplication: [string, string, bigint | number][] = [
+    ['2', '3', 6n],
     ['BYTE#2', 'INT#3', 6n],
     ['REAL#2.5', 'INT#2', 5],
     ['INT#2', 'REAL#2.5', 5],
@@ -14,6 +15,7 @@ const cases_multiplication: [string, string, bigint | number][] = [
 ];
 
 const cases_division: [string, string, bigint | number][] = [
+    ['10', '3', 3n],
     ['BYTE#10', 'INT#3', 3n],
     ['REAL#10.1', 'INT#2', 5.05],
     ['INT#2', 'REAL#2.5', 0.8],
@@ -22,27 +24,28 @@ const cases_division: [string, string, bigint | number][] = [
 ];
 
 const cases_modulo: [string, string, bigint | number][] = [
+    ['11', '7', 4n],
     ['UINT#11', 'UINT#7', 4n],
     ['INT#-11', 'UINT#7', -4n],
     ['UINT#11', 'INT#-7', 4n]
 ];
 
 const cases_addition: [string, string, bigint | number][] = [
+    ['99', '1', 100n],
     ['BYTE#99', 'INT#1', 100n],
     ['REAL#99', 'INT#1', 100],
     ['INT#99', 'REAL#1', 100],
     ['REAL#99.1', 'REAL#0.9', 100],
     ['REAL#99.1', 'REAL#-0.9', 98.2]
-    #error: Add date/time test cases here (see errors.md)
 ];
 
 const cases_subtraction: [string, string, bigint | number][] = [
+    ['99', '1', 98n],
     ['BYTE#99', 'INT#1', 98n],
     ['REAL#99', 'INT#1', 98],
     ['INT#99', 'REAL#1', 98],
     ['REAL#99.1', 'REAL#0.9', 98.2],
     ['REAL#99.1', 'REAL#-0.9', 100]
-    #error: Add date/time test cases here (see errors.md)
 ];
 
 suite("arithmetic", () => {
@@ -64,7 +67,7 @@ suite("arithmetic", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, "*");
+            const result = evaluateBinaryOperation(lhsType, rhsType, "*", undefined);
             
             // Assert
             assert(result);
@@ -85,7 +88,7 @@ suite("arithmetic", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, "/");
+            const result = evaluateBinaryOperation(lhsType, rhsType, "/", undefined);
             
             // Assert
             assert(result);
@@ -106,7 +109,7 @@ suite("arithmetic", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, "MOD");
+            const result = evaluateBinaryOperation(lhsType, rhsType, "MOD", undefined);
             
             // Assert
             assert(result);
@@ -127,7 +130,7 @@ suite("arithmetic", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, "+");
+            const result = evaluateBinaryOperation(lhsType, rhsType, "+", undefined);
             
             // Assert
             assert(result);
@@ -148,7 +151,7 @@ suite("arithmetic", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, "-");
+            const result = evaluateBinaryOperation(lhsType, rhsType, "-", undefined);
             
             // Assert
             assert(result);
@@ -158,6 +161,10 @@ suite("arithmetic", () => {
 });
 
 const cases_equals: [string, string][] = [
+    ['1', '1'],
+    ['BIT#1', 'BIT#1'],
+    ['BIT#1', 'BOOL#1'],
+    ['BOOL#1', 'BOOL#1'],
     ['BYTE#2', 'BYTE#2'],
     ['BYTE#2', 'REAL#2.0'],
     ['REAL#2.3e-2', 'REAL#2.3e-2'],
@@ -172,6 +179,10 @@ const cases_equals: [string, string][] = [
 ];
 
 const cases_not_equals: [string, string][] = [
+    ['1', '2'],
+    ['BIT#1', 'BIT#2'],
+    ['BIT#1', 'BOOL#2'],
+    ['BOOL#1', 'BOOL#2'],
     ['BYTE#2', 'BYTE#1'],
     ['BYTE#2', 'REAL#2.1'],
     ['REAL#2.3e-2', 'REAL#2.2e-2'],
@@ -186,6 +197,10 @@ const cases_not_equals: [string, string][] = [
 ];
 
 const cases_greater_than: [string, string][] = [
+    ['2', '1'],
+    ['BIT#2', 'BIT#1'],
+    ['BIT#2', 'BOOL#1'],
+    ['BOOL#2', 'BOOL#1'],
     ['BYTE#3', 'BYTE#2'],
     ['BYTE#3', 'REAL#2.0'],
     ['REAL#2.4e-2', 'REAL#2.3e-2'],
@@ -200,6 +215,10 @@ const cases_greater_than: [string, string][] = [
 ];
 
 const cases_greater_equal: [string, string][] = [
+    ['2', '1'],
+    ['BIT#2', 'BIT#1'],
+    ['BIT#2', 'BOOL#1'],
+    ['BOOL#2', 'BOOL#1'],
     ['BYTE#2', 'BYTE#2'],
     ['BYTE#2', 'REAL#2.0'],
     ['REAL#2.3e-2', 'REAL#2.3e-2'],
@@ -212,6 +231,10 @@ const cases_greater_equal: [string, string][] = [
     ['DATE_AND_TIME#2000-01-01-11:22:33', 'DATE_AND_TIME#2000-01-01-11:22:33'],
     ['LDATE_AND_TIME#2000-01-01-11:22:33', 'LDATE_AND_TIME#2000-01-01-11:22:33'],
 
+    ['1', '1'],
+    ['BIT#1', 'BIT#1'],
+    ['BIT#1', 'BOOL#1'],
+    ['BOOL#1', 'BOOL#1'],
     ['BYTE#3', 'BYTE#2'],
     ['BYTE#3', 'REAL#2.0'],
     ['REAL#2.4e-2', 'REAL#2.3e-2'],
@@ -226,6 +249,10 @@ const cases_greater_equal: [string, string][] = [
 ];
 
 const cases_less_than: [string, string][] = [
+    ['1', '2'],
+    ['BIT#1', 'BIT#2'],
+    ['BIT#1', 'BOOL#2'],
+    ['BOOL#1', 'BOOL#2'],
     ['BYTE#1', 'BYTE#2'],
     ['BYTE#1', 'REAL#2.0'],
     ['REAL#2.2e-2', 'REAL#2.3e-2'],
@@ -240,6 +267,10 @@ const cases_less_than: [string, string][] = [
 ];
 
 const cases_less_equal: [string, string][] = [
+    ['1', '2'],
+    ['BIT#1', 'BIT#2'],
+    ['BIT#1', 'BOOL#2'],
+    ['BOOL#1', 'BOOL#2'],
     ['BYTE#2', 'BYTE#2'],
     ['BYTE#2', 'REAL#2.0'],
     ['REAL#2.3e-2', 'REAL#2.3e-2'],
@@ -252,6 +283,10 @@ const cases_less_equal: [string, string][] = [
     ['DATE_AND_TIME#2000-01-01-11:22:33', 'DATE_AND_TIME#2000-01-01-11:22:33'],
     ['LDATE_AND_TIME#2000-01-01-11:22:33', 'LDATE_AND_TIME#2000-01-01-11:22:33'],
 
+    ['1', '1'],
+    ['BIT#1', 'BIT#1'],
+    ['BIT#1', 'BOOL#1'],
+    ['BOOL#1', 'BOOL#1'],
     ['BYTE#1', 'BYTE#2'],
     ['BYTE#1', 'REAL#2.0'],
     ['REAL#2.2e-2', 'REAL#2.3e-2'],
@@ -284,7 +319,7 @@ suite("equality", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, "=");
+            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, "=");
             
             // Assert
             assert(result);
@@ -305,7 +340,7 @@ suite("equality", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, "<>");
+            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, "<>");
             
             // Assert
             assert(result);
@@ -326,7 +361,7 @@ suite("equality", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, ">");
+            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, ">");
             
             // Assert
             assert(result);
@@ -347,7 +382,7 @@ suite("equality", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, ">=");
+            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, ">=");
             
             // Assert
             assert(result);
@@ -368,7 +403,7 @@ suite("equality", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, "<");
+            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, "<");
             
             // Assert
             assert(result);
@@ -389,7 +424,7 @@ suite("equality", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, "<=");
+            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, "<=");
             
             // Assert
             assert(result);

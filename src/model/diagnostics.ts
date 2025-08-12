@@ -23,7 +23,7 @@ export function M0002(
     lhsTypeName: string,
     rhsTypeName: string,
     operatorText: string,
-    operatorRange?: Range
+    operatorRange: Range | undefined
 ) {
 
     const diagnostic = new Diagnostic(
@@ -37,11 +37,15 @@ export function M0002(
 }
 
 // M0003: The unary operator '{name}' is not defined for type '{name}'
-export function M0003(typeName: string, ctx: UnaryOpContext, unaryOperatorString: string) {
+export function M0003(
+    typeName: string,
+    operatorString: string,
+    operatorRange: Range | undefined
+) {
 
     const diagnostic = new Diagnostic(
-        getContextRange(ctx),
-        `The unary operator '${unaryOperatorString}' is not defined for type '${typeName}'`,
+        operatorRange ?? defaultRange,
+        `The unary operator '${operatorString}' is not defined for type '${typeName}'`,
         DiagnosticSeverity.Error
     );
 

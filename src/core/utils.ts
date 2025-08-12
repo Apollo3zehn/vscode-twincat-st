@@ -303,17 +303,3 @@ export function parseBigIntWithRadix(value: string, radix: number): bigint {
 
     return BigInt(prefix + value);
 }
-
-export function isShortDateOrTime(code: StBuiltinTypeCode): boolean {
-    return code === StBuiltinTypeCode.TIME ||
-        code === StBuiltinTypeCode.DATE ||
-        code === StBuiltinTypeCode.TIME_OF_DAY ||
-        code === StBuiltinTypeCode.DATE_AND_TIME;
-}
-
-export function isLongDateOrTime(code: StBuiltinTypeCode): boolean {
-    return code === StBuiltinTypeCode.LTIME ||
-        code === StBuiltinTypeCode.LDATE ||
-        code === StBuiltinTypeCode.LTIME_OF_DAY ||
-        code === StBuiltinTypeCode.LDATE_AND_TIME;
-}

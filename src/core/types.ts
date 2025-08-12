@@ -48,13 +48,8 @@ export class StBuiltinType {
 
             this.details = details;
 
-            if (
-                details.kind === StBuiltinTypeKind.Bitfield ||
-                details.kind === StBuiltinTypeKind.UnsignedInteger ||
-                details.kind === StBuiltinTypeKind.SignedInteger
-            ) {
+            if (details.superKind === StBuiltinTypeSuperKind.Integer)
                 this.initializeIntegerType(subRangeParamToken);
-            }
         }   
     }
 
@@ -207,6 +202,7 @@ export class StSymbol {
 export class StBuiltinTypeDetails {
     constructor(
         public readonly kind: StBuiltinTypeKind,
+        public readonly superKind: StBuiltinTypeSuperKind,
         public readonly size: number,
         public readonly signed?: boolean,
         public readonly min?: bigint | number,
@@ -245,6 +241,15 @@ export enum StSymbolKind {
     Union,
     Enum,
     EnumMember
+}
+
+export enum StBuiltinTypeSuperKind {
+    Integer,
+    Float,
+    Logical,
+    String,
+    ShortDateOrTime,
+    LongDateOrTime
 }
 
 export enum StBuiltinTypeKind {
@@ -344,48 +349,48 @@ export class StModel {
 export const builtinTypesDetails = new Map<StBuiltinTypeCode, StBuiltinTypeDetails>([
 
     // Logical Types
-    [StBuiltinTypeCode.BOOL,            new StBuiltinTypeDetails(StBuiltinTypeKind.Logical, 1)],
-    [StBuiltinTypeCode.BIT,             new StBuiltinTypeDetails(StBuiltinTypeKind.Logical, 1)],
+    [StBuiltinTypeCode.BOOL,            new StBuiltinTypeDetails(StBuiltinTypeKind.Logical, StBuiltinTypeSuperKind.Logical, 1)],
+    [StBuiltinTypeCode.BIT,             new StBuiltinTypeDetails(StBuiltinTypeKind.Logical, StBuiltinTypeSuperKind.Logical, 1)],
 
     // Bitstring Types
-    [StBuiltinTypeCode.BYTE,            new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, 8, false, 0, 0xFF)],
-    [StBuiltinTypeCode.WORD,            new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, 16, false, 0, 0xFFFF)],
-    [StBuiltinTypeCode.DWORD,           new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, 32, false, 0, 0xFFFFFFFF)],
-    [StBuiltinTypeCode.LWORD,           new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, 64, false, 0, Number.MAX_SAFE_INTEGER)],
+    [StBuiltinTypeCode.BYTE,            new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 8, false, 0, 0xFF)],
+    [StBuiltinTypeCode.WORD,            new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 16, false, 0, 0xFFFF)],
+    [StBuiltinTypeCode.DWORD,           new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 32, false, 0, 0xFFFFFFFF)],
+    [StBuiltinTypeCode.LWORD,           new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 64, false, 0, Number.MAX_SAFE_INTEGER)],
 
     // Unsigned Integer Types
-    [StBuiltinTypeCode.USINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, 8, false, 0, 0xFF)],
-    [StBuiltinTypeCode.UINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, 16, false, 0, 0xFFFF)],
-    [StBuiltinTypeCode.UDINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, 32, false, 0, 0xFFFFFFFF)],
-    [StBuiltinTypeCode.ULINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, 64, false, 0, Number.MAX_SAFE_INTEGER)],
+    [StBuiltinTypeCode.USINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 8, false, 0, 0xFF)],
+    [StBuiltinTypeCode.UINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 16, false, 0, 0xFFFF)],
+    [StBuiltinTypeCode.UDINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 32, false, 0, 0xFFFFFFFF)],
+    [StBuiltinTypeCode.ULINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 64, false, 0, Number.MAX_SAFE_INTEGER)],
 
     // Signed Integer Types
-    [StBuiltinTypeCode.SINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, 8, true, -0x80, 0x7F)],
-    [StBuiltinTypeCode.INT,             new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, 16, true, -0x8000, 0x7FFF)],
-    [StBuiltinTypeCode.DINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, 32, true, -0x80000000, 0x7FFFFFFF)],
-    [StBuiltinTypeCode.LINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, 64, true, Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)],
+    [StBuiltinTypeCode.SINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 8, true, -0x80, 0x7F)],
+    [StBuiltinTypeCode.INT,             new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 16, true, -0x8000, 0x7FFF)],
+    [StBuiltinTypeCode.DINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 32, true, -0x80000000, 0x7FFFFFFF)],
+    [StBuiltinTypeCode.LINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 64, true, Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)],
 
     // Floating Point Types
-    [StBuiltinTypeCode.REAL,            new StBuiltinTypeDetails(StBuiltinTypeKind.Float, 32, undefined, -3.402823e+38, 3.402823e+38)],
-    [StBuiltinTypeCode.LREAL,           new StBuiltinTypeDetails(StBuiltinTypeKind.Float, 64, undefined, -1.7976931348623158e+308, 1.7976931348623158e+308)],
+    [StBuiltinTypeCode.REAL,            new StBuiltinTypeDetails(StBuiltinTypeKind.Float, StBuiltinTypeSuperKind.Float, 32, undefined, -3.402823e+38, 3.402823e+38)],
+    [StBuiltinTypeCode.LREAL,           new StBuiltinTypeDetails(StBuiltinTypeKind.Float, StBuiltinTypeSuperKind.Float, 64, undefined, -1.7976931348623158e+308, 1.7976931348623158e+308)],
 
     // String Types
-    [StBuiltinTypeCode.STRING,          new StBuiltinTypeDetails(StBuiltinTypeKind.String, -1)],
-    [StBuiltinTypeCode.WSTRING,         new StBuiltinTypeDetails(StBuiltinTypeKind.String, -1)],
+    [StBuiltinTypeCode.STRING,          new StBuiltinTypeDetails(StBuiltinTypeKind.String, StBuiltinTypeSuperKind.String, -1)],
+    [StBuiltinTypeCode.WSTRING,         new StBuiltinTypeDetails(StBuiltinTypeKind.String, StBuiltinTypeSuperKind.String, -1)],
 
     // Time types
-    [StBuiltinTypeCode.TIME,            new StBuiltinTypeDetails(StBuiltinTypeKind.Time, 32)],
-    [StBuiltinTypeCode.LTIME,           new StBuiltinTypeDetails(StBuiltinTypeKind.Time, 64)],
+    [StBuiltinTypeCode.TIME,            new StBuiltinTypeDetails(StBuiltinTypeKind.Time, StBuiltinTypeSuperKind.ShortDateOrTime, 32)],
+    [StBuiltinTypeCode.LTIME,           new StBuiltinTypeDetails(StBuiltinTypeKind.Time, StBuiltinTypeSuperKind.LongDateOrTime, 64)],
     
     // Date types
-    [StBuiltinTypeCode.DATE,            new StBuiltinTypeDetails(StBuiltinTypeKind.Date, 32)],
-    [StBuiltinTypeCode.LDATE,           new StBuiltinTypeDetails(StBuiltinTypeKind.Date, 64)],
+    [StBuiltinTypeCode.DATE,            new StBuiltinTypeDetails(StBuiltinTypeKind.Date, StBuiltinTypeSuperKind.ShortDateOrTime, 32)],
+    [StBuiltinTypeCode.LDATE,           new StBuiltinTypeDetails(StBuiltinTypeKind.Date, StBuiltinTypeSuperKind.LongDateOrTime, 64)],
     
     // Time-of-day types
-    [StBuiltinTypeCode.TIME_OF_DAY,     new StBuiltinTypeDetails(StBuiltinTypeKind.TimeOfDay, 32)],
-    [StBuiltinTypeCode.LTIME_OF_DAY,    new StBuiltinTypeDetails(StBuiltinTypeKind.TimeOfDay, 64)],
+    [StBuiltinTypeCode.TIME_OF_DAY,     new StBuiltinTypeDetails(StBuiltinTypeKind.TimeOfDay, StBuiltinTypeSuperKind.ShortDateOrTime, 32)],
+    [StBuiltinTypeCode.LTIME_OF_DAY,    new StBuiltinTypeDetails(StBuiltinTypeKind.TimeOfDay, StBuiltinTypeSuperKind.LongDateOrTime, 64)],
     
     // Date-and-time types
-    [StBuiltinTypeCode.DATE_AND_TIME,   new StBuiltinTypeDetails(StBuiltinTypeKind.DateAndTime, 32)],
-    [StBuiltinTypeCode.LDATE_AND_TIME,  new StBuiltinTypeDetails(StBuiltinTypeKind.DateAndTime, 64)],
+    [StBuiltinTypeCode.DATE_AND_TIME,   new StBuiltinTypeDetails(StBuiltinTypeKind.DateAndTime, StBuiltinTypeSuperKind.ShortDateOrTime, 32)],
+    [StBuiltinTypeCode.LDATE_AND_TIME,  new StBuiltinTypeDetails(StBuiltinTypeKind.DateAndTime, StBuiltinTypeSuperKind.LongDateOrTime, 64)],
 ]);

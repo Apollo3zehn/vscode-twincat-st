@@ -1,6 +1,9 @@
 import assert from 'assert';
+import { Uri } from 'vscode';
+import { StSourceFile } from '../core/types.js';
 import { evaluateBinaryOperation } from '../model/evaluation.js';
 import { evaluateIntegerLiteral } from '../model/literals/evaluateIntegerLiteral.js';
+import { StModelBuilder } from '../model/StModelBuilder.js';
 import { createType } from './testUtils.js';
 
 // Left operand: typed variable, right operand: typed variable
@@ -79,6 +82,10 @@ const cases_untyped_literals = [
 
 suite("binary operators", () => {
     
+    setup(() => {
+        StModelBuilder.currentSourceFile = new StSourceFile(Uri.parse("file:///dummy"));
+    });
+
     // Left operand: typed variable, right operand: typed variable
     cases_typed_variables.forEach(([lhs, rhs, operator, expectedType]) => {
         
@@ -89,7 +96,7 @@ suite("binary operators", () => {
             const rhsType = createType(rhs);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, operator);
+            const result = evaluateBinaryOperation(lhsType, rhsType, operator, undefined);
             
             // Assert
             assert(result);
@@ -110,7 +117,7 @@ suite("binary operators", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, operator);
+            const result = evaluateBinaryOperation(lhsType, rhsType, operator, undefined);
             
             // Assert
             assert(result);
@@ -131,7 +138,7 @@ suite("binary operators", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, operator);
+            const result = evaluateBinaryOperation(lhsType, rhsType, operator, undefined);
             
             // Assert
             assert(result);
@@ -152,7 +159,7 @@ suite("binary operators", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, operator);
+            const result = evaluateBinaryOperation(lhsType, rhsType, operator, undefined);
             
             // Assert
             assert(result);

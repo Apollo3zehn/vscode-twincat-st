@@ -389,70 +389,46 @@ function evaluateArithmeticOperation(
     const lhsBuiltinType = lhsType.builtinType;
     const rhsBuiltinType = rhsType.builtinType;
 
-    if (!lhsBuiltinType || !rhsBuiltinType) {
-        M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
-        return undefined;
-    }
-
-    // Get target type code (Could be invalid, so needs to be checked later)
+    // Get target type code
     const newTypeCode = getTargetTypeCode(
         lhsType,
         rhsType
     );
 
+    if (!newTypeCode)
+        return undefined;
+
     const newType = new StType();
     newType.builtinType = new StBuiltinType(newTypeCode);
+
+    // Validate
+    const success = checkConversion(
+        newType,
+        lhsType,
+        rhsType,
+        operatorText,
+        operatorRange,
+        lhsRange,
+        rhsRange
+    );
+
+    if (!success)
+        return undefined;
 
     // Execute operation
     let opNumber: ((a: number, b: number) => number | bigint) | undefined;
     let opBigInt: ((a: bigint, b: bigint) => bigint) | undefined;
 
-    const lhsSuperKind = lhsBuiltinType.details!.superKind;
-    const lhsIsNumber = lhsSuperKind === StBuiltinTypeSuperKind.Integer || lhsSuperKind === StBuiltinTypeSuperKind.Float;
-
-    const rhsSuperKind = rhsBuiltinType.details!.superKind;
-    const rhsIsNumber = rhsSuperKind === StBuiltinTypeSuperKind.Integer || rhsSuperKind === StBuiltinTypeSuperKind.Float;
-
     switch (operatorText) {
 
         case "*":
-            
-            if (lhsIsNumber && rhsIsNumber) {
-
-                if (
-                    !checkAssignment(newType, lhsType, lhsRange) ||
-                    !checkAssignment(newType, rhsType, rhsRange)
-                ) {
-                    return undefined;
-                }
-            }
-            
-            else {
-                M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
-                return undefined;
-            }
-            
+                        
             opNumber = multiplyNumber;
             opBigInt = multiplyBigInt;
             
             break;
         
         case "/":
-
-            if (lhsIsNumber && rhsIsNumber) {
-
-                if (
-                    !checkAssignment(newType, lhsType, lhsRange) ||
-                    !checkAssignment(newType, rhsType, rhsRange)
-                ) {
-                    return undefined;
-                }
-            }
-            
-            else {
-                M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
-                return undefined;
-            }
             
             opNumber = divideNumber;
             opBigInt = divideBigInt;
@@ -461,51 +437,12 @@ function evaluateArithmeticOperation(
         
         case "MOD":
 
-            if (lhsIsNumber && rhsIsNumber) {
-
-                if (
-                    !checkAssignment(newType, lhsType, lhsRange) ||
-                    !checkAssignment(newType, rhsType, rhsRange)
-                ) {
-                    return undefined;
-                }
-            }
-            
-            else {
-                M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
-                return undefined;
-            }
-
             opNumber = undefined;
             opBigInt = moduloBigInt;
 
             break;
 
         case "+":
-
-            if (lhsIsNumber && rhsIsNumber) {
-
-                if (
-                    !checkAssignment(newType, lhsType, lhsRange) ||
-                    !checkAssignment(newType, rhsType, rhsRange)
-                ) {
-                    return undefined;
-                }
-            }
-            
-            else if (
-                lhsBuiltinType.details?.superKind === StBuiltinTypeSuperKind.ShortDateOrTime && rhsBuiltinType.code === StBuiltinTypeCode.TIME ||
-                lhsBuiltinType.details?.superKind === StBuiltinTypeSuperKind.LongDateOrTime && rhsBuiltinType.code === StBuiltinTypeCode.LTIME ||
-                rhsBuiltinType.details?.superKind === StBuiltinTypeSuperKind.ShortDateOrTime && lhsBuiltinType.code === StBuiltinTypeCode.TIME ||
-                rhsBuiltinType.details?.superKind === StBuiltinTypeSuperKind.LongDateOrTime && lhsBuiltinType.code === StBuiltinTypeCode.LTIME
-            ) {
-                // do nothing
-            }
-
-            else {
-                M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
-                return undefined;
-            }
             
             opNumber = addNumber;
             opBigInt = addBigInt;
@@ -513,28 +450,6 @@ function evaluateArithmeticOperation(
             break;
         
         case "-":
-
-            if (lhsIsNumber && rhsIsNumber) {
-                
-                if (
-                    !checkAssignment(newType, lhsType, lhsRange) ||
-                    !checkAssignment(newType, rhsType, rhsRange)
-                ) {
-                    return undefined;
-                }
-            }
-            
-            else if (
-                lhsBuiltinType.details?.superKind === StBuiltinTypeSuperKind.ShortDateOrTime && rhsBuiltinType.code === StBuiltinTypeCode.TIME ||
-                lhsBuiltinType.details?.superKind === StBuiltinTypeSuperKind.LongDateOrTime && rhsBuiltinType.code === StBuiltinTypeCode.LTIME
-            ) {
-                // do nothing
-            }
-
-            else {
-                M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
-                return undefined;
-            }
             
             opNumber = subtractNumber;
             opBigInt = subtractBigInt;
@@ -546,8 +461,8 @@ function evaluateArithmeticOperation(
     }
 
     newType.builtinType.value = executeBinaryOperation(
-        lhsBuiltinType.value,
-        rhsBuiltinType.value,
+        lhsBuiltinType!.value,
+        rhsBuiltinType!.value,
         opNumber,
         opBigInt
     );
@@ -756,7 +671,7 @@ export function internalEvaluateAssignment(
             
         case StBuiltinTypeKind.Float:
            
-            const isFloat = rhsBuiltinType?.details?.kind === StBuiltinTypeKind.Float;
+            const isFloat = rhsBuiltinType?.details?.superKind === StBuiltinTypeSuperKind.Float;
             
             if (isFloat && Math.abs(rhsBuiltinType!.value! as number) <= 3.402823e+38)
                 return [lhsType, lhsType];
@@ -785,6 +700,68 @@ export function internalEvaluateAssignment(
     checkAssignment(lhsType, rhsType, getContextRange(rhsCtx));
 
     return [lhsType, rhsType];
+}
+
+function checkConversion(
+    newType: StType,
+    lhsType: StType,
+    rhsType: StType,
+    operatorText: string,
+    operatorRange?: Range,
+    lhsRange?: Range,
+    rhsRange?: Range
+): boolean {
+
+    const lhsBuiltinType = lhsType.builtinType;
+    const rhsBuiltinType = rhsType.builtinType;
+
+    if (lhsBuiltinType && rhsBuiltinType) {
+
+        const lhsSuperKind = lhsBuiltinType.details!.superKind;
+        const lhsIsNumber = lhsSuperKind === StBuiltinTypeSuperKind.Integer || lhsSuperKind === StBuiltinTypeSuperKind.Float;
+
+        const rhsSuperKind = rhsBuiltinType.details!.superKind;
+        const rhsIsNumber = rhsSuperKind === StBuiltinTypeSuperKind.Integer || rhsSuperKind === StBuiltinTypeSuperKind.Float;
+
+        if (lhsIsNumber && rhsIsNumber) {
+
+            if (
+                checkAssignment(newType, lhsType, lhsRange) &&
+                checkAssignment(newType, rhsType, rhsRange)
+            ) {
+                return true;
+            }
+        }
+        
+        else if (
+            operatorText === "+" &&
+            lhsBuiltinType &&
+            rhsBuiltinType &&
+            (
+                lhsBuiltinType.details?.superKind === StBuiltinTypeSuperKind.ShortDateOrTime && rhsBuiltinType.code === StBuiltinTypeCode.TIME ||
+                lhsBuiltinType.details?.superKind === StBuiltinTypeSuperKind.LongDateOrTime && rhsBuiltinType.code === StBuiltinTypeCode.LTIME ||
+                rhsBuiltinType.details?.superKind === StBuiltinTypeSuperKind.ShortDateOrTime && lhsBuiltinType.code === StBuiltinTypeCode.TIME ||
+                rhsBuiltinType.details?.superKind === StBuiltinTypeSuperKind.LongDateOrTime && lhsBuiltinType.code === StBuiltinTypeCode.LTIME
+            )
+        ) {
+            return true;
+        }
+            
+        else if (
+            operatorText === "-" &&
+            lhsBuiltinType &&
+            rhsBuiltinType &&
+            (
+                lhsBuiltinType.details?.superKind === StBuiltinTypeSuperKind.ShortDateOrTime && rhsBuiltinType.code === StBuiltinTypeCode.TIME ||
+                lhsBuiltinType.details?.superKind === StBuiltinTypeSuperKind.LongDateOrTime && rhsBuiltinType.code === StBuiltinTypeCode.LTIME
+            )
+        ) {
+            return true;
+        }
+    }
+
+    M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
+    return false;
 }
 
 function checkAssignment(
@@ -816,7 +793,7 @@ function checkAssignment(
         if (lhsBuiltinType.code === rhsBuiltinType.code) {
 
             if (
-                rhsDetails.kind === StBuiltinTypeKind.String &&
+                rhsDetails.superKind === StBuiltinTypeSuperKind.String &&
                 lhsBuiltinType.stringLength! < rhsBuiltinType.stringLength!
             ) {
 
@@ -838,7 +815,7 @@ function checkAssignment(
 
             case StBuiltinTypeSuperKind.Logical:
 
-                if (rhsDetails.kind === StBuiltinTypeKind.Logical)
+                if (rhsDetails.superKind === StBuiltinTypeSuperKind.Logical)
                     return true;
 
                 break;
@@ -1006,11 +983,16 @@ function promoteUntypedLiterals(
 function getTargetTypeCode(
     lhsType: StType,
     rhsType: StType
-): StBuiltinTypeCode {
+): StBuiltinTypeCode | undefined {
 
-    /* The calling method ensures that both values are defined */
-    const leftCode = lhsType.builtinType!.code!;
-    const rightCode = rhsType.builtinType!.code!;
+    const lhsBuiltinType = lhsType.builtinType;
+    const rhsBuiltinType = rhsType.builtinType;
+
+    if (!lhsBuiltinType || !rhsBuiltinType)
+        return undefined;
+
+    const leftCode = lhsBuiltinType.code;
+    const rightCode = rhsBuiltinType.code;
 
     // Prefer REAL / LREAL
     if (leftCode === StBuiltinTypeCode.LREAL || rightCode === StBuiltinTypeCode.LREAL)
@@ -1024,51 +1006,44 @@ function getTargetTypeCode(
         leftCode === StBuiltinTypeCode.TIME ||
         leftCode === StBuiltinTypeCode.LTIME
     ) {
-        return rightCode;
+        return rightCode ?? undefined;
     }
 
     else if (
         rightCode === StBuiltinTypeCode.TIME ||
         rightCode === StBuiltinTypeCode.LTIME
     ) {
-        return leftCode;
+        return leftCode ?? undefined;
     }
 
     //
-    const leftDetails = lhsType.builtinType!.details;
-    const rightDetails = rhsType.builtinType!.details;
+    const leftDetails = lhsBuiltinType.details!;
+    const rightDetails = rhsBuiltinType.details!;
 
-    if (leftDetails && rightDetails) {
+    const leftIsUnsignedInteger = leftDetails.signed === false;
+    const leftIsSignedInteger = leftDetails.signed === true;
 
-        const leftIsUnsignedInteger = leftDetails.signed === false;
-        const leftIsSignedInteger = leftDetails.signed === true;
+    const rightIsUnsignedInteger = rightDetails.signed === false;
+    const rightIsSignedInteger = rightDetails.signed === true;
 
-        const rightIsUnsignedInteger = rightDetails.signed === false;
-        const rightIsSignedInteger = rightDetails.signed === true;
+    // If both are unsigned, promote to the larger unsigned type
+    if (leftIsUnsignedInteger && rightIsUnsignedInteger)
+        return getUnsignedIntegerForSize(Math.max(leftDetails.size, rightDetails.size));
 
-        // If both are unsigned, promote to the larger unsigned type
-        if (leftIsUnsignedInteger && rightIsUnsignedInteger)
-            return getUnsignedIntegerForSize(Math.max(leftDetails.size, rightDetails.size));
+    // If both are signed, promote to the larger signed type
+    else if (leftIsSignedInteger && rightIsSignedInteger)
+        return getSignedIntegerForSize(Math.max(leftDetails.size, rightDetails.size));
 
-        // If both are signed, promote to the larger signed type
-        else if (leftIsSignedInteger && rightIsSignedInteger)
-            return getSignedIntegerForSize(Math.max(leftDetails.size, rightDetails.size));
-
-        // If one is signed and one is unsigned, promote to signed type with larger size
-        else if (
-            (leftIsSignedInteger && rightIsUnsignedInteger) ||
-            (leftIsUnsignedInteger && rightIsSignedInteger)
-        ) {
-            return getSignedIntegerForSize(Math.max(leftDetails.size, rightDetails.size));
-        }
-
-        // Default: fallback to the larger type
-        return leftDetails.size >= rightDetails.size ? leftCode : rightCode;
+    // If one is signed and one is unsigned, promote to signed type with larger size
+    else if (
+        (leftIsSignedInteger && rightIsUnsignedInteger) ||
+        (leftIsUnsignedInteger && rightIsSignedInteger)
+    ) {
+        return getSignedIntegerForSize(Math.max(leftDetails.size, rightDetails.size));
     }
-    
-    // Neither leftDetails or rightDetails is defined, so just return any type.
-    // The type checking algorithm will then throw an appropriate error.
-    return leftCode;
+
+    // Default: fallback to the larger type
+    return (leftDetails.size >= rightDetails.size ? leftCode : rightCode) ?? undefined;
 }
 
 function evaluateLiteral(literal: LiteralContext): StType | undefined {

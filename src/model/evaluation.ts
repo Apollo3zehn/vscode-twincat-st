@@ -419,6 +419,9 @@ function evaluateArithmeticOperation(
     let opNumber: ((a: number, b: number) => number | bigint) | undefined;
     let opBigInt: ((a: bigint, b: bigint) => bigint) | undefined;
 
+    let lhsValue = lhsBuiltinType!.value;
+    let rhsValue = rhsBuiltinType!.value;
+
     switch (operatorText) {
 
         case "*":
@@ -444,12 +447,47 @@ function evaluateArithmeticOperation(
 
         case "+":
             
+            // Convert ms to s
+            if (
+                lhsValue &&
+                typeof rhsValue === "bigint" &&
+                (
+                    lhsBuiltinType?.code === StBuiltinTypeCode.DATE ||
+                    lhsBuiltinType?.code === StBuiltinTypeCode.DATE_AND_TIME
+                )
+            ) {
+                rhsValue = rhsValue / 1000n;
+            }
+
+            else if (
+                rhsValue &&
+                typeof lhsValue === "bigint" &&
+                (
+                    rhsBuiltinType?.code === StBuiltinTypeCode.DATE ||
+                    rhsBuiltinType?.code === StBuiltinTypeCode.DATE_AND_TIME
+                )
+            ) {
+                lhsValue = lhsValue / 1000n;
+            }
+            
             opNumber = addNumber;
             opBigInt = addBigInt;
 
             break;
         
         case "-":
+            
+            // Convert ms to s
+            if (
+                lhsValue &&
+                typeof rhsValue === "bigint" &&
+                (
+                    lhsBuiltinType?.code === StBuiltinTypeCode.DATE ||
+                    lhsBuiltinType?.code === StBuiltinTypeCode.DATE_AND_TIME
+                )
+            ) {
+                rhsValue = rhsValue / 1000n;
+            }
             
             opNumber = subtractNumber;
             opBigInt = subtractBigInt;
@@ -461,8 +499,8 @@ function evaluateArithmeticOperation(
     }
 
     newType.builtinType.value = executeBinaryOperation(
-        lhsBuiltinType!.value,
-        rhsBuiltinType!.value,
+        lhsValue,
+        rhsValue,
         opNumber,
         opBigInt
     );

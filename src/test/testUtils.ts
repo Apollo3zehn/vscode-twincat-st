@@ -26,7 +26,11 @@ export function bigIntToTwosComplement(value: bigint, bits: number): string {
     return twosComplement;
 }
 
-export function assertBigintOrNumberEqual(actual: bigint | number | undefined, expected: bigint | number, epsilon = 1e-10) {
+export function assertBigIntOrNumberEqual(
+    actual: bigint | number | undefined,
+    expected: bigint | number | string,
+    epsilon = 1e-10
+) {
 
     if (typeof actual === "bigint" && typeof expected === "bigint")
         assert.strictEqual(actual, expected);

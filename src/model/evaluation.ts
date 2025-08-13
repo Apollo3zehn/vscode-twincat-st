@@ -400,9 +400,6 @@ function evaluateArithmeticOperation(
     rhsRange?: Range
 ): StType | undefined {
 
-    const lhsBuiltinType = lhsType.builtinType;
-    const rhsBuiltinType = rhsType.builtinType;
-
     // Get target type code
     const newTypeCode = getTargetTypeCode(
         lhsType,
@@ -416,7 +413,7 @@ function evaluateArithmeticOperation(
     newType.builtinType = new StBuiltinType(newTypeCode);
 
     // Validate
-    const success = checkOperation(
+    const success = checkArithmeticOperation(
         newType,
         lhsType,
         rhsType,
@@ -432,6 +429,9 @@ function evaluateArithmeticOperation(
     // Execute operation
     let opNumber: ((a: number, b: number) => number | bigint) | undefined;
     let opBigInt: ((a: bigint, b: bigint) => bigint) | undefined;
+
+    const lhsBuiltinType = lhsType.builtinType;
+    const rhsBuiltinType = rhsType.builtinType;
 
     let lhsValue = lhsBuiltinType!.value;
     let rhsValue = rhsBuiltinType!.value;
@@ -531,9 +531,6 @@ function evaluateBitstringOperation(
     rhsRange?: Range
 ): StType | undefined {
     
-    const lhsBuiltinType = lhsType.builtinType;
-    const rhsBuiltinType = rhsType.builtinType;
-
     // Get target type code
     const newTypeCode = getTargetTypeCode(
         lhsType,
@@ -548,7 +545,7 @@ function evaluateBitstringOperation(
     newType.builtinType = newBuiltinType;
 
     // Validate
-    const success = checkOperation(
+    const success = checkBitstringOperation(
         newType,
         lhsType,
         rhsType,
@@ -564,8 +561,8 @@ function evaluateBitstringOperation(
     // Execute operation
     let opBigInt: ((a: bigint, b: bigint) => bigint) | undefined;
 
-    let lhsValue = lhsBuiltinType!.value;
-    let rhsValue = rhsBuiltinType!.value;
+    let lhsValue = lhsType.builtinType!.value;
+    let rhsValue = rhsType.builtinType!.value;
 
     switch (operatorText) {
 
@@ -599,41 +596,23 @@ function evaluateEqualityOperation(
     operatorRange?: Range
 ): StType | undefined {
     
-    const lhsBuiltinType = lhsType.builtinType;
-    const rhsBuiltinType = rhsType.builtinType;
+    // Validate
+    const success = checkEqualityOperation(
+        lhsType,
+        rhsType,
+        operatorRange
+    );
 
-    if (!lhsBuiltinType || !rhsBuiltinType) {
-        C0066(lhsType.getId(), rhsType.getId(), operatorRange);
+    if (!success)
         return undefined;
-    }
 
-    const lhsCode = lhsBuiltinType.code;
-    const lhsSuperKind = lhsBuiltinType.details!.superKind;
-    const lhsIsLogical = lhsSuperKind === StBuiltinTypeSuperKind.Logical;
-    const lhsIsNumber = lhsSuperKind === StBuiltinTypeSuperKind.Integer || lhsSuperKind === StBuiltinTypeSuperKind.Float;
-
-    const rhsCode = rhsBuiltinType.code;
-    const rhsSuperKind = rhsBuiltinType.details!.superKind;
-    const rhsIsLogical = rhsSuperKind === StBuiltinTypeSuperKind.Logical;
-    const rhsIsNumber = rhsSuperKind === StBuiltinTypeSuperKind.Integer || rhsSuperKind === StBuiltinTypeSuperKind.Float;
-
+    // Execute operation
     let opNumber: ((a: number, b: number) => number | bigint) | undefined;
     let opBigInt: ((a: bigint, b: bigint) => bigint) | undefined;
 
     switch (operatorText) {
         
         case "=":
-
-            if (
-                !(
-                    lhsIsLogical && rhsIsLogical ||
-                    lhsIsNumber && rhsIsNumber ||
-                    lhsCode === rhsCode
-                )
-            ) {
-                C0066(lhsType.getId(), rhsType.getId(), operatorRange);
-                return undefined;
-            }
 
             opNumber = equalsNumber;
             opBigInt = equalsBigInt;
@@ -642,34 +621,12 @@ function evaluateEqualityOperation(
         
         case "<>":
 
-            if (
-                !(
-                    lhsIsLogical && rhsIsLogical ||
-                    lhsIsNumber && rhsIsNumber ||
-                    lhsCode === rhsCode
-                )
-            ) {
-                C0066(lhsType.getId(), rhsType.getId(), operatorRange);
-                return undefined;
-            }
-
             opNumber = notEqualsNumber;
             opBigInt = notEqualsBigInt;
 
             break;
         
         case ">":
-
-            if (
-                !(
-                    lhsIsLogical && rhsIsLogical ||
-                    lhsIsNumber && rhsIsNumber ||
-                    lhsCode === rhsCode
-                )
-            ) {
-                C0066(lhsType.getId(), rhsType.getId(), operatorRange);
-                return undefined;
-            }
 
             opNumber = greaterThanNumber;
             opBigInt = greaterThanBigInt;
@@ -678,17 +635,6 @@ function evaluateEqualityOperation(
         
         case ">=":
 
-            if (
-                !(
-                    lhsIsLogical && rhsIsLogical ||
-                    lhsIsNumber && rhsIsNumber ||
-                    lhsCode === rhsCode
-                )
-            ) {
-                C0066(lhsType.getId(), rhsType.getId(), operatorRange);
-                return undefined;
-            }
-
             opNumber = greaterThanOrEqualToNumber;
             opBigInt = greaterThanOrEqualToBigInt;
 
@@ -696,34 +642,12 @@ function evaluateEqualityOperation(
         
         case "<":
 
-            if (
-                !(
-                    lhsIsLogical && rhsIsLogical ||
-                    lhsIsNumber && rhsIsNumber ||
-                    lhsCode === rhsCode
-                )
-            ) {
-                C0066(lhsType.getId(), rhsType.getId(), operatorRange);
-                return undefined;
-            }
-
             opNumber = lessThanNumber;
             opBigInt = lessThanBigInt;
 
             break;
         
         case "<=":
-
-            if (
-                !(
-                    lhsIsLogical && rhsIsLogical ||
-                    lhsIsNumber && rhsIsNumber ||
-                    lhsCode === rhsCode
-                )
-            ) {
-                C0066(lhsType.getId(), rhsType.getId(), operatorRange);
-                return undefined;
-            }
 
             opNumber = lessThanOrEqualToNumber;
             opBigInt = lessThanOrEqualToBigInt;
@@ -738,8 +662,8 @@ function evaluateEqualityOperation(
     newType.builtinType = new StBuiltinType(StBuiltinTypeCode.BOOL);
 
     newType.builtinType.value = executeBinaryOperation(
-        lhsBuiltinType.value,
-        rhsBuiltinType.value,
+        lhsType.builtinType!.value,
+        rhsType.builtinType!.value,
         opNumber,
         opBigInt
     );
@@ -824,7 +748,7 @@ export function internalEvaluateAssignment(
     return [lhsType, rhsType];
 }
 
-function checkOperation(
+function checkArithmeticOperation(
     newType: StType,
     lhsType: StType,
     rhsType: StType,
@@ -895,6 +819,81 @@ function checkOperation(
     }
 
     M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
+    return false;
+}
+
+function checkBitstringOperation(
+    newType: StType,
+    lhsType: StType,
+    rhsType: StType,
+    operatorText: string,
+    operatorRange?: Range,
+    lhsRange?: Range,
+    rhsRange?: Range
+): boolean {
+
+    const lhsBuiltinType = lhsType.builtinType;
+    const rhsBuiltinType = rhsType.builtinType;
+
+    if (lhsBuiltinType && rhsBuiltinType) {
+
+        const lhsSuperKind = lhsBuiltinType.details!.superKind;
+        const lhsIsLogical = lhsSuperKind === StBuiltinTypeSuperKind.Logical;
+        const lhsIsInteger = lhsSuperKind === StBuiltinTypeSuperKind.Integer;
+
+        const rhsSuperKind = rhsBuiltinType.details!.superKind;
+        const rhsIsLogical = rhsSuperKind === StBuiltinTypeSuperKind.Logical;
+        const rhsIsInteger = rhsSuperKind === StBuiltinTypeSuperKind.Integer;
+
+        if (
+            lhsIsLogical && rhsIsLogical ||
+            lhsIsInteger && rhsIsInteger
+        ) {
+
+            if (
+                checkAssignment(newType, lhsType, lhsRange) &&
+                checkAssignment(newType, rhsType, rhsRange)
+            ) {
+                return true;
+            }
+        }
+    }
+
+    M0002(lhsType.getId(), rhsType.getId(), operatorText, operatorRange);
+    return false;
+}
+
+function checkEqualityOperation(
+    lhsType: StType,
+    rhsType: StType,
+    operatorRange?: Range,
+): boolean {
+
+    const lhsBuiltinType = lhsType.builtinType;
+    const rhsBuiltinType = rhsType.builtinType;
+
+    if (lhsBuiltinType && rhsBuiltinType) {
+
+        const lhsCode = lhsBuiltinType.code;
+        const lhsSuperKind = lhsBuiltinType.details!.superKind;
+        const lhsIsLogical = lhsSuperKind === StBuiltinTypeSuperKind.Logical;
+        const lhsIsNumber = lhsSuperKind === StBuiltinTypeSuperKind.Integer || lhsSuperKind === StBuiltinTypeSuperKind.Float;
+
+        const rhsCode = rhsBuiltinType.code;
+        const rhsSuperKind = rhsBuiltinType.details!.superKind;
+        const rhsIsLogical = rhsSuperKind === StBuiltinTypeSuperKind.Logical;
+        const rhsIsNumber = rhsSuperKind === StBuiltinTypeSuperKind.Integer || rhsSuperKind === StBuiltinTypeSuperKind.Float;
+
+        if (
+            lhsIsLogical && rhsIsLogical ||
+            lhsIsNumber && rhsIsNumber ||
+            lhsCode === rhsCode
+        ) {
+            return true;
+        }
+    }
+
+    C0066(lhsType.getId(), rhsType.getId(), operatorRange);
     return false;
 }
 

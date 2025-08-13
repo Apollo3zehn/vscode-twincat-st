@@ -1,10 +1,10 @@
-import { builtinTypesDetails, StBuiltinType, StBuiltinTypeCode, StBuiltinTypeKind, StType } from "../../core/types.js";
+import { builtinTypesDetails, StBuiltinType, StBuiltinTypeCode, StBuiltinTypeDetails, StBuiltinTypeKind, StType } from "../../core/types.js";
 import { parseBigIntWithRadix } from "../../core/utils.js";
 
 export function evaluateIntegerLiteral(
     literal: string
 ): [StType | undefined, string | undefined] {
-    
+
     const splittedText = literal.split('#');
 
     let lhsBuiltinType: StBuiltinType | undefined;
@@ -15,11 +15,14 @@ export function evaluateIntegerLiteral(
      * first because TwinCAT requires the input string 
      * to be uppercase, otherwise it is a syntax error.
      */
+
+    // Detect type and radix
     if (splittedText.length === 3) {
+
         lhsBuiltinType = new StBuiltinType(splittedText[0] as StBuiltinTypeCode);
         radix = parseInt(splittedText[1], 10);
     }
-
+    
     else if (splittedText.length === 2) {
 
         if (splittedText[0] in StBuiltinTypeCode)
@@ -28,10 +31,22 @@ export function evaluateIntegerLiteral(
         else
             radix = parseInt(splittedText[0], 10);
     }
-    
-    const valueAsString = splittedText[splittedText.length - 1].replaceAll("_", "");
-    value = parseBigIntWithRadix(valueAsString, radix);
 
+    // Get value
+    const valueAsString = splittedText[splittedText.length - 1].replaceAll("_", "");
+
+    if (lhsBuiltinType) {
+
+        value = parseBigIntWithRadix(valueAsString, radix);
+        value = convertToSignedIntegerIfRequired(lhsBuiltinType.details!, value);
+    }
+    
+    else {
+        // Default: parse as unsigned, promote later
+        value = parseBigIntWithRadix(valueAsString, radix);
+    }
+
+    // Get type for value
     let rhsType: StType;
 
     const integerType = getSmallestIntegerForValue(value, true, true);
@@ -47,6 +62,7 @@ export function evaluateIntegerLiteral(
         ];
     }
 
+    // Validate
     if (lhsBuiltinType) {
 
         if (
@@ -60,12 +76,12 @@ export function evaluateIntegerLiteral(
             ];
         }
 
-        const rhsDetails = rhsType.builtinType?.details;
         const lhsDetails = lhsBuiltinType.details;
+        const rhsDetails = rhsType.builtinType?.details;
 
         if (
-            rhsDetails &&
             lhsDetails &&
+            rhsDetails &&
             lhsDetails.max! < rhsDetails.max!
         ) {
             return [
@@ -87,6 +103,19 @@ export function evaluateIntegerLiteral(
     type.builtinType = builtinType;
 
     return [type, undefined];
+}
+
+export function convertToSignedIntegerIfRequired(builtinTypeDetails: StBuiltinTypeDetails, value: bigint) {
+
+    if (builtinTypeDetails.signed) {
+
+        // If value exceeds positive range, interpret as negative using two's complement
+        const max = builtinTypeDetails.max as bigint;
+
+        if (value >= max)
+            value -= (max << BigInt(1));
+    }
+    return value;
 }
 
 export function getSmallestIntegerForValue(

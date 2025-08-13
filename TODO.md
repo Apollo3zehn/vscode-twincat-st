@@ -1,6 +1,3 @@
-- syntax highlighting
-    - constants (blue)
-
 - case insensitivity
     - symbol resolution (methods, variables, types)
     - syntax highlighting
@@ -11,6 +8,12 @@
     - support constant value expression in String length and subrange parameters (e.g. STRING(1+1), INT(0..2/1))
 
 - statements (for loop, while loop, ...)
+
+- operators
+    AND_THEN, OR_ELSE
+
+- date types
+    UCHAR
 
 - var types:
 
@@ -43,3 +46,5 @@
 - test explorer
 - Clean up extension.ts
 - Print out errors and warnings of a specific file and compare that to expected errors and warnings in an automated way
+- interpreter
+- debugger

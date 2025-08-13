@@ -9,14 +9,14 @@ import { C0001, C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0066, C
 import { evaluateLogicalLiteral } from "./literals/evaluateBoolLiteral.js";
 import { evaluateDateAndTimeLiteral } from "./literals/evaluateDateAndTimeLiteral.js";
 import { evaluateDateLiteral } from "./literals/evaluateDateLiteral.js";
-import { evaluateIntegerLiteral, getSignedIntegerForSize, getSmallestIntegerForValue, getUnsignedIntegerForSize } from "./literals/evaluateIntegerLiteral.js";
+import { convertToSignedIntegerIfRequired, evaluateIntegerLiteral, getSignedIntegerForSize, getSmallestIntegerForValue, getUnsignedIntegerForSize } from "./literals/evaluateIntegerLiteral.js";
 import { evaluateLTimeLiteral } from "./literals/evaluateLTimeLiteral.js";
 import { evaluateRealLiteral } from "./literals/evaluateRealLiteral.js";
 import { evaluateStringLiteral } from "./literals/evaluateStringLiteral.js";
 import { evaluateTimeLiteral } from "./literals/evaluateTimeLiteral.js";
 import { evaluateTimeOfDayLiteral } from "./literals/evaluateTimeOfDayLiteral.js";
 import { evaluateWStringLiteral } from "./literals/evaluateWStringLiteral.js";
-import { addBigInt, addNumber, divideBigInt, divideNumber, equalsBigInt, equalsNumber, executeBinaryOperation, greaterThanBigInt, greaterThanNumber, greaterThanOrEqualToBigInt, greaterThanOrEqualToNumber, lessThanBigInt, lessThanNumber, lessThanOrEqualToBigInt, lessThanOrEqualToNumber, moduloBigInt, multiplyBigInt, multiplyNumber, notEqualsBigInt, notEqualsNumber, subtractBigInt, subtractNumber } from "./operations.js";
+import { addBigInt, addNumber, andBigInt, divideBigInt, divideNumber, equalsBigInt, equalsNumber, executeBinaryOperation, greaterThanBigInt, greaterThanNumber, greaterThanOrEqualToBigInt, greaterThanOrEqualToNumber, lessThanBigInt, lessThanNumber, lessThanOrEqualToBigInt, lessThanOrEqualToNumber, moduloBigInt, multiplyBigInt, multiplyNumber, notEqualsBigInt, notEqualsNumber, subtractBigInt, subtractNumber } from "./operations.js";
 
 export function evaluateAssignment(
     lhsType: StType | undefined,
@@ -144,6 +144,17 @@ export function evaluateBinaryOperation(
         );
     }
 
+    else if (bitstringOperatorText) {
+        return evaluateBitstringOperation(
+            lhsType,
+            rhsType,
+            bitstringOperatorText,
+            getTokenRange(operationExpr?._bitstringOp!),
+            lhsRange,
+            rhsRange
+        );
+    }
+
     else if (equalityOperatorText) {
         return evaluateEqualityOperation(
             lhsType,
@@ -152,15 +163,6 @@ export function evaluateBinaryOperation(
             getTokenRange(operationExpr?._equalityOp!)
         );
     }
-        
-    // else if (bitstringOperatorText) {
-    //     return evaluateBitstringOperation(
-    //         lhsType,
-    //         rhsType,
-    //         bitstringOperatorText,
-    //         getTokenRange(operationExpr?._bitstringOp!)
-    //     );
-    // }
 
     else {
         return undefined;
@@ -516,6 +518,76 @@ function evaluateArithmeticOperation(
         opNumber,
         opBigInt
     );
+
+    return newType;
+}
+
+function evaluateBitstringOperation(
+    lhsType: StType,
+    rhsType: StType,
+    operatorText: string,
+    operatorRange?: Range,
+    lhsRange?: Range,
+    rhsRange?: Range
+): StType | undefined {
+    
+    const lhsBuiltinType = lhsType.builtinType;
+    const rhsBuiltinType = rhsType.builtinType;
+
+    // Get target type code
+    const newTypeCode = getTargetTypeCode(
+        lhsType,
+        rhsType
+    );
+
+    if (!newTypeCode)
+        return undefined;
+
+    const newType = new StType();
+    const newBuiltinType = new StBuiltinType(newTypeCode);
+    newType.builtinType = newBuiltinType;
+
+    // Validate
+    const success = checkOperation(
+        newType,
+        lhsType,
+        rhsType,
+        operatorText,
+        operatorRange,
+        lhsRange,
+        rhsRange
+    );
+
+    if (!success)
+        return undefined;
+
+    // Execute operation
+    let opBigInt: ((a: bigint, b: bigint) => bigint) | undefined;
+
+    let lhsValue = lhsBuiltinType!.value;
+    let rhsValue = rhsBuiltinType!.value;
+
+    switch (operatorText) {
+
+        case "AND":
+                        
+            opBigInt = andBigInt;
+            
+            break;
+                
+        default:
+            throw new Error(`The operator ${operatorText} is not yet implemented.`);
+    }
+
+    newBuiltinType.value = executeBinaryOperation(
+        lhsValue,
+        rhsValue,
+        undefined,
+        opBigInt
+    );
+
+    if (newBuiltinType.value)
+        newBuiltinType.value = convertToSignedIntegerIfRequired(newBuiltinType.details!, newBuiltinType.value as bigint);
 
     return newType;
 }

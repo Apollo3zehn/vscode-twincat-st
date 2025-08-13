@@ -138,3 +138,15 @@ export function lessThanOrEqualToBigInt(a: bigint, b: bigint): bigint {
         ? 1n
         : 0n;
 }
+
+export function andBigInt(a: bigint, b: bigint): bigint {
+    return a & b;
+}
+
+export function orBigInt(a: bigint, b: bigint): bigint {
+    return a | b;
+}
+
+export function xorBigInt(a: bigint, b: bigint): bigint {
+    return a ^ b;
+}

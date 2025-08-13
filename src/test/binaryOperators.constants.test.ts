@@ -1,6 +1,6 @@
 import assert from 'assert';
 import { Uri } from 'vscode';
-import { StSourceFile } from '../core/types.js';
+import { StBuiltinTypeCode, StSourceFile } from '../core/types.js';
 import { evaluateBinaryOperation } from '../model/evaluation.js';
 import { StModelBuilder } from '../model/StModelBuilder.js';
 import { assertBigIntOrNumberEqual, evaluateLiteralHelper } from './testUtils.js';
@@ -96,7 +96,7 @@ suite("arithmetic", () => {
 
             if (typeof expected === "string")
                 expected = evaluateLiteralHelper(expected)[0]?.builtinType?.value!;
-            
+
             assertBigIntOrNumberEqual(result.builtinType?.value, expected, 0.1);
         });
     });
@@ -214,7 +214,7 @@ const cases_equals: [string, string][] = [
     ["TIME_OF_DAY#11:22:33", "TIME_OF_DAY#11:22:33"],
     ["LTIME_OF_DAY#11:22:33.123", "LTIME_OF_DAY#11:22:33.123"],
     ["DATE_AND_TIME#2000-01-01-11:22:33", "DATE_AND_TIME#2000-01-01-11:22:33"],
-    ["LDATE_AND_TIME#2000-01-01-11:22:33", "LDATE_AND_TIME#2000-01-01-11:22:33"],
+    ["LDATE_AND_TIME#2000-01-01-11:22:33", "LDATE_AND_TIME#2000-01-01-11:22:33"]
 ];
 
 const cases_not_equals: [string, string][] = [
@@ -232,7 +232,7 @@ const cases_not_equals: [string, string][] = [
     ["TIME_OF_DAY#11:22:33", "TIME_OF_DAY#11:22:34"],
     ["LTIME_OF_DAY#11:22:33.123", "LTIME_OF_DAY#11:22:33.124"],
     ["DATE_AND_TIME#2000-01-01-11:22:33", "DATE_AND_TIME#2000-01-01-11:22:34"],
-    ["LDATE_AND_TIME#2000-01-01-11:22:33", "LDATE_AND_TIME#2000-01-01-11:22:34"],
+    ["LDATE_AND_TIME#2000-01-01-11:22:33", "LDATE_AND_TIME#2000-01-01-11:22:34"]
 ];
 
 const cases_greater_than: [string, string][] = [
@@ -250,7 +250,7 @@ const cases_greater_than: [string, string][] = [
     ["TIME_OF_DAY#11:22:34", "TIME_OF_DAY#11:22:33"],
     ["LTIME_OF_DAY#11:22:33.124", "LTIME_OF_DAY#11:22:33.123"],
     ["DATE_AND_TIME#2000-01-01-11:22:34", "DATE_AND_TIME#2000-01-01-11:22:33"],
-    ["LDATE_AND_TIME#2000-01-01-11:22:34", "LDATE_AND_TIME#2000-01-01-11:22:33"],
+    ["LDATE_AND_TIME#2000-01-01-11:22:34", "LDATE_AND_TIME#2000-01-01-11:22:33"]
 ];
 
 const cases_greater_equal: [string, string][] = [
@@ -284,7 +284,7 @@ const cases_greater_equal: [string, string][] = [
     ["TIME_OF_DAY#11:22:34", "TIME_OF_DAY#11:22:33"],
     ["LTIME_OF_DAY#11:22:33.124", "LTIME_OF_DAY#11:22:33.123"],
     ["DATE_AND_TIME#2000-01-01-11:22:34", "DATE_AND_TIME#2000-01-01-11:22:33"],
-    ["LDATE_AND_TIME#2000-01-01-11:22:34", "LDATE_AND_TIME#2000-01-01-11:22:33"],
+    ["LDATE_AND_TIME#2000-01-01-11:22:34", "LDATE_AND_TIME#2000-01-01-11:22:33"]
 ];
 
 const cases_less_than: [string, string][] = [
@@ -302,7 +302,7 @@ const cases_less_than: [string, string][] = [
     ["TIME_OF_DAY#11:22:32", "TIME_OF_DAY#11:22:33"],
     ["LTIME_OF_DAY#11:22:33.122", "LTIME_OF_DAY#11:22:33.123"],
     ["DATE_AND_TIME#2000-01-01-11:22:32", "DATE_AND_TIME#2000-01-01-11:22:33"],
-    ["LDATE_AND_TIME#2000-01-01-11:22:32", "LDATE_AND_TIME#2000-01-01-11:22:33"],
+    ["LDATE_AND_TIME#2000-01-01-11:22:32", "LDATE_AND_TIME#2000-01-01-11:22:33"]
 ];
 
 const cases_less_equal: [string, string][] = [
@@ -336,7 +336,7 @@ const cases_less_equal: [string, string][] = [
     ["TIME_OF_DAY#11:22:32", "TIME_OF_DAY#11:22:33"],
     ["LTIME_OF_DAY#11:22:33.122", "LTIME_OF_DAY#11:22:33.123"],
     ["DATE_AND_TIME#2000-01-01-11:22:32", "DATE_AND_TIME#2000-01-01-11:22:33"],
-    ["LDATE_AND_TIME#2000-01-01-11:22:32", "LDATE_AND_TIME#2000-01-01-11:22:33"],
+    ["LDATE_AND_TIME#2000-01-01-11:22:32", "LDATE_AND_TIME#2000-01-01-11:22:33"]
 ];
 
 suite("equality", () => {
@@ -468,6 +468,48 @@ suite("equality", () => {
             // Assert
             assert(result);
             assert.strictEqual(result.builtinType?.value, 1n);
+        });
+    });
+});
+
+const cases_and: [string, string, string][] = [
+    ["BIT#1", "BIT#1", "BIT#1"],
+    ["BIT#1", "BIT#0", "BIT#0"],
+    ["BIT#1", "BOOL#1", "BIT#1"],
+    ["BIT#1", "BOOL#0", "BIT#0"],
+    ["BYTE#2#10101010", "BYTE#2#00101001", "USINT#2#00101000"],
+    ["BYTE#2#10101010", "INT#2#0010100100101001", "INT#2#0000000000101000"],
+    ["BYTE#2#10101010", "-1", "SINT#2#10101010"],
+];
+
+suite("bitstring", () => {
+    
+    setup(() => {
+        StModelBuilder.currentSourceFile = new StSourceFile(Uri.parse("file:///dummy"));
+    });
+
+    // Equal
+    cases_and.forEach(([lhs, rhs, expectedString]) => {
+        
+        test(`and: ${lhs} AND ${rhs} = ${expectedString}`, () => {
+            
+            // Arrange
+            const [lhsType, _1] = evaluateLiteralHelper(lhs);
+            const [rhsType, _2] = evaluateLiteralHelper(rhs);
+
+            assert(lhsType);
+            assert(rhsType);
+
+            // Act
+            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, undefined, "AND");
+            
+            // Assert
+            assert(result);
+
+            const expected = evaluateLiteralHelper(expectedString)[0]?.builtinType;
+
+            assert.strictEqual(result.builtinType?.code, expected?.code);
+            assert.strictEqual(result.builtinType?.value, expected?.value);
         });
     });
 });

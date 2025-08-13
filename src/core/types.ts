@@ -353,22 +353,22 @@ export const builtinTypesDetails = new Map<StBuiltinTypeCode, StBuiltinTypeDetai
     [StBuiltinTypeCode.BIT,             new StBuiltinTypeDetails(StBuiltinTypeKind.Logical, StBuiltinTypeSuperKind.Logical, 1)],
 
     // Bitstring Types
-    [StBuiltinTypeCode.BYTE,            new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 8, false, 0, 0xFF)],
-    [StBuiltinTypeCode.WORD,            new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 16, false, 0, 0xFFFF)],
-    [StBuiltinTypeCode.DWORD,           new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 32, false, 0, 0xFFFFFFFF)],
-    [StBuiltinTypeCode.LWORD,           new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 64, false, 0, Number.MAX_SAFE_INTEGER)],
+    [StBuiltinTypeCode.BYTE,            new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 8, false, 0n, 0xFFn)],
+    [StBuiltinTypeCode.WORD,            new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 16, false, 0n, 0xFFFFn)],
+    [StBuiltinTypeCode.DWORD,           new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 32, false, 0n, 0xFFFFFFFFn)],
+    [StBuiltinTypeCode.LWORD,           new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 64, false, 0n, 0xFFFFFFFFFFFFFFFFn)],
 
     // Unsigned Integer Types
-    [StBuiltinTypeCode.USINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 8, false, 0, 0xFF)],
-    [StBuiltinTypeCode.UINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 16, false, 0, 0xFFFF)],
-    [StBuiltinTypeCode.UDINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 32, false, 0, 0xFFFFFFFF)],
-    [StBuiltinTypeCode.ULINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 64, false, 0, Number.MAX_SAFE_INTEGER)],
+    [StBuiltinTypeCode.USINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 8, false, 0n, 0xFFn)],
+    [StBuiltinTypeCode.UINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 16, false, 0n, 0xFFFFn)],
+    [StBuiltinTypeCode.UDINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 32, false, 0n, 0xFFFFFFFFn)],
+    [StBuiltinTypeCode.ULINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 64, false, 0n, 0xFFFFFFFFFFFFFFFFn)],
 
     // Signed Integer Types
-    [StBuiltinTypeCode.SINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 8, true, -0x80, 0x7F)],
-    [StBuiltinTypeCode.INT,             new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 16, true, -0x8000, 0x7FFF)],
-    [StBuiltinTypeCode.DINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 32, true, -0x80000000, 0x7FFFFFFF)],
-    [StBuiltinTypeCode.LINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 64, true, Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)],
+    [StBuiltinTypeCode.SINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 8, true, -0x80n, 0x7Fn)],
+    [StBuiltinTypeCode.INT,             new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 16, true, -0x8000n, 0x7FFFn)],
+    [StBuiltinTypeCode.DINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 32, true, -0x80000000n, 0x7FFFFFFFn)],
+    [StBuiltinTypeCode.LINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 64, true, -0x8000000000000000n, 0x7FFFFFFFFFFFFFFFn)],
 
     // Floating Point Types
     [StBuiltinTypeCode.REAL,            new StBuiltinTypeDetails(StBuiltinTypeKind.Float, StBuiltinTypeSuperKind.Float, 32, undefined, -3.402823e+38, 3.402823e+38)],

@@ -5,22 +5,24 @@ import { evaluateBinaryOperation } from '../model/evaluation.js';
 import { StModelBuilder } from '../model/StModelBuilder.js';
 import { assertBigIntOrNumberEqual, evaluateLiteralHelper } from './testUtils.js';
 
-const cases_multiplication: [string, string, bigint | number][] = [
+const cases_multiplication: [string, string, bigint | number | string][] = [
     ["2", "3", 6n],
     ["BYTE#2", "INT#3", 6n],
     ["REAL#2.5", "INT#2", 5],
     ["INT#2", "REAL#2.5", 5],
     ["REAL#2.5", "REAL#2.5", 6.25],
-    ["REAL#2.5", "REAL#-2.5", -6.25]
+    ["REAL#2.5", "REAL#-2.5", -6.25],
+    ["TIME#2H2M", "2", "TIME#4H4M"],
 ];
 
-const cases_division: [string, string, bigint | number][] = [
+const cases_division: [string, string, bigint | number | string][] = [
     ["10", "3", 3n],
     ["BYTE#10", "INT#3", 3n],
     ["REAL#10.1", "INT#2", 5.05],
     ["INT#2", "REAL#2.5", 0.8],
     ["REAL#2.5", "REAL#2", 1.25],
-    ["REAL#2.5", "REAL#-2", -1.25]
+    ["REAL#2.5", "REAL#-2", -1.25],
+    ["TIME#2H2M", "2", "TIME#1H1M"],
 ];
 
 const cases_modulo: [string, string, bigint | number][] = [
@@ -87,10 +89,14 @@ suite("arithmetic", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, "*", undefined);
+            const result = evaluateBinaryOperation(lhsType, rhsType, "*", undefined, undefined);
             
             // Assert
             assert(result);
+
+            if (typeof expected === "string")
+                expected = evaluateLiteralHelper(expected)[0]?.builtinType?.value!;
+            
             assertBigIntOrNumberEqual(result.builtinType?.value, expected, 0.1);
         });
     });
@@ -108,10 +114,14 @@ suite("arithmetic", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, "/", undefined);
+            const result = evaluateBinaryOperation(lhsType, rhsType, "/", undefined, undefined);
             
             // Assert
             assert(result);
+
+            if (typeof expected === "string")
+                expected = evaluateLiteralHelper(expected)[0]?.builtinType?.value!;
+
             assertBigIntOrNumberEqual(result.builtinType?.value, expected, 0.1);
         });
     });
@@ -129,7 +139,7 @@ suite("arithmetic", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, "MOD", undefined);
+            const result = evaluateBinaryOperation(lhsType, rhsType, "MOD", undefined, undefined);
             
             // Assert
             assert(result);
@@ -151,7 +161,7 @@ suite("arithmetic", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, "+", undefined);
+            const result = evaluateBinaryOperation(lhsType, rhsType, "+", undefined, undefined);
             
             // Assert
             assert(result);
@@ -176,7 +186,7 @@ suite("arithmetic", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, "-", undefined);
+            const result = evaluateBinaryOperation(lhsType, rhsType, "-", undefined, undefined);
             
             // Assert
             assert(result);
@@ -348,7 +358,7 @@ suite("equality", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, "=");
+            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, "=", undefined);
             
             // Assert
             assert(result);
@@ -369,7 +379,7 @@ suite("equality", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, "<>");
+            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, "<>", undefined);
             
             // Assert
             assert(result);
@@ -390,7 +400,7 @@ suite("equality", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, ">");
+            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, ">", undefined);
             
             // Assert
             assert(result);
@@ -411,7 +421,7 @@ suite("equality", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, ">=");
+            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, ">=", undefined);
             
             // Assert
             assert(result);
@@ -432,7 +442,7 @@ suite("equality", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, "<");
+            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, "<", undefined);
             
             // Assert
             assert(result);
@@ -453,7 +463,7 @@ suite("equality", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, "<=");
+            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, "<=", undefined);
             
             // Assert
             assert(result);

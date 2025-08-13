@@ -96,7 +96,7 @@ suite("binary operators", () => {
             const rhsType = createType(rhs);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, operator, undefined);
+            const result = evaluateBinaryOperation(lhsType, rhsType, operator, undefined, undefined);
             
             // Assert
             assert(result);
@@ -117,7 +117,7 @@ suite("binary operators", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, operator, undefined);
+            const result = evaluateBinaryOperation(lhsType, rhsType, operator, undefined, undefined);
             
             // Assert
             assert(result);
@@ -138,7 +138,7 @@ suite("binary operators", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, operator, undefined);
+            const result = evaluateBinaryOperation(lhsType, rhsType, operator, undefined, undefined);
             
             // Assert
             assert(result);
@@ -159,7 +159,7 @@ suite("binary operators", () => {
             assert(rhsType);
 
             // Act
-            const result = evaluateBinaryOperation(lhsType, rhsType, operator, undefined);
+            const result = evaluateBinaryOperation(lhsType, rhsType, operator, undefined, undefined);
             
             // Assert
             assert(result);

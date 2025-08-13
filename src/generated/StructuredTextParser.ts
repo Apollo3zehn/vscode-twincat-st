@@ -3202,10 +3202,10 @@ export class StructuredTextParser extends antlr.Parser {
                             throw this.createFailedPredicateException("this.precpred(this.context, 7)");
                         }
                         this.state = 709;
-                        localContext._op = this.tokenStream.LT(1);
+                        localContext._arithmeticOp = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!(_la === 16 || _la === 17 || _la === 97)) {
-                            localContext._op = this.errorHandler.recoverInline(this);
+                            localContext._arithmeticOp = this.errorHandler.recoverInline(this);
                         }
                         else {
                             this.errorHandler.reportMatch(this);
@@ -3224,10 +3224,10 @@ export class StructuredTextParser extends antlr.Parser {
                             throw this.createFailedPredicateException("this.precpred(this.context, 6)");
                         }
                         this.state = 712;
-                        localContext._op = this.tokenStream.LT(1);
+                        localContext._arithmeticOp = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!(_la === 18 || _la === 19)) {
-                            localContext._op = this.errorHandler.recoverInline(this);
+                            localContext._arithmeticOp = this.errorHandler.recoverInline(this);
                         }
                         else {
                             this.errorHandler.reportMatch(this);
@@ -3268,10 +3268,10 @@ export class StructuredTextParser extends antlr.Parser {
                             throw this.createFailedPredicateException("this.precpred(this.context, 4)");
                         }
                         this.state = 718;
-                        localContext._op = this.tokenStream.LT(1);
+                        localContext._bitstringOp = this.tokenStream.LT(1);
                         _la = this.tokenStream.LA(1);
                         if(!(((((_la - 75)) & ~0x1F) === 0 && ((1 << (_la - 75)) & 31) !== 0))) {
-                            localContext._op = this.errorHandler.recoverInline(this);
+                            localContext._bitstringOp = this.errorHandler.recoverInline(this);
                         }
                         else {
                             this.errorHandler.reportMatch(this);
@@ -5783,8 +5783,9 @@ export class TimeOfDayLiteralContext extends antlr.ParserRuleContext {
 
 
 export class ExprContext extends antlr.ParserRuleContext {
-    public _op?: Token | null;
+    public _arithmeticOp?: Token | null;
     public _equalityOp?: Token | null;
+    public _bitstringOp?: Token | null;
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }

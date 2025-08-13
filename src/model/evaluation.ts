@@ -60,14 +60,16 @@ export function evaluateExpression(
         if (!lhsType || !rhsType)
             return undefined;
 
-        const binaryOperatorText = expression._op?.text;
+        const arithmeticOperatorText = expression._arithmeticOp?.text;
         const equalityOperatorText = expression._equalityOp?.text;
+        const bitstringOperatorText = expression._bitstringOp?.text;
 
         return evaluateBinaryOperation(
             lhsType,
             rhsType,
-            binaryOperatorText,
+            arithmeticOperatorText,
             equalityOperatorText,
+            bitstringOperatorText,
             expression,
             getContextRange(expressions[0]),
             getContextRange(expressions[1])
@@ -105,6 +107,7 @@ export function evaluateBinaryOperation(
     rhsType: StType,
     arithmeticOperatorText: string | undefined,
     equalityOperatorText: string | undefined,
+    bitstringOperatorText: string | undefined,
     operationExpr?: ExprContext,
     lhsRange?: Range,
     rhsRange?: Range
@@ -135,7 +138,7 @@ export function evaluateBinaryOperation(
             lhsType,
             rhsType,
             arithmeticOperatorText,
-            getTokenRange(operationExpr?._op!),
+            getTokenRange(operationExpr?._arithmeticOp!),
             lhsRange,
             rhsRange
         );
@@ -149,6 +152,15 @@ export function evaluateBinaryOperation(
             getTokenRange(operationExpr?._equalityOp!)
         );
     }
+        
+    // else if (bitstringOperatorText) {
+    //     return evaluateBitstringOperation(
+    //         lhsType,
+    //         rhsType,
+    //         bitstringOperatorText,
+    //         getTokenRange(operationExpr?._bitstringOp!)
+    //     );
+    // }
 
     else {
         return undefined;
@@ -402,7 +414,7 @@ function evaluateArithmeticOperation(
     newType.builtinType = new StBuiltinType(newTypeCode);
 
     // Validate
-    const success = checkConversion(
+    const success = checkOperation(
         newType,
         lhsType,
         rhsType,
@@ -740,7 +752,7 @@ export function internalEvaluateAssignment(
     return [lhsType, rhsType];
 }
 
-function checkConversion(
+function checkOperation(
     newType: StType,
     lhsType: StType,
     rhsType: StType,
@@ -769,6 +781,18 @@ function checkConversion(
             ) {
                 return true;
             }
+        }
+
+        else if (
+            (operatorText === "*" || operatorText === "/") &&
+            lhsBuiltinType &&
+            rhsBuiltinType &&
+            (
+                lhsBuiltinType.details?.kind === StBuiltinTypeKind.Time && rhsBuiltinType.details?.superKind === StBuiltinTypeSuperKind.Integer ||
+                rhsBuiltinType.details?.kind === StBuiltinTypeKind.Time && lhsBuiltinType.details?.superKind === StBuiltinTypeSuperKind.Integer
+            )
+        ) {
+            return true;
         }
         
         else if (

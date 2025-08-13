@@ -1,15 +1,9 @@
-- C0066: Cannot compare type 'TIME' with type 'SINT'
-  _bit := _time = 2;
-  _bit := _time >= 2;
-
+- more types (UCHAR, UTF8): https://infosys.beckhoff.com/content/1031/tc3_plc_intro/2529284235.html?id=2804714150558064752
 
 - implement string equality
 
 - C0203: Only structures and function blocks can contain variables of type BIT
   PRG_MAIN: _bit: BIT;
-
-- C0004: '-' is no component of 'SBYTE'
-  	_bit := SBYTE#-1;
 
 - Evaluate errors.st
  array: ARRAY [0+1..GVL_Array.UPPER_LIMIT] OF INT;
@@ -99,34 +93,5 @@ END_VAR
   C0538: The number of inputs/outputs of the method '{method}' does not correspond to the interface '{interface}'
 
 
+https://en.wikipedia.org/wiki/IEC_61131-3#Data_types
 
-
-
-
-
-_bit := _time * 2;
-_bit := _ltime * 2;
-
-_bit := _time + _time;
-# _bit := _time = _time;
-
-_bit := _ltime + _ltime;
-# _bit := _ltime = _ltime;
-
-_bit := _date + _time;
-# _bit := _date = _date;
-
-_bit := _ldate + _ltime;
-# _bit := _ldate = _ldate;
-
-_bit := _time_of_day + _time;
-# _bit := _time_of_day = _time_of_day;
-
-_bit := _ltime_of_day + _ltime;
-# _bit := _ltime_of_day = _ltime_of_day;
-
-_bit := _date_and_time + _time;
-# _bit := _date_and_time = _date_and_time;
-
-_bit := _ldate_and_time + _ltime;
-# _bit := _ldate_and_time = _ldate_and_time;

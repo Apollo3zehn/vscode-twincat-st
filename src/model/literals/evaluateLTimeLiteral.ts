@@ -17,10 +17,11 @@ export function evaluateLTimeLiteral(
     literal: string
 ): [StType | undefined, string | undefined] {
     
-    const ltimeText = literal.split('#')[1];
+    let ltimeText = literal.split('#')[1];
+    ltimeText = ltimeText.replace("MS", "Z"); // Workaround to make regex recognition unambiguous
 
     // Regex to extract D, H, M, S, MS, US, NS values
-    const ltimeRegex = /(?:([0-9_]+)D)?(?:([0-9_]+)H)?(?:([0-9_]+)M)?(?:([0-9_]+)S)?(?:([0-9_]+)MS)?(?:([0-9_]+)US)?(?:([0-9_]+)NS)?/;
+    const ltimeRegex = /(?:([0-9_]+)D)?(?:([0-9_]+)H)?(?:([0-9_]+)M)?(?:([0-9_]+)S)?(?:([0-9_]+)Z)?(?:([0-9_]+)US)?(?:([0-9_]+)NS)?/;
     const match = ltimeText.match(ltimeRegex)!;
 
     for (let i = 0; i < 7; ++i) {
@@ -28,13 +29,13 @@ export function evaluateLTimeLiteral(
     }
 
     const ltimeInNanoseconds =
-        BigInt(TIME_COMPONENTS[0].value) * 24n * 60n * 60n * 1_000_000_000n + // days
-        BigInt(TIME_COMPONENTS[1].value) * 60n * 60n * 1_000_000_000n +       // hours
-        BigInt(TIME_COMPONENTS[2].value) * 60n * 1_000_000_000n +            // minutes
-        BigInt(TIME_COMPONENTS[3].value) * 1_000_000_000n +                  // seconds
-        BigInt(TIME_COMPONENTS[4].value) * 1_000_000n +                      // milliseconds
-        BigInt(TIME_COMPONENTS[5].value) * 1_000n +                          // microseconds
-        BigInt(TIME_COMPONENTS[6].value);                                    // nanoseconds
+        BigInt(TIME_COMPONENTS[0].value) * 24n * 60n * 60n * 1_000_000_000n +   // days
+        BigInt(TIME_COMPONENTS[1].value) * 60n * 60n * 1_000_000_000n +         // hours
+        BigInt(TIME_COMPONENTS[2].value) * 60n * 1_000_000_000n +               // minutes
+        BigInt(TIME_COMPONENTS[3].value) * 1_000_000_000n +                     // seconds
+        BigInt(TIME_COMPONENTS[4].value) * 1_000_000n +                         // milliseconds
+        BigInt(TIME_COMPONENTS[5].value) * 1_000n +                             // microseconds
+        BigInt(TIME_COMPONENTS[6].value);                                       // nanoseconds
 
     // Find index of first overflowing component
     const index = match.slice(1).findIndex(x => x);

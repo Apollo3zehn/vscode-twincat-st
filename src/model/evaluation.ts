@@ -1,6 +1,6 @@
 import { ParserRuleContext } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Range } from "vscode";
-import { StBuiltinType, StBuiltinTypeCode, StModifier, StBuiltinTypeKind, StSymbol, StSymbolKind, StType, StVariableScope, StModel, StBuiltinTypeSuperKind } from "../core/types.js";
+import { StBuiltinType, StBuiltinTypeCode, StBuiltinTypeKind, StBuiltinTypeSuperKind, StModifier, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
 import { defaultRange, getContextRange, getNestedTypeOrSelf, getTokenRange, negateBits } from "../core/utils.js";
 import { AssignmentOperatorContext, ExprContext, LiteralContext, MemberExpressionContext, PostfixOpContext, PropertyContext } from "../generated/StructuredTextParser.js";
 import { StModelBuilder } from "./StModelBuilder.js";
@@ -9,7 +9,7 @@ import { C0001, C0018, C0032, C0035, C0036, C0037, C0046, C0047, C0064, C0066, C
 import { evaluateLogicalLiteral } from "./literals/evaluateBoolLiteral.js";
 import { evaluateDateAndTimeLiteral } from "./literals/evaluateDateAndTimeLiteral.js";
 import { evaluateDateLiteral } from "./literals/evaluateDateLiteral.js";
-import { convertToSignedIntegerIfRequired, evaluateIntegerLiteral, getSignedIntegerForSize, getSmallestIntegerForValue, getUnsignedIntegerForSize } from "./literals/evaluateIntegerLiteral.js";
+import { ensureNoOverflowBigIntWorkaround, evaluateIntegerLiteral, getSignedIntegerForSize, getSmallestIntegerForValue, getUnsignedIntegerForSize } from "./literals/evaluateIntegerLiteral.js";
 import { evaluateLTimeLiteral } from "./literals/evaluateLTimeLiteral.js";
 import { evaluateRealLiteral } from "./literals/evaluateRealLiteral.js";
 import { evaluateStringLiteral } from "./literals/evaluateStringLiteral.js";
@@ -401,20 +401,20 @@ function evaluateArithmeticOperation(
 ): StType | undefined {
 
     // Get target type code
-    const newTypeCode = getTargetTypeCode(
+    const targetTypeCode = getTargetTypeCode(
         lhsType,
         rhsType
     );
 
-    if (!newTypeCode)
+    if (!targetTypeCode)
         return undefined;
 
-    const newType = new StType();
-    newType.builtinType = new StBuiltinType(newTypeCode);
+    const targetType = new StType();
+    targetType.builtinType = new StBuiltinType(targetTypeCode);
 
     // Validate
     const success = checkArithmeticOperation(
-        newType,
+        targetType,
         lhsType,
         rhsType,
         operatorText,
@@ -512,14 +512,43 @@ function evaluateArithmeticOperation(
             throw new Error(`The operator ${operatorText} is not yet implemented.`);
     }
 
-    newType.builtinType.value = executeBinaryOperation(
+    let value = executeBinaryOperation(
         lhsValue,
         rhsValue,
         opNumber,
         opBigInt
     );
 
-    return newType;
+    let targetTypeDetails = targetType.builtinType.details!;
+
+    // In case of constant expression: Try to upgrade to next larger integer type if necessary
+    if (
+        targetTypeDetails.superKind === StBuiltinTypeSuperKind.Integer &&
+        value !== undefined &&
+        value as bigint > targetTypeDetails.max!
+    ) {
+        const allowSigned = targetTypeDetails.signed ?? false;
+        const allowUnsigned = !allowSigned;
+
+        const upgradedType = getSmallestIntegerForValue(
+            value as bigint,
+            allowSigned,
+            allowUnsigned,
+            true
+        )!;
+
+        if (upgradedType.builtinType!.details!.size > targetTypeDetails.size)
+            targetType.builtinType = upgradedType.builtinType!;
+    }
+
+    targetTypeDetails = targetType.builtinType.details!;
+
+    if (value !== undefined)
+        value = ensureNoOverflowBigIntWorkaround(targetTypeDetails, value);
+
+    targetType.builtinType.value = value;
+
+    return targetType;
 }
 
 function evaluateBitstringOperation(
@@ -532,21 +561,21 @@ function evaluateBitstringOperation(
 ): StType | undefined {
     
     // Get target type code
-    const newTypeCode = getTargetTypeCode(
+    const targetTypeCode = getTargetTypeCode(
         lhsType,
         rhsType
     );
 
-    if (!newTypeCode)
+    if (!targetTypeCode)
         return undefined;
 
-    const newType = new StType();
-    const newBuiltinType = new StBuiltinType(newTypeCode);
-    newType.builtinType = newBuiltinType;
+    const targetType = new StType();
+    const targetBuiltinType = new StBuiltinType(targetTypeCode);
+    targetType.builtinType = targetBuiltinType;
 
     // Validate
     const success = checkBitstringOperation(
-        newType,
+        targetType,
         lhsType,
         rhsType,
         operatorText,
@@ -576,17 +605,19 @@ function evaluateBitstringOperation(
             throw new Error(`The operator ${operatorText} is not yet implemented.`);
     }
 
-    newBuiltinType.value = executeBinaryOperation(
+    let value = executeBinaryOperation(
         lhsValue,
         rhsValue,
         undefined,
         opBigInt
     );
 
-    if (newBuiltinType.value)
-        newBuiltinType.value = convertToSignedIntegerIfRequired(newBuiltinType.details!, newBuiltinType.value as bigint);
+    // if (value !== undefined)
+    //     value = ensureNoOverflowBigIntWorkaround(targetBuiltinType.details!, value);
 
-    return newType;
+    targetBuiltinType.value = value;
+
+    return targetType;
 }
 
 function evaluateEqualityOperation(
@@ -1131,7 +1162,7 @@ function getTargetTypeCode(
     if (leftCode === StBuiltinTypeCode.LREAL || rightCode === StBuiltinTypeCode.LREAL)
         return StBuiltinTypeCode.LREAL;
 
-    if (leftCode === StBuiltinTypeCode.REAL || rightCode === StBuiltinTypeCode.REAL)
+    else if (leftCode === StBuiltinTypeCode.REAL || rightCode === StBuiltinTypeCode.REAL)
         return StBuiltinTypeCode.REAL;
 
     // TIME

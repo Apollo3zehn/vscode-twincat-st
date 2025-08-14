@@ -13,6 +13,10 @@ const cases_multiplication: [string, string, string][] = [
     ["REAL#2.5", "REAL#2.5", "REAL#6.25"],
     ["REAL#2.5", "REAL#-2.5", "REAL#-6.25"],
     ["TIME#2H2M", "2", "TIME#4H4M"],
+
+    // Overflow
+    ["2", "9223372036854775808", "ULINT#0"],
+    ["TIME#1H", "-2", "TIME#49D15H2M47S296MS"]
 ];
 
 const cases_division: [string, string, string][] = [
@@ -23,6 +27,9 @@ const cases_division: [string, string, string][] = [
     ["REAL#2.5", "REAL#2", "REAL#1.25"],
     ["REAL#2.5", "REAL#-2", "REAL#-1.25"],
     ["TIME#2H2M", "2", "TIME#1H1M"],
+
+    // Overflow
+    ["TIME#1H", "-2", "TIME#49D16H32M47S296MS"]
 ];
 
 const cases_modulo: [string, string, string][] = [
@@ -48,11 +55,15 @@ const cases_addition: [string, string, string][] = [
     ["LTIME#2H2M", "LTIME#2H1M", "LTIME#4H3M"],
     ["LDATE#2000-01-01", "LTIME#1D", "LDATE#2000-01-02"],
     ["LTIME_OF_DAY#03:30:21", "LTIME#2H1M", "LTIME_OF_DAY#05:31:21"],
-    ["LDATE_AND_TIME#2000-01-01-03:30:21", "LTIME#2H1M", "LDATE_AND_TIME#2000-01-01-05:31:21"]
+    ["LDATE_AND_TIME#2000-01-01-03:30:21", "LTIME#2H1M", "LDATE_AND_TIME#2000-01-01-05:31:21"],
+
+    // Overflow
+    ["TIME#49D17H2M47S295MS", "TIME#1MS", "TIME#0MS"]
 ];
 
 const cases_subtraction: [string, string, string][] = [
     ["99", "1", "SINT#98"],
+    ["256", "256", "INT#0"],
     ["BYTE#99", "INT#1", "INT#98"],
     ["REAL#99", "INT#1", "REAL#98"],
     ["INT#99", "REAL#1", "REAL#98"],
@@ -67,7 +78,10 @@ const cases_subtraction: [string, string, string][] = [
     ["LTIME#2H2M", "LTIME#2H1M", "LTIME#1M"],
     ["LDATE#2000-01-01", "LTIME#1D", "LDATE#1999-12-31"],
     ["LTIME_OF_DAY#03:30:21", "LTIME#2H1M", "LTIME_OF_DAY#01:29:21"],
-    ["LDATE_AND_TIME#2000-01-01-03:30:21", "LTIME#2H1M", "LDATE_AND_TIME#2000-01-01-01:29:21"]
+    ["LDATE_AND_TIME#2000-01-01-03:30:21", "LTIME#2H1M", "LDATE_AND_TIME#2000-01-01-01:29:21"],
+
+    // Overflow
+    ["TIME#1H", "TIME#2H", "TIME#49D16H2M47S296MS"]
 ];
 
 suite("arithmetic", () => {

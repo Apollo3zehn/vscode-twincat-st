@@ -1,4 +1,4 @@
-import { builtinTypesDetails, StBuiltinType, StBuiltinTypeCode, StBuiltinTypeDetails, StBuiltinTypeKind, StType } from "../../core/types.js";
+import { builtinTypesDetails, StBuiltinType, StBuiltinTypeCode, StBuiltinTypeDetails, StBuiltinTypeKind, StBuiltinTypeSuperKind, StType } from "../../core/types.js";
 import { parseBigIntWithRadix } from "../../core/utils.js";
 
 export function evaluateIntegerLiteral(
@@ -36,9 +36,8 @@ export function evaluateIntegerLiteral(
     const valueAsString = splittedText[splittedText.length - 1].replaceAll("_", "");
 
     if (lhsBuiltinType) {
-
         value = parseBigIntWithRadix(valueAsString, radix);
-        value = convertToSignedIntegerIfRequired(lhsBuiltinType.details!, value);
+        value = ensureNoOverflowBigIntWorkaround(lhsBuiltinType.details!, value) as bigint;
     }
     
     else {
@@ -105,23 +104,46 @@ export function evaluateIntegerLiteral(
     return [type, undefined];
 }
 
-export function convertToSignedIntegerIfRequired(builtinTypeDetails: StBuiltinTypeDetails, value: bigint) {
+export function ensureNoOverflowBigIntWorkaround(
+    builtinTypeDetails: StBuiltinTypeDetails,
+    value: bigint | number
+): bigint | number {
+    
+    if (builtinTypeDetails.superKind === StBuiltinTypeSuperKind.Integer) {
 
-    if (builtinTypeDetails.signed) {
+        value = value as bigint;
+        value = value & builtinTypeDetails.bitmask!;
 
-        // If value exceeds positive range, interpret as negative using two's complement
-        const max = builtinTypeDetails.max as bigint;
+        if (builtinTypeDetails.signed === true) {
 
-        if (value >= max)
-            value -= (max << BigInt(1));
+            // Check if highest bit is set and then convert to negative number
+            const signBit = 1n << BigInt(builtinTypeDetails.size - 1);
+
+            if ((value & signBit) !== 0n) {
+                const maxValue = signBit << BigInt(1);
+                value -= maxValue;
+            }
+        }
     }
+
+    else if (builtinTypeDetails.kind === StBuiltinTypeKind.Time) {
+
+        value = value as bigint;
+        value = value & builtinTypeDetails.bitmask!;
+        
+        // If value is negative, convert to positive equivalent for unsigned type
+        if (value < 0)
+            value += builtinTypeDetails.max! as bigint + 1n;
+    }
+
     return value;
 }
 
 export function getSmallestIntegerForValue(
     value: bigint,
     allowSigned: boolean,
-    allowUnsigned: boolean
+    allowUnsigned: boolean,
+    ensureDefined: boolean = false
 ): StType | undefined {
 
     let code: StBuiltinTypeCode | undefined = undefined;
@@ -137,7 +159,7 @@ export function getSmallestIntegerForValue(
         else if (value >= -Math.pow(2, 31))
             code = StBuiltinTypeCode.DINT;
             
-        else if (value >= -Math.pow(2, 63))
+        else if (value >= -Math.pow(2, 63) || ensureDefined)
             code = StBuiltinTypeCode.LINT;
     }
 
@@ -164,12 +186,14 @@ export function getSmallestIntegerForValue(
         else if (allowSigned && value < Math.pow(2, 63))
             code = StBuiltinTypeCode.LINT;
             
-        else if (value < Math.pow(2, 64))
+        else if (value < Math.pow(2, 64) || ensureDefined)
             code = StBuiltinTypeCode.ULINT;
     }
 
     if (!code)
-        return undefined; // This can only happen when called via evaluateIntegerNumber, otherwise the type is always defined.
+        // This can only happen when called via evaluateIntegerNumber or after
+        // expression evaluation, otherwise the type is always defined.
+        return undefined;
 
     const type = new StType();
     type.builtinType = new StBuiltinType(code);

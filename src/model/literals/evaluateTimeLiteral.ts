@@ -16,10 +16,11 @@ export function evaluateTimeLiteral(
     literal: string
 ): [StType | undefined, string | undefined] {
     
-    const timeText = literal.split('#')[1];
+    let timeText = literal.split('#')[1];
+    timeText = timeText.replace("MS", "Z"); // Workaround to make regex recognition unambiguous
 
     // Regex to extract D, H, M, S, MS values
-    const timeRegex = /(?:([0-9_]+)D)?(?:([0-9_]+)H)?(?:([0-9_]+)M)?(?:([0-9_]+)S)?(?:([0-9_]+)MS)?/;
+    const timeRegex = /(?:([0-9_]+)D)?(?:([0-9_]+)H)?(?:([0-9_]+)M)?(?:([0-9_]+)S)?(?:([0-9_]+)Z)?/;
     const match = timeText.match(timeRegex)!;
 
     for (let i = 0; i < 5; ++i) {

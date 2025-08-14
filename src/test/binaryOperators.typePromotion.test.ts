@@ -31,7 +31,7 @@ const cases_typed_literals = [
 // Left operand: typed literal, right operand: untyped literal
 const cases_typed_untyped_literals = [
     ['SINT#1', '1', '+', 'SINT'],
-    ['SINT#1', '127', '+', 'SINT'],
+    ['SINT#1', '127', '+', 'INT'],
     ['SINT#1', '128', '+', 'INT'],
     ['SINT#1', '1', '-', 'SINT'],
     ['SINT#1', '127', '-', 'SINT'],
@@ -40,7 +40,7 @@ const cases_typed_untyped_literals = [
     ['SINT#1', '-128', '+', 'SINT'],
     ['SINT#1', '-129', '+', 'INT'],
     ['USINT#1', '1', '+', 'USINT'],
-    ['USINT#1', '255', '+', 'USINT'],
+    ['USINT#1', '255', '+', 'UINT'],
     ['USINT#1', '256', '+', 'UINT'],
     ['USINT#1', '1', '-', 'USINT'],
     ['USINT#1', '255', '-', 'USINT'],
@@ -60,8 +60,8 @@ const cases_untyped_literals = [
     ['-128', '-1', '+', 'SINT'],
     ['-128', '-128', '+', 'SINT'],
     ['-128', '-129', '+', 'INT'],
-    ['255', '1', '+', 'USINT'],
-    ['255', '255', '+', 'USINT'],
+    ['255', '1', '+', 'UINT'],
+    ['255', '255', '+', 'UINT'],
     ['255', '256', '+', 'UINT'],
     ['255', '-1', '+', 'INT'],
     ['255', '-128', '+', 'INT'],
@@ -78,6 +78,12 @@ const cases_untyped_literals = [
     ['255', '255', '-', 'INT'],
     ['255', '256', '-', 'INT'],
     ['0', '0', '-', 'SINT'],
+
+    // Multiplication
+    ["2", "127", '*', "USINT"],
+    ["2", "128", '*', "UINT"],
+    ["2", "32768", '*', "UDINT"],
+    ["2", "2147483648", '*', "ULINT"],
 ];
 
 suite("binary operators", () => {

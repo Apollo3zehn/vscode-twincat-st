@@ -1,44 +1,44 @@
 import assert from 'assert';
 import { Uri } from 'vscode';
-import { StBuiltinTypeCode, StSourceFile } from '../core/types.js';
+import { StSourceFile } from '../core/types.js';
 import { evaluateBinaryOperation } from '../model/evaluation.js';
 import { StModelBuilder } from '../model/StModelBuilder.js';
 import { assertBigIntOrNumberEqual, evaluateLiteralHelper } from './testUtils.js';
 
-const cases_multiplication: [string, string, bigint | number | string][] = [
-    ["2", "3", 6n],
-    ["BYTE#2", "INT#3", 6n],
-    ["REAL#2.5", "INT#2", 5],
-    ["INT#2", "REAL#2.5", 5],
-    ["REAL#2.5", "REAL#2.5", 6.25],
-    ["REAL#2.5", "REAL#-2.5", -6.25],
+const cases_multiplication: [string, string, string][] = [
+    ["2", "3", "USINT#6"],
+    ["BYTE#2", "INT#3", "INT#6"],
+    ["REAL#2.5", "INT#2", "REAL#5"],
+    ["INT#2", "REAL#2.5", "REAL#5"],
+    ["REAL#2.5", "REAL#2.5", "REAL#6.25"],
+    ["REAL#2.5", "REAL#-2.5", "REAL#-6.25"],
     ["TIME#2H2M", "2", "TIME#4H4M"],
 ];
 
-const cases_division: [string, string, bigint | number | string][] = [
-    ["10", "3", 3n],
-    ["BYTE#10", "INT#3", 3n],
-    ["REAL#10.1", "INT#2", 5.05],
-    ["INT#2", "REAL#2.5", 0.8],
-    ["REAL#2.5", "REAL#2", 1.25],
-    ["REAL#2.5", "REAL#-2", -1.25],
+const cases_division: [string, string, string][] = [
+    ["10", "3", "USINT#3"],
+    ["BYTE#10", "INT#3", "INT#3"],
+    ["REAL#10.1", "INT#2", "REAL#5.05"],
+    ["INT#2", "REAL#2.5", "REAL#0.8"],
+    ["REAL#2.5", "REAL#2", "REAL#1.25"],
+    ["REAL#2.5", "REAL#-2", "REAL#-1.25"],
     ["TIME#2H2M", "2", "TIME#1H1M"],
 ];
 
-const cases_modulo: [string, string, bigint | number][] = [
-    ["11", "7", 4n],
-    ["UINT#11", "UINT#7", 4n],
-    ["INT#-11", "UINT#7", -4n],
-    ["UINT#11", "INT#-7", 4n]
+const cases_modulo: [string, string, string][] = [
+    ["11", "7", "USINT#4"],
+    ["UINT#11", "UINT#7", "UINT#4"],
+    ["INT#-11", "UINT#7", "INT#-4"],
+    ["UINT#11", "INT#-7", "INT#4"]
 ];
 
-const cases_addition: [string, string, bigint | number | string][] = [
-    ["99", "1", 100n],
-    ["BYTE#99", "INT#1", 100n],
-    ["REAL#99", "INT#1", 100],
-    ["INT#99", "REAL#1", 100],
-    ["REAL#99.1", "REAL#0.9", 100],
-    ["REAL#99.1", "REAL#-0.9", 98.2],
+const cases_addition: [string, string, string][] = [
+    ["99", "1", "USINT#100"],
+    ["BYTE#99", "INT#1", "INT#100"],
+    ["REAL#99", "INT#1", "REAL#100"],
+    ["INT#99", "REAL#1", "REAL#100"],
+    ["REAL#99.1", "REAL#0.9", "REAL#100"],
+    ["REAL#99.1", "REAL#-0.9", "REAL#98.2"],
 
     ["TIME#2H2M", "TIME#2H1M", "TIME#4H3M"],
     ["DATE#2000-01-01", "TIME#1D", "DATE#2000-01-02"],
@@ -51,13 +51,13 @@ const cases_addition: [string, string, bigint | number | string][] = [
     ["LDATE_AND_TIME#2000-01-01-03:30:21", "LTIME#2H1M", "LDATE_AND_TIME#2000-01-01-05:31:21"]
 ];
 
-const cases_subtraction: [string, string, bigint | number | string][] = [
-    ["99", "1", 98n],
-    ["BYTE#99", "INT#1", 98n],
-    ["REAL#99", "INT#1", 98],
-    ["INT#99", "REAL#1", 98],
-    ["REAL#99.1", "REAL#0.9", 98.2],
-    ["REAL#99.1", "REAL#-0.9", 100],
+const cases_subtraction: [string, string, string][] = [
+    ["99", "1", "SINT#98"],
+    ["BYTE#99", "INT#1", "INT#98"],
+    ["REAL#99", "INT#1", "REAL#98"],
+    ["INT#99", "REAL#1", "REAL#98"],
+    ["REAL#99.1", "REAL#0.9", "REAL#98.2"],
+    ["REAL#99.1", "REAL#-0.9", "REAL#100"],
 
     ["TIME#2H2M", "TIME#2H1M", "TIME#1M"],
     ["DATE#2000-01-01", "TIME#1D", "DATE#1999-12-31"],
@@ -77,9 +77,9 @@ suite("arithmetic", () => {
     });
 
     // Multiplication
-    cases_multiplication.forEach(([lhs, rhs, expected]) => {
+    cases_multiplication.forEach(([lhs, rhs, expectedString]) => {
         
-        test(`multiplication: ${lhs} * ${rhs} = ${expected}`, () => {
+        test(`multiplication: ${lhs} * ${rhs} = ${expectedString}`, () => {
             
             // Arrange
             const [lhsType, _1] = evaluateLiteralHelper(lhs);
@@ -94,17 +94,17 @@ suite("arithmetic", () => {
             // Assert
             assert(result);
 
-            if (typeof expected === "string")
-                expected = evaluateLiteralHelper(expected)[0]?.builtinType?.value!;
+            const expected = evaluateLiteralHelper(expectedString)[0]?.builtinType;
 
-            assertBigIntOrNumberEqual(result.builtinType?.value, expected, 0.1);
+            assert.strictEqual(result.builtinType?.code, expected?.code);
+            assertBigIntOrNumberEqual(result.builtinType?.value, expected?.value!, 0.1);
         });
     });
 
     // Division
-    cases_division.forEach(([lhs, rhs, expected]) => {
+    cases_division.forEach(([lhs, rhs, expectedString]) => {
         
-        test(`division: ${lhs} / ${rhs} = ${expected}`, () => {
+        test(`division: ${lhs} / ${rhs} = ${expectedString}`, () => {
             
             // Arrange
             const [lhsType, _1] = evaluateLiteralHelper(lhs);
@@ -119,17 +119,17 @@ suite("arithmetic", () => {
             // Assert
             assert(result);
 
-            if (typeof expected === "string")
-                expected = evaluateLiteralHelper(expected)[0]?.builtinType?.value!;
+            const expected = evaluateLiteralHelper(expectedString)[0]?.builtinType;
 
-            assertBigIntOrNumberEqual(result.builtinType?.value, expected, 0.1);
+            assert.strictEqual(result.builtinType?.code, expected?.code);
+            assertBigIntOrNumberEqual(result.builtinType?.value, expected?.value!, 0.1);
         });
     });
 
     // Modulo
-    cases_modulo.forEach(([lhs, rhs, expected]) => {
+    cases_modulo.forEach(([lhs, rhs, expectedString]) => {
         
-        test(`modulo: ${lhs} MOD ${rhs} = ${expected}`, () => {
+        test(`modulo: ${lhs} MOD ${rhs} = ${expectedString}`, () => {
             
             // Arrange
             const [lhsType, _1] = evaluateLiteralHelper(lhs);
@@ -144,14 +144,17 @@ suite("arithmetic", () => {
             // Assert
             assert(result);
 
-            assertBigIntOrNumberEqual(result.builtinType?.value, expected, 0.1);
+            const expected = evaluateLiteralHelper(expectedString)[0]?.builtinType;
+
+            assert.strictEqual(result.builtinType?.code, expected?.code);
+            assertBigIntOrNumberEqual(result.builtinType?.value, expected?.value!, 0.1);
         });
     });
 
     // Addition
-    cases_addition.forEach(([lhs, rhs, expected]) => {
+    cases_addition.forEach(([lhs, rhs, expectedString]) => {
         
-        test(`addition: ${lhs} + ${rhs} = ${expected}`, () => {
+        test(`addition: ${lhs} + ${rhs} = ${expectedString}`, () => {
             
             // Arrange
             const [lhsType, _1] = evaluateLiteralHelper(lhs);
@@ -166,17 +169,17 @@ suite("arithmetic", () => {
             // Assert
             assert(result);
 
-            if (typeof expected === "string")
-                expected = evaluateLiteralHelper(expected)[0]?.builtinType?.value!;
+            const expected = evaluateLiteralHelper(expectedString)[0]?.builtinType;
 
-            assertBigIntOrNumberEqual(result.builtinType?.value, expected);
+            assert.strictEqual(result.builtinType?.code, expected?.code);
+            assertBigIntOrNumberEqual(result.builtinType?.value, expected?.value!, 0.1);
         });
     });
 
     // Subtraction
-    cases_subtraction.forEach(([lhs, rhs, expected]) => {
+    cases_subtraction.forEach(([lhs, rhs, expectedString]) => {
         
-        test(`subtraction: ${lhs} - ${rhs} = ${expected}`, () => {
+        test(`subtraction: ${lhs} - ${rhs} = ${expectedString}`, () => {
             
             // Arrange
             const [lhsType, _1] = evaluateLiteralHelper(lhs);
@@ -191,10 +194,10 @@ suite("arithmetic", () => {
             // Assert
             assert(result);
 
-            if (typeof expected === "string")
-                expected = evaluateLiteralHelper(expected)[0]?.builtinType?.value!;
+            const expected = evaluateLiteralHelper(expectedString)[0]?.builtinType;
 
-            assertBigIntOrNumberEqual(result.builtinType?.value, expected, 0.1);
+            assert.strictEqual(result.builtinType?.code, expected?.code);
+            assertBigIntOrNumberEqual(result.builtinType?.value, expected?.value!, 0.1);
         });
     });
 });

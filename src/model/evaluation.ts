@@ -1134,19 +1134,30 @@ function getTargetTypeCode(
     if (leftCode === StBuiltinTypeCode.REAL || rightCode === StBuiltinTypeCode.REAL)
         return StBuiltinTypeCode.REAL;
 
-    // Prefer the other operand of TIME / LTIME
-    if (
-        leftCode === StBuiltinTypeCode.TIME ||
-        leftCode === StBuiltinTypeCode.LTIME
-    ) {
-        return rightCode ?? undefined;
+    // TIME
+    if (leftCode === StBuiltinTypeCode.TIME) {
+        return rhsBuiltinType.details!.superKind === StBuiltinTypeSuperKind.ShortDateOrTime
+            ? rightCode ?? undefined
+            : leftCode;
     }
 
-    else if (
-        rightCode === StBuiltinTypeCode.TIME ||
-        rightCode === StBuiltinTypeCode.LTIME
-    ) {
-        return leftCode ?? undefined;
+    else if (rightCode === StBuiltinTypeCode.TIME) {
+        return lhsBuiltinType.details!.superKind === StBuiltinTypeSuperKind.ShortDateOrTime
+            ? leftCode ?? undefined
+            : rightCode;
+    }
+
+    // LTIME
+    if (leftCode === StBuiltinTypeCode.LTIME) {
+        return rhsBuiltinType.details!.superKind === StBuiltinTypeSuperKind.LongDateOrTime
+            ? rightCode ?? undefined
+            : leftCode;
+    }
+
+    else if (rightCode === StBuiltinTypeCode.LTIME) {
+        return lhsBuiltinType.details!.superKind === StBuiltinTypeSuperKind.LongDateOrTime
+            ? leftCode ?? undefined
+            : rightCode;
     }
 
     //

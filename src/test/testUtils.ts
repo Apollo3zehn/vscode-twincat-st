@@ -28,7 +28,7 @@ export function bigIntToTwosComplement(value: bigint, bits: number): string {
 
 export function assertBigIntOrNumberEqual(
     actual: bigint | number | undefined,
-    expected: bigint | number | string,
+    expected: bigint | number,
     epsilon = 1e-10
 ) {
 

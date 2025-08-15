@@ -257,24 +257,6 @@ export function getModifier(modifierCtx: ModifierContext | null): StModifier | u
         : undefined;
 }
 
-
-export function negateBits(value: bigint, bitWidth: number, signed: boolean): bigint {
-
-    let valueAsBigInt = value;
-    const mask = (1n << BigInt(bitWidth)) - 1n;
-    let negated = ~valueAsBigInt & mask;
-
-    if (signed) {
-        // Convert to signed representation if MSB is set
-        const signBit = 1n << BigInt(bitWidth - 1);
-
-        if (negated & signBit)
-            negated -= (1n << BigInt(bitWidth));
-    }
-
-    return negated;
-}
-
 export function parseBigIntWithRadix(value: string, radix: number): bigint {
     
     let prefix = "";

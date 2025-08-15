@@ -109,31 +109,38 @@ export function ensureNoOverflowBigIntWorkaround(
     value: bigint | number
 ): bigint | number {
     
-    if (builtinTypeDetails.superKind === StBuiltinTypeSuperKind.Integer) {
+    switch (builtinTypeDetails.superKind) {
 
-        value = value as bigint;
-        value = value & builtinTypeDetails.bitmask!;
+        case StBuiltinTypeSuperKind.Integer:
 
-        if (builtinTypeDetails.signed === true) {
+            value = value as bigint;
+            value = value & builtinTypeDetails.bitmask!;
 
-            // Check if highest bit is set and then convert to negative number
-            const signBit = 1n << BigInt(builtinTypeDetails.size - 1);
+            if (builtinTypeDetails.signed === true) {
 
-            if ((value & signBit) !== 0n) {
-                const maxValue = signBit << BigInt(1);
-                value -= maxValue;
+                // Check if highest bit is set and then convert to negative number
+                const signBit = 1n << BigInt(builtinTypeDetails.size - 1);
+
+                if ((value & signBit) !== 0n) {
+                    const maxValue = signBit << BigInt(1);
+                    value -= maxValue;
+                }
             }
-        }
-    }
 
-    else if (builtinTypeDetails.kind === StBuiltinTypeKind.Time) {
-
-        value = value as bigint;
-        value = value & builtinTypeDetails.bitmask!;
+            break;
         
-        // If value is negative, convert to positive equivalent for unsigned type
-        if (value < 0)
-            value += builtinTypeDetails.max! as bigint + 1n;
+        case StBuiltinTypeSuperKind.ShortDateOrTime:
+        case StBuiltinTypeSuperKind.LongDateOrTime:
+
+            value = value as bigint;
+            value = value & builtinTypeDetails.bitmask!;
+            
+            // If value is negative, convert to positive equivalent for unsigned type
+            if (value < 0)
+                value += builtinTypeDetails.max! as bigint + 1n;
+    
+        default:
+            break;
     }
 
     return value;

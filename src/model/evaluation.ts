@@ -1,7 +1,7 @@
 import { ParserRuleContext } from "antlr4ng";
 import { Diagnostic, DiagnosticSeverity, Range } from "vscode";
 import { StBuiltinType, StBuiltinTypeCode, StBuiltinTypeKind, StBuiltinTypeSuperKind, StModifier, StSymbol, StSymbolKind, StType, StVariableScope } from "../core/types.js";
-import { defaultRange, getContextRange, getNestedTypeOrSelf, getTokenRange, negateBits } from "../core/utils.js";
+import { defaultRange, getContextRange, getNestedTypeOrSelf, getTokenRange } from "../core/utils.js";
 import { AssignmentOperatorContext, ExprContext, LiteralContext, MemberExpressionContext, PostfixOpContext, PropertyContext } from "../generated/StructuredTextParser.js";
 import { StModelBuilder } from "./StModelBuilder.js";
 import { findDeclaration } from "./declaration.js";
@@ -16,7 +16,7 @@ import { evaluateStringLiteral } from "./literals/evaluateStringLiteral.js";
 import { evaluateTimeLiteral } from "./literals/evaluateTimeLiteral.js";
 import { evaluateTimeOfDayLiteral } from "./literals/evaluateTimeOfDayLiteral.js";
 import { evaluateWStringLiteral } from "./literals/evaluateWStringLiteral.js";
-import { addBigInt, addNumber, andBigInt, divideBigInt, divideNumber, equalsBigInt, equalsNumber, executeBinaryOperation, greaterThanBigInt, greaterThanNumber, greaterThanOrEqualToBigInt, greaterThanOrEqualToNumber, lessThanBigInt, lessThanNumber, lessThanOrEqualToBigInt, lessThanOrEqualToNumber, moduloBigInt, multiplyBigInt, multiplyNumber, notEqualsBigInt, notEqualsNumber, subtractBigInt, subtractNumber } from "./operations.js";
+import { addBigInt, addNumber, andBigInt, divideBigInt, divideNumber, equalsBigInt, equalsNumber, executeBinaryOperation, greaterThanBigInt, greaterThanNumber, greaterThanOrEqualToBigInt, greaterThanOrEqualToNumber, lessThanBigInt, lessThanNumber, lessThanOrEqualToBigInt, lessThanOrEqualToNumber, moduloBigInt, multiplyBigInt, multiplyNumber, notBigInt, notEqualsBigInt, notEqualsNumber, subtractBigInt, subtractNumber } from "./operations.js";
 
 export function evaluateAssignment(
     lhsType: StType | undefined,
@@ -250,22 +250,11 @@ export function evaluateUnaryOperation(
             superKind === StBuiltinTypeSuperKind.Integer
         )
     ) {
+        if (newValue !== undefined) {
+            const bitWidth = builtinType.details!.size!;
+            const isSigned = builtinType.details!.signed!;
 
-        if (superKind === StBuiltinTypeSuperKind.Logical) {
-            if (newValue !== undefined) {
-                newValue = newValue === 0n
-                    ? 1n
-                    : 0n;
-            }
-        }
-
-        else {
-            if (newValue !== undefined) {
-                const bitWidth = builtinType.details!.size!;
-                const isSigned = builtinType.details!.signed!;
-
-                newValue = negateBits(newValue as bigint, bitWidth, isSigned);
-            }
+            newValue = notBigInt(newValue as bigint, bitWidth, isSigned);
         }
     }
         
@@ -1355,11 +1344,11 @@ function evaluatePostOps(
         else if (postfixOp.call()) {
 
             /* Hint: Calls are always standalone, the following is
-                * not possible in Structured Text:
-                *
-                * - MyArrayOfMethods[0]()          (because of C0261)
-                * - MyMethodWhichReturnsArray()[0] (because of C0185)
-                */
+             * not possible in Structured Text:
+             *
+             * - MyArrayOfMethods[0]()          (because of C0261)
+             * - MyMethodWhichReturnsArray()[0] (because of C0185)
+             */
 
             noMoreOpsAllowed = true;
 
@@ -1378,12 +1367,12 @@ function evaluatePostOps(
             else {
 
                 /* The following is valid syntax, but will not compile:
-                    * MyArrayOfMethods[0]();
-                    * This means that this branch is only ever executed when
-                    * the call is the very first postfix operation, which
-                    * in turn means we can make use of memberDeclaration instead
-                    * of trying to work with currentType.
-                    */
+                 * MyArrayOfMethods[0]();
+                 * This means that this branch is only ever executed when
+                 * the call is the very first postfix operation, which
+                 * in turn means we can make use of memberDeclaration instead
+                 * of trying to work with currentType.
+                 */
 
                 switch (memberDeclaration.kind) {
 

@@ -150,3 +150,20 @@ export function orBigInt(a: bigint, b: bigint): bigint {
 export function xorBigInt(a: bigint, b: bigint): bigint {
     return a ^ b;
 }
+
+export function notBigInt(value: bigint, bitWidth: number, signed: boolean): bigint {
+
+    let valueAsBigInt = value;
+    const mask = (1n << BigInt(bitWidth)) - 1n;
+    let negated = ~valueAsBigInt & mask;
+
+    if (signed) {
+        // Convert to signed representation if MSB is set
+        const signBit = 1n << BigInt(bitWidth - 1);
+
+        if (negated & signBit)
+            negated -= (1n << BigInt(bitWidth));
+    }
+
+    return negated;
+}

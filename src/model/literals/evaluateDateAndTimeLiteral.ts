@@ -146,7 +146,6 @@ export function evaluateDateAndTimeLiteral(
                 choosenType = StBuiltinTypeCode.LDATE_AND_TIME;
                 value = BigInt(dateAndTimeValue.since(EPOCH).total("nanoseconds"));
             }
-            
             else {
                 return [undefined, lhsBuiltinType];
             }

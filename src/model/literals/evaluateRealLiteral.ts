@@ -64,7 +64,7 @@ export function evaluateRealLiteral(
         if (
             lhsTypeDetails &&
             rhsTypeDetails &&
-            lhsTypeDetails.max! < rhsTypeDetails.max!
+            lhsTypeDetails.maxExcl! < rhsTypeDetails.maxExcl!
         ) {
             return [undefined, lhsTypeCode];
         }

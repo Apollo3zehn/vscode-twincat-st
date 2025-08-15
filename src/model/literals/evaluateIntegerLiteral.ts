@@ -81,7 +81,7 @@ export function evaluateIntegerLiteral(
         if (
             lhsDetails &&
             rhsDetails &&
-            lhsDetails.max! < rhsDetails.max!
+            lhsDetails.maxExcl! < rhsDetails.maxExcl!
         ) {
             return [
                 undefined,
@@ -95,8 +95,8 @@ export function evaluateIntegerLiteral(
         : new StBuiltinType(null); // Return 'null' for untyped integer literals
 
     builtinType.value = value;
-    builtinType.subRangeStart = value;
-    builtinType.subRangeStop = value;
+    builtinType.subRangeStartIncl = value;
+    builtinType.subRangeStopExcl = value;
 
     const type = new StType();
     type.builtinType = builtinType;
@@ -116,7 +116,7 @@ export function ensureNoOverflowBigIntWorkaround(
             value = value as bigint;
             value = value & builtinTypeDetails.bitmask!;
 
-            if (builtinTypeDetails.signed === true) {
+            if (builtinTypeDetails.kind === StBuiltinTypeKind.SignedInteger) {
 
                 // Check if highest bit is set and then convert to negative number
                 const signBit = 1n << BigInt(builtinTypeDetails.size - 1);
@@ -132,12 +132,9 @@ export function ensureNoOverflowBigIntWorkaround(
         case StBuiltinTypeSuperKind.ShortDateOrTime:
         case StBuiltinTypeSuperKind.LongDateOrTime:
 
-            value = value as bigint;
-            value = value & builtinTypeDetails.bitmask!;
-            
-            // If value is negative, convert to positive equivalent for unsigned type
-            if (value < 0)
-                value += builtinTypeDetails.max! as bigint + 1n;
+            // https://stackoverflow.com/a/4467559
+            const maxExcl = builtinTypeDetails.maxExcl as bigint;
+            value = ((value as bigint % maxExcl) + maxExcl) % maxExcl;
     
         default:
             break;
@@ -214,7 +211,7 @@ export function getSignedIntegerForSize(size: number): StBuiltinTypeCode {
     for (const [code, builtinTypeDetails] of builtinTypesDetails.entries()) {
 
         if (
-            builtinTypeDetails.signed &&
+            builtinTypeDetails.kind === StBuiltinTypeKind.SignedInteger &&
             builtinTypeDetails.size === size
         ) {
             return code;

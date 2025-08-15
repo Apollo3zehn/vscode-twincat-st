@@ -54,8 +54,8 @@ export class StBuiltinType {
     }
 
     public details?: StBuiltinTypeDetails;  // all
-    public subRangeStart?: bigint;          // unsigned and signed integers
-    public subRangeStop?: bigint;           // unsigned and signed integers
+    public subRangeStartIncl?: bigint;          // unsigned and signed integers
+    public subRangeStopExcl?: bigint;           // unsigned and signed integers
     public isFullRange?: boolean;           // unsigned and signed integers
     public value?: bigint | number;         // literals or constants (bigint = logical + integers, number = float)
     public isLiteral?: boolean;             // literals
@@ -70,21 +70,21 @@ export class StBuiltinType {
         const subRangeParam = subRangeParamToken?.getText();
         const subRangeParts = subRangeParam?.split('..');
 
+        const min = this.details.minIncl as bigint;
+        const max = this.details.maxExcl as bigint;
+
         if (subRangeParts) {
 
-            this.subRangeStart = parseBigIntWithRadix(subRangeParts[0].slice(1), 10);
-            this.subRangeStop = parseBigIntWithRadix(subRangeParts[1].slice(0, -1), 10);
+            this.subRangeStartIncl = parseBigIntWithRadix(subRangeParts[0].slice(1), 10);
+            this.subRangeStopExcl = parseBigIntWithRadix(subRangeParts[1].slice(0, -1), 10);
             this.isFullRange = false;
 
-            const min = this.details.min!;
-            const max = this.details.max!;
-
             if (
-                this.subRangeStart !== undefined &&
-                this.subRangeStop !== undefined &&
+                this.subRangeStartIncl !== undefined &&
+                this.subRangeStopExcl !== undefined &&
                 (
-                    !(min <= this.subRangeStart && this.subRangeStart <= max) ||
-                    !(min <= this.subRangeStop && this.subRangeStop <= max)
+                    !(min <= this.subRangeStartIncl && this.subRangeStartIncl < max) ||
+                    !(min <= this.subRangeStopExcl && this.subRangeStopExcl < max)
                 )
             ) {
                 M0001(subRangeParamToken!);
@@ -92,8 +92,8 @@ export class StBuiltinType {
         }
 
         else {
-            this.subRangeStart = this.details.min as bigint;
-            this.subRangeStop = this.details.max as bigint;
+            this.subRangeStartIncl = min;
+            this.subRangeStopExcl = max;
             this.isFullRange = true;
         }
     }
@@ -136,8 +136,8 @@ export class StType {
 
             const typeString = StBuiltinTypeCode[this.builtinType.code];
 
-            if (!this.builtinType.isFullRange && this.builtinType.subRangeStart && this.builtinType.subRangeStop)
-                return typeString + `(${this.builtinType.subRangeStart}..${this.builtinType.subRangeStop})`;
+            if (!this.builtinType.isFullRange && this.builtinType.subRangeStartIncl && this.builtinType.subRangeStopExcl)
+                return typeString + `(${this.builtinType.subRangeStartIncl}..${this.builtinType.subRangeStopExcl})`;
 
             else
                 return typeString;
@@ -203,36 +203,42 @@ export class StBuiltinTypeDetails {
     constructor(
         public readonly kind: StBuiltinTypeKind,
         public readonly superKind: StBuiltinTypeSuperKind,
-        public readonly size: number,
-        public readonly signed?: boolean
+        public readonly size: number
     ) {
         // Calculate min and max
         if (kind === StBuiltinTypeKind.Float && size === 32) {
-            this.min = -3.402823e+38;
-            this.max = 3.402823e+38;
+            this.minIncl = -3.402823e+38;
+            this.maxExcl = 3.402823e+38;
         }
         
         else if (kind === StBuiltinTypeKind.Float && size === 64) {
-            this.min = -1.7976931348623158e+308;
-            this.max = 1.7976931348623158e+308;
+            this.minIncl = -1.7976931348623158e+308;
+            this.maxExcl = 1.7976931348623158e+308;
         }
-        
+            
+        else if (kind === StBuiltinTypeKind.TimeOfDay && size === 32) {
+            this.minIncl = 0n;
+            this.maxExcl = 86400000n;
+        }
+            
+        else if (kind === StBuiltinTypeKind.TimeOfDay && size === 64) {
+            this.minIncl = 0n;
+            this.maxExcl = 86400000000000n;
+        }
+                
         else if (kind === StBuiltinTypeKind.SignedInteger) {
-            this.min = -1n << BigInt(size - 1);
-            this.max = (1n << BigInt(size - 1)) - 1n;
+            this.minIncl = -1n << BigInt(size - 1);
+            this.maxExcl = (1n << BigInt(size - 1));
         }
         
-        else if (
-            kind === StBuiltinTypeKind.UnsignedInteger ||
-            kind === StBuiltinTypeKind.Bitfield
-        ) {
-            this.min = 0n;
-            this.max = (1n << BigInt(size)) - 1n;
+        else if (size > 0) {
+            this.minIncl = 0n;
+            this.maxExcl = (1n << BigInt(size));
         }
         
         else {
-            this.min = undefined;
-            this.max = undefined;
+            this.minIncl = undefined;
+            this.maxExcl = undefined;
         }
 
         // Calculate bitmask if size is positive
@@ -240,8 +246,8 @@ export class StBuiltinTypeDetails {
             this.bitmask = (1n << BigInt(size)) - 1n;
     }
 
-    public readonly min?: bigint | number;
-    public readonly max?: bigint | number;
+    public readonly minIncl?: bigint | number;
+    public readonly maxExcl?: bigint | number;
     public readonly bitmask?: bigint;
 }
 
@@ -386,26 +392,26 @@ export const builtinTypesDetails = new Map<StBuiltinTypeCode, StBuiltinTypeDetai
     [StBuiltinTypeCode.BIT,             new StBuiltinTypeDetails(StBuiltinTypeKind.Logical, StBuiltinTypeSuperKind.Logical, 1)],
 
     // Bitstring Types
-    [StBuiltinTypeCode.BYTE,            new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 8, false)],
-    [StBuiltinTypeCode.WORD,            new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 16, false)],
-    [StBuiltinTypeCode.DWORD,           new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 32, false)],
-    [StBuiltinTypeCode.LWORD,           new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 64, false)],
+    [StBuiltinTypeCode.BYTE,            new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 8)],
+    [StBuiltinTypeCode.WORD,            new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 16)],
+    [StBuiltinTypeCode.DWORD,           new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 32)],
+    [StBuiltinTypeCode.LWORD,           new StBuiltinTypeDetails(StBuiltinTypeKind.Bitfield, StBuiltinTypeSuperKind.Integer, 64)],
 
     // Unsigned Integer Types
-    [StBuiltinTypeCode.USINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 8, false)],
-    [StBuiltinTypeCode.UINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 16, false)],
-    [StBuiltinTypeCode.UDINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 32, false)],
-    [StBuiltinTypeCode.ULINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 64, false)],
+    [StBuiltinTypeCode.USINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 8)],
+    [StBuiltinTypeCode.UINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 16)],
+    [StBuiltinTypeCode.UDINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 32)],
+    [StBuiltinTypeCode.ULINT,           new StBuiltinTypeDetails(StBuiltinTypeKind.UnsignedInteger, StBuiltinTypeSuperKind.Integer, 64)],
 
     // Signed Integer Types
-    [StBuiltinTypeCode.SINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 8, true)],
-    [StBuiltinTypeCode.INT,             new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 16, true)],
-    [StBuiltinTypeCode.DINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 32, true)],
-    [StBuiltinTypeCode.LINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 64, true)],
+    [StBuiltinTypeCode.SINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 8)],
+    [StBuiltinTypeCode.INT,             new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 16)],
+    [StBuiltinTypeCode.DINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 32)],
+    [StBuiltinTypeCode.LINT,            new StBuiltinTypeDetails(StBuiltinTypeKind.SignedInteger, StBuiltinTypeSuperKind.Integer, 64)],
 
     // Floating Point Types
-    [StBuiltinTypeCode.REAL,            new StBuiltinTypeDetails(StBuiltinTypeKind.Float, StBuiltinTypeSuperKind.Float, 32, undefined)],
-    [StBuiltinTypeCode.LREAL,           new StBuiltinTypeDetails(StBuiltinTypeKind.Float, StBuiltinTypeSuperKind.Float, 64, undefined)],
+    [StBuiltinTypeCode.REAL,            new StBuiltinTypeDetails(StBuiltinTypeKind.Float, StBuiltinTypeSuperKind.Float, 32)],
+    [StBuiltinTypeCode.LREAL,           new StBuiltinTypeDetails(StBuiltinTypeKind.Float, StBuiltinTypeSuperKind.Float, 64)],
 
     // String Types
     [StBuiltinTypeCode.STRING,          new StBuiltinTypeDetails(StBuiltinTypeKind.String, StBuiltinTypeSuperKind.String, -1)],

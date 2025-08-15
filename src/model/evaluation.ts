@@ -252,7 +252,7 @@ export function evaluateUnaryOperation(
     ) {
         if (newValue !== undefined) {
             const bitWidth = builtinType.details!.size!;
-            const isSigned = builtinType.details!.signed!;
+            const isSigned = builtinType.details!.kind === StBuiltinTypeKind.SignedInteger;
 
             newValue = notBigInt(newValue as bigint, bitWidth, isSigned);
         }
@@ -452,7 +452,7 @@ function evaluateArithmeticOperation(
             
             // Convert ms to s
             if (
-                lhsValue &&
+                lhsValue !== undefined &&
                 typeof rhsValue === "bigint" &&
                 (
                     lhsBuiltinType?.code === StBuiltinTypeCode.DATE ||
@@ -463,7 +463,7 @@ function evaluateArithmeticOperation(
             }
 
             else if (
-                rhsValue &&
+                rhsValue !== undefined &&
                 typeof lhsValue === "bigint" &&
                 (
                     rhsBuiltinType?.code === StBuiltinTypeCode.DATE ||
@@ -482,7 +482,7 @@ function evaluateArithmeticOperation(
             
             // Convert ms to s
             if (
-                lhsValue &&
+                lhsValue !== undefined &&
                 typeof rhsValue === "bigint" &&
                 (
                     lhsBuiltinType?.code === StBuiltinTypeCode.DATE ||
@@ -514,9 +514,9 @@ function evaluateArithmeticOperation(
     if (
         targetTypeDetails.superKind === StBuiltinTypeSuperKind.Integer &&
         value !== undefined &&
-        value as bigint > targetTypeDetails.max!
+        value as bigint >= targetTypeDetails.maxExcl!
     ) {
-        const allowSigned = targetTypeDetails.signed ?? false;
+        const allowSigned = targetTypeDetails.kind === StBuiltinTypeKind.SignedInteger;
         const allowUnsigned = !allowSigned;
 
         const upgradedType = getSmallestIntegerForValue(
@@ -983,30 +983,30 @@ function checkAssignment(
 
                         if (!subRangeIsOK) {
 
-                            const lhsStart = lhsBuiltinType.subRangeStart! < lhsBuiltinType.subRangeStop!
-                                ? lhsBuiltinType.subRangeStart!
-                                : lhsBuiltinType.subRangeStop!;
+                            const lhsStart = lhsBuiltinType.subRangeStartIncl! < lhsBuiltinType.subRangeStopExcl!
+                                ? lhsBuiltinType.subRangeStartIncl!
+                                : lhsBuiltinType.subRangeStopExcl!;
                             
-                            const lhsStop = lhsBuiltinType.subRangeStart! < lhsBuiltinType.subRangeStop!
-                                ? lhsBuiltinType.subRangeStop!
-                                : lhsBuiltinType.subRangeStart!;
+                            const lhsStop = lhsBuiltinType.subRangeStartIncl! < lhsBuiltinType.subRangeStopExcl!
+                                ? lhsBuiltinType.subRangeStopExcl!
+                                : lhsBuiltinType.subRangeStartIncl!;
                             
-                            const rhsStart = rhsBuiltinType.subRangeStart! < rhsBuiltinType.subRangeStop!
-                                ? rhsBuiltinType.subRangeStart!
-                                : rhsBuiltinType.subRangeStop!;
+                            const rhsStart = rhsBuiltinType.subRangeStartIncl! < rhsBuiltinType.subRangeStopExcl!
+                                ? rhsBuiltinType.subRangeStartIncl!
+                                : rhsBuiltinType.subRangeStopExcl!;
                             
-                            const rhsStop = rhsBuiltinType.subRangeStart! < rhsBuiltinType.subRangeStop!
-                                ? rhsBuiltinType.subRangeStop!
-                                : rhsBuiltinType.subRangeStart!;
+                            const rhsStop = rhsBuiltinType.subRangeStartIncl! < rhsBuiltinType.subRangeStopExcl!
+                                ? rhsBuiltinType.subRangeStopExcl!
+                                : rhsBuiltinType.subRangeStartIncl!;
 
                             subRangeIsOK =
-                                lhsStart <= rhsStart && rhsStart <= lhsStop &&
-                                lhsStart <= rhsStop && rhsStop <= lhsStop;
+                                lhsStart <= rhsStart && rhsStart < lhsStop &&
+                                lhsStart <= rhsStop && rhsStop < lhsStop;
                         }
 
                         if (subRangeIsOK) {
 
-                            if (rhsDetails.signed && !lhsDetails.signed) {
+                            if (rhsDetails.kind === StBuiltinTypeKind.SignedInteger && lhsDetails.kind !== StBuiltinTypeKind.SignedInteger) {
 
                                 const warning = new Diagnostic(
                                     rhsRange ?? defaultRange,
@@ -1017,7 +1017,7 @@ function checkAssignment(
                                 StModelBuilder.currentSourceFile.diagnostics.push(warning);
                             }
 
-                            else if (!rhsDetails.signed && lhsDetails.signed) {
+                            else if (rhsDetails.kind !== StBuiltinTypeKind.SignedInteger && lhsDetails.kind === StBuiltinTypeKind.SignedInteger) {
 
                                 const warning = new Diagnostic(
                                     rhsRange ?? defaultRange,
@@ -1104,8 +1104,8 @@ function promoteUntypedLiterals(
 
     else {
 
-        const lhsIsSigned = lhsBuiltinType?.details?.signed;
-        const rhsIsSigned = rhsBuiltinType?.details?.signed;
+        const lhsIsSigned = lhsBuiltinType?.details?.kind === StBuiltinTypeKind.SignedInteger;
+        const rhsIsSigned = rhsBuiltinType?.details?.kind === StBuiltinTypeKind.SignedInteger;
 
         if (lhsIsSigned || rhsIsSigned) {
 
@@ -1184,11 +1184,11 @@ function getTargetTypeCode(
     const leftDetails = lhsBuiltinType.details!;
     const rightDetails = rhsBuiltinType.details!;
 
-    const leftIsUnsignedInteger = leftDetails.signed === false;
-    const leftIsSignedInteger = leftDetails.signed === true;
+    const leftIsUnsignedInteger = leftDetails.kind === StBuiltinTypeKind.Bitfield || leftDetails.kind === StBuiltinTypeKind.UnsignedInteger;
+    const leftIsSignedInteger = leftDetails.kind === StBuiltinTypeKind.SignedInteger;
 
-    const rightIsUnsignedInteger = rightDetails.signed === false;
-    const rightIsSignedInteger = rightDetails.signed === true;
+    const rightIsUnsignedInteger = rightDetails.kind === StBuiltinTypeKind.Bitfield || rightDetails.kind === StBuiltinTypeKind.UnsignedInteger;
+    const rightIsSignedInteger = rightDetails.kind === StBuiltinTypeKind.SignedInteger;
 
     // If both are unsigned, promote to the larger unsigned type
     if (leftIsUnsignedInteger && rightIsUnsignedInteger)

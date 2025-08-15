@@ -7,6 +7,7 @@ import { evaluateLTimeLiteral } from "../model/literals/evaluateLTimeLiteral";
 import { evaluateDateLiteral } from "../model/literals/evaluateDateLiteral";
 import { evaluateTimeOfDayLiteral } from "../model/literals/evaluateTimeOfDayLiteral";
 import { evaluateDateAndTimeLiteral } from "../model/literals/evaluateDateAndTimeLiteral";
+import { evaluateLogicalLiteral } from "../model/literals/evaluateBoolLiteral";
 
 export function createType(typeCodeString: string): StType {
 
@@ -42,26 +43,29 @@ export function assertBigIntOrNumberEqual(
         throw Error("Actual and expected must be of the same type");
 }
 
-export function evaluateLiteralHelper(literal: string): [StType | undefined, string | undefined] {
+export function evaluateLiteralHelper(literal: string): StType | undefined {
 
-    if (literal.startsWith("REAL") || literal.startsWith("LREAL"))
-        return evaluateRealLiteral(literal);
+    if (literal.startsWith("BIT") || literal.startsWith("BOOL"))
+        return evaluateLogicalLiteral(literal);
+
+    else if (literal.startsWith("REAL") || literal.startsWith("LREAL"))
+        return evaluateRealLiteral(literal)[0];
 
     else if (literal.startsWith("TIME#"))
-        return evaluateTimeLiteral(literal);
+        return evaluateTimeLiteral(literal)[0];
 
     else if (literal.startsWith("LTIME#"))
-        return evaluateLTimeLiteral(literal);
+        return evaluateLTimeLiteral(literal)[0];
 
     else if (literal.startsWith("DATE#") || literal.startsWith("LDATE#"))
-        return evaluateDateLiteral(literal.split('#')[0], literal.split('#')[1]);
+        return evaluateDateLiteral(literal.split('#')[0], literal.split('#')[1])[0];
 
     else if (literal.startsWith("TIME_OF_DAY#") || literal.startsWith("LTIME_OF_DAY#"))
-        return evaluateTimeOfDayLiteral(literal.split('#')[0], literal.split('#')[1]);
+        return evaluateTimeOfDayLiteral(literal.split('#')[0], literal.split('#')[1])[0];
 
     else if (literal.startsWith("DATE_AND_TIME#") || literal.startsWith("LDATE_AND_TIME#"))
-        return evaluateDateAndTimeLiteral(literal.split('#')[0], literal.split('#')[1]);
+        return evaluateDateAndTimeLiteral(literal.split('#')[0], literal.split('#')[1])[0];
 
     // fallback to integer
-    return evaluateIntegerLiteral(literal);
+    return evaluateIntegerLiteral(literal)[0];
 }

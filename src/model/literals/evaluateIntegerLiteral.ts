@@ -1,5 +1,6 @@
 import { builtinTypesDetails, StBuiltinType, StBuiltinTypeCode, StBuiltinTypeDetails, StBuiltinTypeKind, StBuiltinTypeSuperKind, StType } from "../../core/types.js";
 import { parseBigIntWithRadix } from "../../core/utils.js";
+import { StModelBuilder } from "../StModelBuilder.js";
 
 export function evaluateIntegerLiteral(
     literal: string
@@ -34,16 +35,7 @@ export function evaluateIntegerLiteral(
 
     // Get value
     const valueAsString = splittedText[splittedText.length - 1].replaceAll("_", "");
-
-    if (lhsBuiltinType) {
-        value = parseBigIntWithRadix(valueAsString, radix);
-        value = ensureNoOverflowBigIntWorkaround(lhsBuiltinType.details!, value) as bigint;
-    }
-    
-    else {
-        // Default: parse as unsigned, promote later
-        value = parseBigIntWithRadix(valueAsString, radix);
-    }
+    value = parseBigIntWithRadix(valueAsString, radix);
 
     // Get type for value
     let rhsType: StType;

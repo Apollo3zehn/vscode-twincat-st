@@ -16,7 +16,7 @@ import { evaluateStringLiteral } from "./literals/evaluateStringLiteral.js";
 import { evaluateTimeLiteral } from "./literals/evaluateTimeLiteral.js";
 import { evaluateTimeOfDayLiteral } from "./literals/evaluateTimeOfDayLiteral.js";
 import { evaluateWStringLiteral } from "./literals/evaluateWStringLiteral.js";
-import { addBigInt, addNumber, andBigInt, divideBigInt, divideNumber, equalsBigInt, equalsNumber, executeBinaryOperation, greaterThanBigInt, greaterThanNumber, greaterThanOrEqualToBigInt, greaterThanOrEqualToNumber, lessThanBigInt, lessThanNumber, lessThanOrEqualToBigInt, lessThanOrEqualToNumber, moduloBigInt, multiplyBigInt, multiplyNumber, notBigInt, notEqualsBigInt, notEqualsNumber, subtractBigInt, subtractNumber } from "./operations.js";
+import { addBigInt, addNumber, andBigInt, divideBigInt, divideNumber, equalsBigInt, equalsNumber, executeBinaryOperation, greaterThanBigInt, greaterThanNumber, greaterThanOrEqualToBigInt, greaterThanOrEqualToNumber, lessThanBigInt, lessThanNumber, lessThanOrEqualToBigInt, lessThanOrEqualToNumber, moduloBigInt, multiplyBigInt, multiplyNumber, notBigInt, notEqualsBigInt, notEqualsNumber, orBigInt, subtractBigInt, subtractNumber, xorBigInt } from "./operations.js";
 
 export function evaluateAssignment(
     lhsType: StType | undefined,
@@ -390,7 +390,7 @@ function evaluateArithmeticOperation(
 ): StType | undefined {
 
     // Get target type code
-    const targetTypeCode = getTargetTypeCode(
+    const targetTypeCode = getArithmeticTargetTypeCode(
         lhsType,
         rhsType
     );
@@ -550,7 +550,7 @@ function evaluateBitstringOperation(
 ): StType | undefined {
     
     // Get target type code
-    const targetTypeCode = getTargetTypeCode(
+    const targetTypeCode = getBitstringTargetTypeCode(
         lhsType,
         rhsType
     );
@@ -589,6 +589,18 @@ function evaluateBitstringOperation(
             opBigInt = andBigInt;
             
             break;
+        
+        case "OR":
+                        
+            opBigInt = orBigInt;
+            
+            break;
+        
+        case "XOR":
+                        
+            opBigInt = xorBigInt;
+            
+            break;
                 
         default:
             throw new Error(`The operator ${operatorText} is not yet implemented.`);
@@ -601,8 +613,8 @@ function evaluateBitstringOperation(
         opBigInt
     );
 
-    // if (value !== undefined)
-    //     value = ensureNoOverflowBigIntWorkaround(targetBuiltinType.details!, value);
+    if (value !== undefined)
+        value = ensureNoOverflowBigIntWorkaround(targetBuiltinType.details!, value);
 
     targetBuiltinType.value = value;
 
@@ -1133,7 +1145,7 @@ function promoteUntypedLiterals(
     return [lhsType, rhsType];
 }
 
-function getTargetTypeCode(
+function getArithmeticTargetTypeCode(
     lhsType: StType,
     rhsType: StType
 ): StBuiltinTypeCode | undefined {
@@ -1208,6 +1220,47 @@ function getTargetTypeCode(
 
     // Default: fallback to the larger type
     return (leftDetails.size >= rightDetails.size ? leftCode : rightCode) ?? undefined;
+}
+
+function getBitstringTargetTypeCode(
+    lhsType: StType,
+    rhsType: StType
+): StBuiltinTypeCode | undefined {
+
+    const lhsBuiltinType = lhsType.builtinType;
+    const rhsBuiltinType = rhsType.builtinType;
+
+    if (!lhsBuiltinType || !rhsBuiltinType)
+        return undefined;
+
+    const lhsSuperKind = lhsBuiltinType.details?.superKind;
+    const rhsSuperKind = rhsBuiltinType.details?.superKind;
+
+    const lhsKind = lhsBuiltinType.details?.kind;
+    const rhsKind = rhsBuiltinType.details?.kind;
+
+    // Logical
+    if (
+        lhsSuperKind === StBuiltinTypeSuperKind.Logical &&
+        rhsSuperKind === StBuiltinTypeSuperKind.Logical
+    ) {
+        return StBuiltinTypeCode.BOOL;
+    }
+
+    // Integer
+    else if (
+        lhsSuperKind === StBuiltinTypeSuperKind.Integer &&
+        rhsSuperKind === StBuiltinTypeSuperKind.Integer
+    ) {
+        const size = Math.max(
+            lhsBuiltinType.details!.size,
+            rhsBuiltinType.details!.size
+        );
+        
+        return getUnsignedIntegerForSize(size);
+    }
+
+    return undefined; 
 }
 
 function evaluateLiteral(literal: LiteralContext): StType | undefined {

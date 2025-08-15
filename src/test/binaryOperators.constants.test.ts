@@ -508,13 +508,45 @@ suite("equality", () => {
 });
 
 const cases_and: [string, string, string][] = [
-    ["BIT#1", "BIT#1", "BIT#1"],
-    ["BIT#1", "BIT#0", "BIT#0"],
-    ["BIT#1", "BOOL#1", "BIT#1"],
-    ["BIT#1", "BOOL#0", "BIT#0"],
+    ["BIT#0", "BIT#0", "BOOL#0"],
+    ["BIT#0", "BIT#1", "BOOL#0"],
+    ["BIT#1", "BIT#0", "BOOL#0"],
+    ["BIT#1", "BIT#1", "BOOL#1"],
+    ["BIT#0", "BOOL#0", "BOOL#0"],
+    ["BIT#0", "BOOL#1", "BOOL#0"],
+    ["BIT#1", "BOOL#0", "BOOL#0"],
+    ["BIT#1", "BOOL#1", "BOOL#1"],
     ["BYTE#2#10101010", "BYTE#2#00101001", "USINT#2#00101000"],
-    ["BYTE#2#10101010", "INT#2#0010100100101001", "INT#2#0000000000101000"],
-    ["BYTE#2#10101010", "-1", "SINT#2#10101010"],
+    ["BYTE#2#10101010", "INT#2#0010100100101001", "UINT#2#0000000000101000"],
+    ["BYTE#2#10101010", "-1", "USINT#2#10101010"]
+];
+
+const cases_or: [string, string, string][] = [
+    ["BIT#0", "BIT#0", "BOOL#0"],
+    ["BIT#0", "BIT#1", "BOOL#1"],
+    ["BIT#1", "BIT#0", "BOOL#1"],
+    ["BIT#1", "BIT#1", "BOOL#1"],
+    ["BIT#0", "BOOL#0", "BOOL#0"],
+    ["BIT#0", "BOOL#1", "BOOL#1"],
+    ["BIT#1", "BOOL#0", "BOOL#1"],
+    ["BIT#1", "BOOL#1", "BOOL#1"],
+    ["BYTE#2#10101010", "BYTE#2#00101001", "USINT#2#10101011"],
+    ["BYTE#2#10101010", "INT#2#0010100100101001", "UINT#2#0010100110101011"],
+    ["BYTE#2#10101010", "-1", "USINT#2#11111111"]
+];
+
+const cases_xor: [string, string, string][] = [
+    ["BIT#0", "BIT#0", "BOOL#0"],
+    ["BIT#0", "BIT#1", "BOOL#1"],
+    ["BIT#1", "BIT#0", "BOOL#1"],
+    ["BIT#1", "BIT#1", "BOOL#0"],
+    ["BIT#0", "BOOL#0", "BOOL#0"],
+    ["BIT#0", "BOOL#1", "BOOL#1"],
+    ["BIT#1", "BOOL#0", "BOOL#1"],
+    ["BIT#1", "BOOL#1", "BOOL#0"],
+    ["BYTE#2#10101010", "BYTE#2#00101001", "USINT#2#10000011"],
+    ["BYTE#2#10101010", "INT#2#0010100100101001", "UINT#2#0010100110000011"],
+    ["BYTE#2#10101010", "-1", "USINT#2#01010101"]
 ];
 
 suite("bitstring", () => {
@@ -523,7 +555,7 @@ suite("bitstring", () => {
         StModelBuilder.currentSourceFile = new StSourceFile(Uri.parse("file:///dummy"));
     });
 
-    // Equal
+    // AND
     cases_and.forEach(([lhs, rhs, expectedString]) => {
         
         test(`and: ${lhs} AND ${rhs} = ${expectedString}`, () => {
@@ -537,6 +569,56 @@ suite("bitstring", () => {
 
             // Act
             const result = evaluateBinaryOperation(lhsType, rhsType, undefined, undefined, "AND");
+            
+            // Assert
+            assert(result);
+
+            const expected = evaluateLiteralHelper(expectedString)?.builtinType;
+
+            assert.strictEqual(result.builtinType?.code, expected?.code);
+            assert.strictEqual(result.builtinType?.value, expected?.value);
+        });
+    });
+
+    // OR
+    cases_or.forEach(([lhs, rhs, expectedString]) => {
+        
+        test(`or: ${lhs} OR ${rhs} = ${expectedString}`, () => {
+            
+            // Arrange
+            const lhsType = evaluateLiteralHelper(lhs);
+            const rhsType = evaluateLiteralHelper(rhs);
+
+            assert(lhsType);
+            assert(rhsType);
+
+            // Act
+            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, undefined, "OR");
+            
+            // Assert
+            assert(result);
+
+            const expected = evaluateLiteralHelper(expectedString)?.builtinType;
+
+            assert.strictEqual(result.builtinType?.code, expected?.code);
+            assert.strictEqual(result.builtinType?.value, expected?.value);
+        });
+    });
+
+    // XOR
+    cases_xor.forEach(([lhs, rhs, expectedString]) => {
+        
+        test(`xor: ${lhs} XOR ${rhs} = ${expectedString}`, () => {
+            
+            // Arrange
+            const lhsType = evaluateLiteralHelper(lhs);
+            const rhsType = evaluateLiteralHelper(rhs);
+
+            assert(lhsType);
+            assert(rhsType);
+
+            // Act
+            const result = evaluateBinaryOperation(lhsType, rhsType, undefined, undefined, "XOR");
             
             // Assert
             assert(result);

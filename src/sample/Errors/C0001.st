@@ -1,13 +1,15 @@
+// C0001: Constant '{constant}' too large for type '{name}'
 FUNCTION_BLOCK C0001
 
     VAR
 
         // Signed Integer Types
-        _int:                   INT             := INT#16#8000;
+        _int1:                  INT             := INT#2#10000000_00000000;
+        _int2:                  INT             := INT#16#8000;
 
         // Unsigned Integer Types
-        _uint:                  UINT            := UINT#-1;
-        _int2:                  INT             := 18446744073709551616;
+        _uint1:                 UINT            := UINT#-1;
+        _Uint2:                 UINT            := 18446744073709551616;
 
         // Floating Point Types
         _real:                  REAL            := REAL#3.402824E+38;

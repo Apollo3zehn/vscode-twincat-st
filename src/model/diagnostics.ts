@@ -183,7 +183,7 @@ export function C0066(lhsName: string, rhsName: string, operatorRange: Range | u
         DiagnosticSeverity.Error
     );
 
-    diagnostic.code = "C0064";
+    diagnostic.code = "C0066";
     StModelBuilder.currentSourceFile.diagnostics.push(diagnostic);
 }
 

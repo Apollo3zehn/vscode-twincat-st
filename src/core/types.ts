@@ -26,7 +26,7 @@ export class StSourceFile {
         //
     }
 
-    public tokenStream: CommonTokenStream | undefined;
+    public tokenStream?: CommonTokenStream;
     public readonly symbolMap = new Map<ParserRuleContext, StSymbol>();
     public readonly globalObjects = new Map<string, StSymbol>();
     public readonly statements: StatementContext[] = [];
@@ -53,13 +53,13 @@ export class StBuiltinType {
         }   
     }
 
-    public details: StBuiltinTypeDetails | undefined;        // all
-    public subRangeStart: bigint | undefined;               // unsigned and signed integers
-    public subRangeStop: bigint | undefined;                // unsigned and signed integers
-    public isFullRange: boolean | undefined;                // unsigned and signed integers
-    public value: bigint | number | undefined;              // literals or constants (bigint = logical + integers, number = float)
-    public isLiteral: boolean | undefined;                  // literals
-    public stringLength: number | undefined;                // strings
+    public details?: StBuiltinTypeDetails;  // all
+    public subRangeStart?: bigint;          // unsigned and signed integers
+    public subRangeStop?: bigint;           // unsigned and signed integers
+    public isFullRange?: boolean;           // unsigned and signed integers
+    public value?: bigint | number;         // literals or constants (bigint = logical + integers, number = float)
+    public isLiteral?: boolean;             // literals
+    public stringLength?: number;           // strings
 
     private initializeIntegerType(
         subRangeParamToken: TerminalNode | undefined
@@ -101,10 +101,10 @@ export class StBuiltinType {
 
 export class StType {
 
-    public builtinType: StBuiltinType | undefined;      // builtin type
-    public declaration: StSymbol | undefined;           // custom type
-    public referencedOrElementType: StType | undefined; // array, reference, pointer
-    public context: TypeContext | undefined;
+    public builtinType?: StBuiltinType;      // builtin type
+    public declaration?: StSymbol;           // custom type
+    public referencedOrElementType?: StType; // array, reference, pointer
+    public context?: TypeContext;
 
     public get isArray(): boolean {
 
@@ -169,26 +169,26 @@ export class StSymbol {
         //
     }
 
-    public accessModifier: StAccessModifier | undefined;                    // for many things
-    public modifier: StModifier | undefined;                                // for many things
-    public references: StSymbol[] | undefined;                              // for many things
+    public accessModifier?: StAccessModifier;                   // for many things
+    public modifier?: StModifier;                               // for many things
+    public references?: StSymbol[];                             // for many things
 
-    public typeUsage: StSymbol | undefined;                                 // for variable declarations & properties
-    public variableKind: StVariableScope | undefined;                       // for variable declarations
-    public parent: StSymbol | undefined;                                    // for variable declarations
+    public typeUsage?: StSymbol;                                // for variable declarations & properties
+    public variableKind?: StVariableScope;                      // for variable declarations
+    public parent?: StSymbol;                                   // for variable declarations
 
-    public typeDeclarationDetails: StTypeDeclarationDetails | undefined;    // for type declarations
+    public typeDeclarationDetails?: StTypeDeclarationDetails;   // for type declarations
 
-    public returnTypeUsage: StSymbol | undefined;                           // for method & function declarations
+    public returnTypeUsage?: StSymbol;                          // for method & function declarations
 
-    public declaration: StSymbol | undefined;                               // for variable usages
+    public declaration?: StSymbol;                              // for variable usages
 
-    public type: StType | undefined;                                        // for type usages
+    public type?: StType;                                       // for type usages
    
-    public variablesAndProperties: Map<string, StSymbol> | undefined;       // for function blocks, functions, methods, global variable lists, enums, structs
-    public methods: Map<string, StSymbol> | undefined;                      // for function blocks, interfaces
+    public variablesAndProperties?: Map<string, StSymbol>;      // for function blocks, functions, methods, global variable lists, enums, structs
+    public methods?: Map<string, StSymbol>;                     // for function blocks, interfaces
 
-    public children: StSymbol[] | undefined;                                // for document symbol provider
+    public children?: StSymbol[];                               // for document symbol provider
 
     public addChild(symbol: StSymbol): void {
 
@@ -240,9 +240,9 @@ export class StBuiltinTypeDetails {
             this.bitmask = (1n << BigInt(size)) - 1n;
     }
 
-    public readonly min: bigint | number | undefined;
-    public readonly max: bigint | number | undefined;
-    public readonly bitmask: bigint | undefined;
+    public readonly min?: bigint | number;
+    public readonly max?: bigint | number;
+    public readonly bitmask?: bigint;
 }
 
 export class StTypeDeclarationDetails {
@@ -251,10 +251,10 @@ export class StTypeDeclarationDetails {
         Object.assign(this, init);
     }
 
-    public underlyingType: StType | undefined;
-    public baseTypes: StSymbol[] | undefined;
-    public interfaces: StSymbol[] | undefined;
-    public subTypes: StSymbol[] | undefined;
+    public underlyingType?: StType;
+    public baseTypes?: StSymbol[];
+    public interfaces?: StSymbol[];
+    public subTypes?: StSymbol[];
 }
 
 export enum StSymbolKind {

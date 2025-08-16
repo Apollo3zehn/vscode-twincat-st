@@ -22,14 +22,18 @@ export function evaluateRealLiteral(
 
     // https://infosys.beckhoff.com/english.php?content=../content/1033/tc3_plc_intro/2529405067.html&id=
 
-    if (value < 0) {
+    if (lhsTypeCode && (value === -Infinity || value === +Infinity)) {
+        rhsTypeCode = lhsTypeCode;
+    }
 
-        if (-value >= -3.402823e+38)
+    else if (value < 0) {
+
+        if (value >= -3.402823e+38)
             rhsTypeCode = StBuiltinTypeCode.REAL;
 
-        else if (-value >= -1.7976931348623158e+308)
+        else if (value >= -1.7976931348623158e+308)
             rhsTypeCode = StBuiltinTypeCode.LREAL;
-            
+                       
         else {
             return [
                 undefined,
@@ -45,7 +49,7 @@ export function evaluateRealLiteral(
 
         else if (value <= 1.7976931348623158e+308)
             rhsTypeCode = StBuiltinTypeCode.LREAL;
-                                
+           
         else {
             return [
                 undefined,

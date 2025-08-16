@@ -58,6 +58,9 @@ const cases_addition: [string, string, string][] = [
     ["LDATE_AND_TIME#2000-01-01-03:30:21", "LTIME#2H1M", "LDATE_AND_TIME#2000-01-01-05:31:21"],
 
     // Overflow
+    ["REAL#3.402823E+38", "REAL#1E+38", "REAL#Infinity"],
+    ["LREAL#1.7976931348623158E+308", "LREAL#1E+308", "LREAL#Infinity"],
+
     ["TIME#49D17H2M47S295MS", "TIME#1MS", "TIME#0MS"],
     ["DATE#2106-02-07", "TIME#06H28M16S", "DATE#1970-01-01"],
     ["TIME_OF_DAY#23:59:59.999", "TIME#1MS", "TIME_OF_DAY#00:00:00"],
@@ -65,8 +68,8 @@ const cases_addition: [string, string, string][] = [
 
     ["LTIME#213503D23H34M33S709MS551US615NS", "LTIME#1NS", "LTIME#0NS"],
     ["LDATE#2554-7-21", "LTIME#23H34M33S709MS551US616NS", "LDATE#1970-01-01"],
-    ["LTIME_OF_DAY#23:59:59.999999999", "LTIME#1NS", "LTIME_OF_DAY#00:00:00"]
-    /* It looks like Temporal API has rounding errors near the maximum :-( */
+    ["LTIME_OF_DAY#23:59:59.999999999", "LTIME#1NS", "LTIME_OF_DAY#00:00:00"],
+    /* It looks like Temporal API has rounding errors near the maximum :-( (see also Number.MAX_SAFE_INTEGER) */
     // ["LDATE_AND_TIME#2554-7-21-23:34:33.709551615", "LTIME#1NS", "LDATE_AND_TIME#1970-1-1-0:0:0"]
 ];
 
@@ -90,6 +93,9 @@ const cases_subtraction: [string, string, string][] = [
     ["LDATE_AND_TIME#2000-01-01-03:30:21", "LTIME#2H1M", "LDATE_AND_TIME#2000-01-01-01:29:21"],
 
     // Overflow
+    ["REAL#-3.402823E+38", "REAL#1E+38", "REAL#-Infinity"],
+    ["LREAL#-1.7976931348623158E+308", "LREAL#1E+308", "LREAL#-Infinity"],
+
     ["TIME#1H", "TIME#2H", "TIME#49D16H2M47S296MS"],
     ["DATE#1970-01-01", "TIME#06H28M16S", "DATE#2106-02-07"],
     ["TIME_OF_DAY#00:00:00", "TIME#1MS", "TIME_OF_DAY#23:59:59.999"],
@@ -98,7 +104,7 @@ const cases_subtraction: [string, string, string][] = [
     ["LTIME#0NS", "LTIME#1NS", "LTIME#213503D23H34M33S709MS551US615NS"],
     ["LDATE#1970-01-01", "LTIME#23H34M33S709MS551US616NS", "LDATE#2554-7-21"],
     ["LTIME_OF_DAY#00:00:00", "LTIME#1NS", "LTIME_OF_DAY#23:59:59.999999999"],
-    /* It looks like Temporal API has rounding errors near the maximum :-( */
+    /* It looks like Temporal API has rounding errors near the maximum :-( (see also Number.MAX_SAFE_INTEGER) */
     // ["LDATE_AND_TIME#1970-1-1-0:0:0", "LTIME#1NS", "LDATE_AND_TIME#2554-7-21-23:34:33.709551615"]
 ];
 

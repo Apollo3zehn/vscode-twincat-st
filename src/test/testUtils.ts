@@ -33,14 +33,25 @@ export function assertBigIntOrNumberEqual(
     epsilon = 1e-10
 ) {
 
-    if (typeof actual === "bigint" && typeof expected === "bigint")
+    if (typeof actual === "bigint" && typeof expected === "bigint") {
         assert.strictEqual(actual, expected);
+    }
     
-    else if (typeof actual === "number" && typeof expected === "number")
-        assert.ok(Math.abs(actual - expected) < epsilon, `Expected ${actual} to be close to ${expected}`);
+    else if (typeof actual === "number" && typeof expected === "number") {
+
+        if (actual === Infinity && expected === Infinity)
+            return;
+
+        else if (actual === -Infinity && expected === -Infinity)
+            return;
+
+        else
+            assert.ok(Math.abs(actual - expected) < epsilon, `Expected ${actual} to be close to ${expected}`);
+    }
     
-    else
+    else {
         throw Error("Actual and expected must be of the same type");
+    }
 }
 
 export function evaluateLiteralHelper(literal: string): StType | undefined {

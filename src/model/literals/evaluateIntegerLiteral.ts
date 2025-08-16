@@ -121,6 +121,18 @@ export function ensureNoOverflowBigIntWorkaround(
 
             break;
         
+        case StBuiltinTypeSuperKind.Float:
+
+            value = value as number;
+
+            if (value < (builtinTypeDetails.minIncl as number))
+                value = -Infinity;
+
+            else if (value >= (builtinTypeDetails.maxExcl as number))
+                value = +Infinity;
+
+            break;
+       
         case StBuiltinTypeSuperKind.ShortDateOrTime:
         case StBuiltinTypeSuperKind.LongDateOrTime:
 
